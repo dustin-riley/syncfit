@@ -5,7 +5,7 @@
 
 ## 0. Design-System Sequencing (copy-first, migrate later)
 
-SyncFit does **not** block on the `@dustinriley/design` package. Instead:
+SyncFit does **not** block on the `@dustin-riley/design` package. Instead:
 
 1. **Interim shim:** vendor scorigami's **`--ds-*` token block + shadcn HSL
    bridge + `@theme` radius map ONLY** into `app/globals.css`. **No furniture**
@@ -15,7 +15,7 @@ SyncFit does **not** block on the `@dustinriley/design` package. Instead:
    shim's literal values.
 2. **Build the MVP in parallel** with the package extraction (tracked by
    `../dustinriley.com/docs/superpowers/specs/2026-05-16-design-system-package-design.md`).
-3. **Scheduled migration task (see §11):** once `@dustinriley/design` is
+3. **Scheduled migration task (see §11):** once `@dustin-riley/design` is
    published, replace the shim with the three package `@import`s and run a
    visual-parity check.
 
@@ -64,12 +64,12 @@ per-user data isolation. Not a public product yet.
 - **AI:** Vercel AI SDK (`ai`) + `@ai-sdk/anthropic`. Provider-agnostic
   interface; model swappable later.
 - **Design system:** Consumed **day one** from the published npm package
-  **`@dustinriley/design`** (not copied from another repo). See §2a.
+  **`@dustin-riley/design`** (not copied from another repo). See §2a.
 
-## 2a. Design System (`@dustinriley/design`, npm)
+## 2a. Design System (`@dustin-riley/design`, npm)
 
 The design system is being extracted into a standalone public npm package
-(`@dustinriley/design`); its design spec lives at
+(`@dustin-riley/design`); its design spec lives at
 `../dustinriley.com/docs/superpowers/specs/2026-05-16-design-system-package-design.md`.
 SyncFit's **end state** is a consumer of that package. Per §0, it gets there
 via a **copy-first interim shim**, not by blocking on publication.
@@ -83,9 +83,9 @@ semantic classes so the swap is later mechanical.
 `globals.css`):**
 
 ```css
-@import "@dustinriley/design/tokens.css";   /* --ds-* constitution + resets */
-@import "@dustinriley/design/core.css";     /* .ds-btn, .ds-container, .ds-panel, .ds-page-header, ... */
-@import "@dustinriley/design/tailwind.css"; /* Tailwind @theme + shadcn HSL bridge (generated from tokens, drift-free) */
+@import "@dustin-riley/design/tokens.css";   /* --ds-* constitution + resets */
+@import "@dustin-riley/design/core.css";     /* .ds-btn, .ds-container, .ds-panel, .ds-page-header, ... */
+@import "@dustin-riley/design/tailwind.css"; /* Tailwind @theme + shadcn HSL bridge (generated from tokens, drift-free) */
 ```
 
 - **shadcn React primitives are NOT in the package** (explicitly deferred there
@@ -261,10 +261,12 @@ setCount, perExercise[], lastSessionAt, restDays }, units }`
 
 ## 11. Design-System Migration (scheduled)
 
-Triggered when `@dustinriley/design` is published (§0). Expected ~30 min + a
+> **Status:** Migrated in branch `design-system-adoption` via `@dustin-riley/design@0.2.1` (single `@import "@dustin-riley/design/tailwind.css"`); no visual-parity check applied because the pre-migration UI was throwaway placeholder.
+
+Triggered when `@dustin-riley/design` is published (§0). Expected ~30 min + a
 visual-parity check; not on the MVP critical path.
 
-1. `npm i @dustinriley/design` pinned to an exact version (no `^`).
+1. `npm i @dustin-riley/design` pinned to an exact version (no `^`).
 2. In `globals.css`, delete the vendored shim block (tokens + bridge +
    `@theme`) and replace with the three package `@import`s from §2a.
 3. **Visual-parity check:** the package generates the shadcn HSL bridge from

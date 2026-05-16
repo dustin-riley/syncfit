@@ -4,7 +4,7 @@
 
 **Goal:** Ship a multi-user web app where a user logs in, uploads their Strong CSV, enters a weekly plan, and clicks "Analyze Readiness" to get an AI verdict on today's session based on trailing strength load.
 
-**Architecture:** Next.js App Router on Vercel. Pure, independently-tested modules for the Strong CSV parser, trailing-load aggregator, and AI engine. Neon Postgres via Drizzle, Better Auth (email+password) for auth, Vercel AI SDK + Anthropic for the coaching engine. Design system vendored as a copy-first shim (spec §0), migrated to `@dustinriley/design` later as an off-critical-path task.
+**Architecture:** Next.js App Router on Vercel. Pure, independently-tested modules for the Strong CSV parser, trailing-load aggregator, and AI engine. Neon Postgres via Drizzle, Better Auth (email+password) for auth, Vercel AI SDK + Anthropic for the coaching engine. Design system vendored as a copy-first shim (spec §0), migrated to `@dustin-riley/design` later as an off-critical-path task.
 
 **Tech Stack:** Next.js 16 (App Router, TypeScript; `create-next-app@latest` resolved to 16.2.6 — accepted deliberately, all stack deps support it), Tailwind CSS v4, shadcn/ui, Drizzle ORM, Neon Postgres, Better Auth, Vercel AI SDK (`ai` + `@ai-sdk/anthropic`), Vitest.
 
@@ -76,7 +76,7 @@ Replace `src/app/globals.css` with the vendored token block + shadcn HSL bridge 
 ```css
 @import "tailwindcss";
 
-/* === VENDORED DESIGN-SYSTEM SHIM (spec §0) — replace with @dustinriley/design imports on migration (spec §11) === */
+/* === VENDORED DESIGN-SYSTEM SHIM (spec §0) — replace with @dustin-riley/design imports on migration (spec §11) === */
 :root {
   --ds-bg:#faf6f0; --ds-surface:#f3ece0; --ds-surface-sunken:#ede4d3; --ds-border:#e0d5c2;
   --ds-text:#1f1a14; --ds-text-muted:#6b5f50;
@@ -1209,7 +1209,7 @@ git add -A && git commit -m "docs: README and deployment notes"
 
 ## Deferred (not in this plan)
 
-- **Design-system package migration** — spec §11. Scheduled when `@dustinriley/design` publishes; replace the shim block in `globals.css` with the three package imports + visual-parity check. Off critical path.
+- **Design-system package migration** — spec §11. ~~Scheduled when `@dustin-riley/design` publishes; replace the shim block in `globals.css` with the three package imports + visual-parity check. Off critical path.~~ **DONE (branch `design-system-adoption`).** Migrated to `@dustin-riley/design@0.2.1`, consumed through the single `@import "@dustin-riley/design/tailwind.css"` (which transitively pulls core.css + tokens.css, the `@theme` block, and the shadcn HSL bridge) — superseding the vendored §0 shim in `globals.css`. NO visual-parity check applied because the pre-migration UI was throwaway placeholder. The bundled `dustinriley-design` Claude skill is now installed at `.claude/skills/dustinriley-design/` to drive the subsequent philosophy-driven UI rebuild.
 - **Progression view** — spec §10. Top-set weight charts; v1.1.
 - **AI `modifications[]`** — spec §1. Prompt enrichment only; schema/UI already support it.
 - **Strava + endurance model** — spec v2 (`endurance_activity` + `activity_split`).

@@ -11,7 +11,7 @@ SyncFit is a hybrid-athlete training-readiness MVP. Import your strength history
 - **Vercel AI SDK** + **Anthropic** (`claude-sonnet-4-6`)
 - **Vitest** (unit + integration)
 
-The design system is currently a vendored shim pending the `@dustinriley/design` package (see spec §11).
+The design system is currently a vendored shim pending the `@dustin-riley/design` package (see spec §11).
 
 ## Prerequisites
 
@@ -72,7 +72,7 @@ The deploy is interactive and tied to your Vercel account plus the Neon↔Vercel
 
 The following are intentionally out of scope for v1 (see `docs/superpowers/specs/2026-05-16-syncfit-mvp-design.md` and the implementation plan):
 
-- **Design-system package migration** — vendored shim now; migrate to `@dustinriley/design` later (spec §11).
+- **Design-system package migration** — vendored shim now; migrate to `@dustin-riley/design` later (spec §11).
 - **Progression charts** — deferred to v1.1 (spec §10).
 - **AI `modifications[]` population** — the field exists but is unpopulated in v1; deferred to v1.1 (spec §1).
 - **Strava integration + endurance model** — deferred to v2 (spec, v2 section).
