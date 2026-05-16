@@ -19,9 +19,9 @@ export function computeTrailingLoad(rows: SetRow[], now: Date, windowHours: numb
   const lastSessionAt = inWin.length
     ? new Date(Math.max(...inWin.map(r => r.performedAt.getTime()))) : null;
   const restDays = lastSessionAt
-    ? Math.floor((now.getTime() - lastSessionAt.getTime()) / 86_400_000) : -1;
+    ? Math.floor((now.getTime() - lastSessionAt.getTime()) / 86_400_000) : 0;
   return {
     windowHours, sessions: sessionKeys.size, setCount: inWin.length, totalVolume,
-    perExercise: [...perMap.values()], lastSessionAt, restDays: lastSessionAt ? restDays : 0,
+    perExercise: [...perMap.values()], lastSessionAt, restDays,
   };
 }

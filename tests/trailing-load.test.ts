@@ -31,5 +31,6 @@ describe("computeTrailingLoad", () => {
     expect(r.setCount).toBe(0);
     expect(r.sessions).toBe(0);
     expect(r.lastSessionAt).toBeNull();
+    expect(r.restDays).toBe(0);
   });
 });
