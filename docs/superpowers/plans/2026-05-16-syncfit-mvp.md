@@ -6,7 +6,7 @@
 
 **Architecture:** Next.js App Router on Vercel. Pure, independently-tested modules for the Strong CSV parser, trailing-load aggregator, and AI engine. Neon Postgres via Drizzle, Better Auth (email+password) for auth, Vercel AI SDK + Anthropic for the coaching engine. Design system vendored as a copy-first shim (spec §0), migrated to `@dustinriley/design` later as an off-critical-path task.
 
-**Tech Stack:** Next.js 15 (App Router, TypeScript), Tailwind CSS v4, shadcn/ui, Drizzle ORM, Neon Postgres, Better Auth, Vercel AI SDK (`ai` + `@ai-sdk/anthropic`), Vitest.
+**Tech Stack:** Next.js 16 (App Router, TypeScript; `create-next-app@latest` resolved to 16.2.6 — accepted deliberately, all stack deps support it), Tailwind CSS v4, shadcn/ui, Drizzle ORM, Neon Postgres, Better Auth, Vercel AI SDK (`ai` + `@ai-sdk/anthropic`), Vitest.
 
 **Decisions locked from spec open items:**
 - Auth: **email + password** (no Resend/magic link for the testing phase — spec §10 allows this).
