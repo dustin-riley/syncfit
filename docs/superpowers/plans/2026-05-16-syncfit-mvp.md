@@ -1214,6 +1214,13 @@ git add -A && git commit -m "docs: README and deployment notes"
 - **AI `modifications[]`** — spec §1. Prompt enrichment only; schema/UI already support it.
 - **Strava + endurance model** — spec v2 (`endurance_activity` + `activity_split`).
 
+### Post-MVP follow-ups (surfaced in final review — tracked, non-blocking for a few-tester v1)
+
+- **`middleware`→`proxy` rename** — Next.js 16 deprecates the `middleware` file convention (build warns, still works as `ƒ Proxy (Middleware)`). Rename `src/middleware.ts` → the `proxy` convention before a future Next major.
+- **Server-side concurrency guard for Analyze** — the one-in-flight guard is client-side only (`analyze-button.tsx`); two tabs/devices could double-bill the LLM. Add a per-user advisory lock or same-day short-circuit in v1.1. (Deliberately not a `unique(userId, analysisDate)` constraint — that would block legitimate same-day re-analysis.)
+- **Import loop perf** — `import-persist.ts` awaits per-workout sequentially; a multi-year Strong history (hundreds of workouts) could be slow / approach serverless timeouts. Batch/chunk in v1.1 if large histories appear.
+- **Billed-but-lost analysis** — if the `readiness_analysis` insert fails after a successful (billed) LLM call, the user sees a generic error and the result is lost (`readiness.ts` catch). Rare; consider persist-then-return or a more specific error in v1.1.
+
 ---
 
 ## Self-Review
