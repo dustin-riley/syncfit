@@ -1,0 +1,8 @@
+# Secrets — never commit (created early; Task 1 scaffold will extend this)
+.env
+.env.local
+.env*.local
+
+# Node / Next
+node_modules/
+.next/
