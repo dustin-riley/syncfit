@@ -2,11 +2,13 @@ import { describe, it, expect, afterAll } from "vitest";
 import { inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { plannedSession } from "@/db/schema";
-import { getPlanForUser, upsertPlanDayForUser } from "@/lib/plan-store";
+import { getPlanForUser, upsertPlanDayForUser, upsertPlanWeekForUser } from "@/lib/plan-store";
 
 const U = "itest-plan-" + Date.now();
 const U2 = "itest-plan-other-" + Date.now();
-const ALL_USERS = [U, U2];
+const W = "itest-planweek-" + Date.now();
+const W2 = "itest-planweek-other-" + Date.now();
+const ALL_USERS = [U, U2, W, W2];
 
 afterAll(async () => {
   await db.delete(plannedSession).where(inArray(plannedSession.userId, ALL_USERS));
@@ -50,5 +52,51 @@ describe("plan-store (live Neon)", () => {
     expect(rows.length).toBe(3);
     const day3 = rows.find((r) => r.dayOfWeek === 3);
     expect(day3?.title).toBe("Heavy Lower v2");
+  });
+});
+
+describe("upsertPlanWeekForUser (live Neon)", () => {
+  const week = (titleSuffix: string) =>
+    Array.from({ length: 7 }, (_, dow) => {
+      const modality = dow === 0 ? "rest" : dow === 2 || dow === 4 ? "endurance" : "strength";
+      return {
+        dayOfWeek: dow,
+        title: `Day ${dow} ${titleSuffix}`,
+        description: `desc ${dow} ${titleSuffix}`,
+        modality,
+      };
+    });
+
+  it("E: saves all 7 days, getPlanForUser returns exactly 7 rows with right per-day modality/title", async () => {
+    await upsertPlanWeekForUser(W, week("v1"));
+    const rows = await getPlanForUser(W);
+    expect(rows.length).toBe(7);
+    const byDay = new Map(rows.map((r) => [r.dayOfWeek, r]));
+    expect([...byDay.keys()].sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4, 5, 6]);
+    expect(byDay.get(0)?.modality).toBe("rest");
+    expect(byDay.get(2)?.modality).toBe("endurance");
+    expect(byDay.get(4)?.modality).toBe("endurance");
+    expect(byDay.get(1)?.modality).toBe("strength");
+    expect(byDay.get(3)?.title).toBe("Day 3 v1");
+    expect(byDay.get(6)?.title).toBe("Day 6 v1");
+  });
+
+  it("F: re-saving the same week updates in place (still 7 rows, not 14)", async () => {
+    await upsertPlanWeekForUser(W, week("v2"));
+    const rows = await getPlanForUser(W);
+    expect(rows.length).toBe(7);
+    const byDay = new Map(rows.map((r) => [r.dayOfWeek, r]));
+    expect(byDay.get(3)?.title).toBe("Day 3 v2");
+    expect(byDay.get(0)?.description).toBe("desc 0 v2");
+  });
+
+  it("G: a second user's week does not affect the first (scoping)", async () => {
+    await upsertPlanWeekForUser(W2, week("other"));
+    const rowsW2 = await getPlanForUser(W2);
+    expect(rowsW2.length).toBe(7);
+    const rowsW = await getPlanForUser(W);
+    expect(rowsW.length).toBe(7);
+    const byDayW = new Map(rowsW.map((r) => [r.dayOfWeek, r]));
+    expect(byDayW.get(3)?.title).toBe("Day 3 v2");
   });
 });

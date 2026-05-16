@@ -3,23 +3,20 @@ import { auth } from "@/auth/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { getPlanForUser, upsertPlanDayForUser } from "@/lib/plan-store";
+import { upsertPlanWeekForUser, type PlanDayInput } from "@/lib/plan-store";
 
-export async function getPlan() {
+export async function savePlanWeek(formData: FormData) {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return [];
-  return getPlanForUser(session.user.id);
-}
-
-export async function savePlanDay(fd: FormData) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  // Session expired after page load: send to login instead of silently dropping the save.
   if (!session) redirect("/login");
-  await upsertPlanDayForUser(session.user.id, {
-    dayOfWeek: Number(fd.get("dayOfWeek")),
-    title: String(fd.get("title") ?? ""),
-    description: String(fd.get("description") ?? ""),
-    modality: String(fd.get("modality") ?? "strength"),
-  });
+  const days: PlanDayInput[] = [];
+  for (let dow = 0; dow < 7; dow++) {
+    days.push({
+      dayOfWeek: dow,
+      title: String(formData.get(`title-${dow}`) ?? ""),
+      description: String(formData.get(`description-${dow}`) ?? ""),
+      modality: String(formData.get(`modality-${dow}`) ?? "strength"),
+    });
+  }
+  await upsertPlanWeekForUser(session.user.id, days);
   revalidatePath("/plan");
 }

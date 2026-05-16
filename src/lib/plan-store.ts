@@ -16,3 +16,7 @@ export async function upsertPlanDayForUser(userId: string, v: PlanDayInput) {
       set: { title: v.title, description: v.description, modality: v.modality },
     });
 }
+
+export async function upsertPlanWeekForUser(userId: string, days: PlanDayInput[]) {
+  for (const d of days) await upsertPlanDayForUser(userId, d);
+}
