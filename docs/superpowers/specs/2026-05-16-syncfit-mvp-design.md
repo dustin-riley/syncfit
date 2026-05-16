@@ -38,11 +38,34 @@ per-user data isolation. Not a public product yet.
 
 ## 2. Tech Stack
 
-- **Framework/host:** Next.js (App Router) + Tailwind CSS, deployed on Vercel.
+- **Framework/host:** Next.js (App Router) + Tailwind CSS v4, deployed on Vercel.
 - **DB:** Neon Postgres + Drizzle ORM.
 - **Auth:** Better Auth (email).
 - **AI:** Vercel AI SDK (`ai`) + `@ai-sdk/anthropic`. Provider-agnostic
   interface; model swappable later.
+- **Design system:** The user's personal design system, adopted **day one**
+  using `../scorigami` as the template (same stack: Next.js + Tailwind v4 +
+  shadcn/ui + `--ds-*` tokens). See §2a.
+
+## 2a. Design System (adopt day one)
+
+`../scorigami` is the canonical Next.js implementation; `../dustinriley.com`
+holds the source-of-truth `DESIGN.md`. Setup is a copy, not a port (~1 hr):
+
+- Copy scorigami's `globals.css` **token block + HSL bridge + `@theme` radius
+  map** (the `--ds-*` custom properties and the shadcn HSL variable bridge).
+- Load the 3 Google fonts in `layout.tsx`: **Outfit** (display), **DM Sans**
+  (body), **JetBrains Mono** (caption/mono).
+- Copy scorigami's `components/ui/` **shadcn primitives** (Button, Card, etc.);
+  they inherit the theme via the HSL bridge with no modification.
+- **App surfaces only.** SyncFit is an app, not a marketing site: skip the
+  marketing chrome (`.hero`, blob gradients, `.site-nav`, `.site-footer`).
+
+**`DESIGN.md` constraints are spec rules:** reference `--ds-*` tokens, never
+hard-code hex/px; exactly 3 radii (8/16/999px), warm-tinted shadows only;
+sentence case; no emoji/italics in UI chrome; no gradient backgrounds or
+glassmorphism; color is never the only state signal. Palette is warm-neutral on
+burnt orange (`--ds-primary #b8541c`).
 
 ## 3. Architecture — Units
 
