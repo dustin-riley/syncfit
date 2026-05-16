@@ -1,7 +1,5 @@
 import { pgTable, text, timestamp, integer, numeric, jsonb, uuid, unique, date } from "drizzle-orm/pg-core";
 
-// Better Auth tables are added in Task 3 via `npx @better-auth/cli generate` — not in this task.
-
 export const workout = pgTable("workout", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: text("user_id").notNull(),
@@ -45,3 +43,5 @@ export const readinessAnalysis = pgTable("readiness_analysis", {
   model: text("model").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
+
+export * from "./auth-schema";
