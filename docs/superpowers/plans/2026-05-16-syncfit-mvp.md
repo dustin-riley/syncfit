@@ -778,7 +778,7 @@ export function buildPrompt(i: AnalyzeInput): string {
     `Trailing ${tl.windowHours}h: ${tl.sessions} session(s), ${tl.setCount} sets, total volume ${tl.totalVolume}.`,
     `Per exercise: ${per || "none"}. Rest days since last session: ${tl.restDays}.`,
     "No RPE is available. Base fatigue judgment on volume, frequency and rest only.",
-    "v1: leave the modifications array empty.",
+    "v1: leave modifications empty.",
   ].join("\n");
 }
 
