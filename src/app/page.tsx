@@ -1,19 +1,17 @@
 import { auth } from "@/auth/auth";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { plannedSession, workout, readinessAnalysis } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
-import { APP_TZ } from "@/lib/units";
+import { todayInfo } from "@/lib/readiness";
 import { AnalyzeButton } from "./analyze-button";
-
-const DOW: Record<string, number> = { Sun:0, Mon:1, Tue:2, Wed:3, Thu:4, Fri:5, Sat:6 };
 
 export default async function Home() {
   const session = await auth.api.getSession({ headers: await headers() });
-  const userId = session!.user.id;
-  const weekday = new Intl.DateTimeFormat("en-US", { timeZone: APP_TZ, weekday: "short" })
-    .format(new Date());
-  const dow = DOW[weekday];
+  if (!session) redirect("/login");
+  const userId = session.user.id;
+  const { dow } = todayInfo(new Date());
   const [planned] = await db.select().from(plannedSession)
     .where(and(eq(plannedSession.userId, userId), eq(plannedSession.dayOfWeek, dow)));
   const recentWorkouts = await db.select().from(workout)

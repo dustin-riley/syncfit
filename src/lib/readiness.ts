@@ -7,7 +7,7 @@ import { APP_TZ } from "@/lib/units";
 
 type GenerateFn = (prompt: string) => Promise<unknown>;
 
-function todayInfo(now: Date) {
+export function todayInfo(now: Date) {
   const parts = new Intl.DateTimeFormat("en-CA", { timeZone: APP_TZ,
     year: "numeric", month: "2-digit", day: "2-digit", weekday: "short" }).formatToParts(now);
   const get = (t: string) => parts.find(p => p.type === t)!.value;
