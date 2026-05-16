@@ -18,6 +18,7 @@ export default function Signup() {
         <button className="ds-btn ds-btn-primary" type="submit">Sign up</button>
         {err && <p style={{color:"var(--ds-error)"}}>{err}</p>}
       </form>
+      <p className="mt-3"><a href="/login">Have an account? Sign in</a></p>
     </main>
   );
 }
