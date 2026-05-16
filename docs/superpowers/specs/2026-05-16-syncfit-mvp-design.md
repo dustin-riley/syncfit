@@ -3,6 +3,18 @@
 **Date:** 2026-05-16
 **Status:** Approved (brainstorming) — pending implementation plan
 
+## 0. External Prerequisites (blocking)
+
+SyncFit implementation **must not begin** until this is satisfied:
+
+- **`@dustinriley/design` published to npm**, with the `tokens.css`,
+  `core.css`, and `tailwind.css` tiers and the bundled `dustinriley-design`
+  Claude Skill. Tracked by
+  `../dustinriley.com/docs/superpowers/specs/2026-05-16-design-system-package-design.md`.
+  Per the user, this work is done before any SyncFit code is written. The
+  implementation plan's first step is to **verify the package installs and the
+  three imports resolve**, not to scaffold around a missing dependency.
+
 ## 1. Goal & Scope
 
 Ship the thinnest vertical slice that delivers SyncFit's core value: a logged-in
@@ -43,23 +55,40 @@ per-user data isolation. Not a public product yet.
 - **Auth:** Better Auth (email).
 - **AI:** Vercel AI SDK (`ai`) + `@ai-sdk/anthropic`. Provider-agnostic
   interface; model swappable later.
-- **Design system:** The user's personal design system, adopted **day one**
-  using `../scorigami` as the template (same stack: Next.js + Tailwind v4 +
-  shadcn/ui + `--ds-*` tokens). See §2a.
+- **Design system:** Consumed **day one** from the published npm package
+  **`@dustinriley/design`** (not copied from another repo). See §2a.
 
-## 2a. Design System (adopt day one)
+## 2a. Design System (`@dustinriley/design`, npm)
 
-`../scorigami` is the canonical Next.js implementation; `../dustinriley.com`
-holds the source-of-truth `DESIGN.md`. Setup is a copy, not a port (~1 hr):
+The design system is being extracted into a standalone public npm package
+(`@dustinriley/design`); its design spec lives at
+`../dustinriley.com/docs/superpowers/specs/2026-05-16-design-system-package-design.md`.
+SyncFit is a **consumer of that package** — it does not copy or vendor CSS.
 
-- Copy scorigami's `globals.css` **token block + HSL bridge + `@theme` radius
-  map** (the `--ds-*` custom properties and the shadcn HSL variable bridge).
-- Load the 3 Google fonts in `layout.tsx`: **Outfit** (display), **DM Sans**
-  (body), **JetBrains Mono** (caption/mono).
-- Copy scorigami's `components/ui/` **shadcn primitives** (Button, Card, etc.);
-  they inherit the theme via the HSL bridge with no modification.
-- **App surfaces only.** SyncFit is an app, not a marketing site: skip the
-  marketing chrome (`.hero`, blob gradients, `.site-nav`, `.site-footer`).
+**Hard prerequisite (see §0):** the package must be published to npm before
+SyncFit implementation begins.
+
+Consumption (SyncFit is Next.js + Tailwind v4 + shadcn → import all three
+tiers in `globals.css`):
+
+```css
+@import "@dustinriley/design/tokens.css";   /* --ds-* constitution + resets */
+@import "@dustinriley/design/core.css";     /* .ds-btn, .ds-container, .ds-panel, .ds-page-header, ... */
+@import "@dustinriley/design/tailwind.css"; /* Tailwind @theme + shadcn HSL bridge (generated from tokens, drift-free) */
+```
+
+- **shadcn React primitives are NOT in the package** (explicitly deferred there
+  under YAGNI). SyncFit adds its own shadcn/ui components (Button, Card, etc.)
+  via the shadcn CLI; the package's `tailwind.css` bridge themes them
+  automatically — **no hand-copied HSL variables, no drift.**
+- **Fonts stay app-side** (the package is framework-free CSS): load the 3
+  Google fonts in `layout.tsx` — **Outfit** (display), **DM Sans** (body),
+  **JetBrains Mono** (caption/mono).
+- The package bundles the **`dustinriley-design` Claude Skill** and a
+  project-neutral **`DESIGN.md`**; enable the skill so AI tooling applies the
+  system consistently.
+- Pin an exact package version in `package.json` (no `^`) so the design surface
+  can't shift under the MVP mid-build.
 
 **`DESIGN.md` constraints are spec rules:** reference `--ds-*` tokens, never
 hard-code hex/px; exactly 3 radii (8/16/999px), warm-tinted shadows only;
