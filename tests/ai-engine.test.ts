@@ -32,4 +32,10 @@ describe("ai-engine", () => {
     await expect(analyzeReadiness(input, { generate: bad })).rejects.toThrow(/couldn't analyze/i);
     expect(bad).toHaveBeenCalledTimes(2);
   });
+
+  it("retries then throws a friendly error when the model call throws", async () => {
+    const throwing = vi.fn().mockRejectedValue(new Error("NoObjectGeneratedError: bad output"));
+    await expect(analyzeReadiness(input, { generate: throwing })).rejects.toThrow(/couldn't analyze/i);
+    expect(throwing).toHaveBeenCalledTimes(2);
+  });
 });

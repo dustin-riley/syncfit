@@ -33,6 +33,7 @@ export function buildPrompt(i: AnalyzeInput): string {
 type GenerateFn = (prompt: string) => Promise<unknown>;
 export const MODEL_ID = "claude-sonnet-4-6";
 
+// `ai`/`@ai-sdk/anthropic` are imported dynamically so injected-mock tests stay offline.
 async function defaultGenerate(prompt: string): Promise<unknown> {
   const { generateObject } = await import("ai");
   const { anthropic } = await import("@ai-sdk/anthropic");
@@ -48,9 +49,13 @@ export async function analyzeReadiness(
   const generate = deps.generate ?? defaultGenerate;
   const prompt = buildPrompt(i);
   for (let attempt = 0; attempt < 2; attempt++) {
-    const raw = await generate(prompt);
-    const parsed = ReadinessSchema.safeParse(raw);
-    if (parsed.success) return parsed.data;
+    try {
+      const raw = await generate(prompt);
+      const parsed = ReadinessSchema.safeParse(raw);
+      if (parsed.success) return parsed.data;
+    } catch {
+      // fall through to retry / friendly error below
+    }
   }
   throw new Error("Sorry, we couldn't analyze your readiness right now. Please try again.");
 }
