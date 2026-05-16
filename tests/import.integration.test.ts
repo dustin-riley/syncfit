@@ -8,7 +8,7 @@ import { importStrongCsvForUser } from "@/lib/import-persist";
 
 const csv = readFileSync(
   fileURLToPath(new URL("./fixtures/strong_sample.csv", import.meta.url)),
-  "utf8",
+  "utf8"
 );
 
 const TEST_USER = "itest-import-" + Date.now();

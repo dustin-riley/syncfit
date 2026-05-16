@@ -1,4 +1,7 @@
-export function buildTrustedOrigins(env: { NODE_ENV?: string; BETTER_AUTH_URL?: string }): string[] {
+export function buildTrustedOrigins(env: {
+  NODE_ENV?: string;
+  BETTER_AUTH_URL?: string;
+}): string[] {
   return [
     "https://*.vercel.app",
     ...(env.BETTER_AUTH_URL ? [env.BETTER_AUTH_URL] : []),

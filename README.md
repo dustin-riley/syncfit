@@ -23,12 +23,12 @@ The design system is currently a vendored shim pending the `@dustinriley/design`
 
 All four are required. Create `.env.local` at the project root. **`.env.local` is gitignored and must never be committed.**
 
-| Name | Purpose | Example / where to get |
-| --- | --- | --- |
-| `DATABASE_URL` | Neon **pooled** connection string, must include `?sslmode=require`. Used by both the neon-http read client and the neon-serverless Pool (transactional import). | `postgresql://user:pass@ep-xxx-pooler.region.aws.neon.tech/db?sslmode=require` (Neon dashboard → Connection Details → Pooled connection) |
-| `BETTER_AUTH_SECRET` | Signing secret for Better Auth sessions. | `openssl rand -base64 32` |
-| `BETTER_AUTH_URL` | App origin used by Better Auth. | `http://localhost:3000` locally; the deployed origin in production |
-| `ANTHROPIC_API_KEY` | Auth for the LLM calls; read automatically by `@ai-sdk/anthropic`. | `sk-ant-...` from [console.anthropic.com](https://console.anthropic.com) |
+| Name                 | Purpose                                                                                                                                                         | Example / where to get                                                                                                                   |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`       | Neon **pooled** connection string, must include `?sslmode=require`. Used by both the neon-http read client and the neon-serverless Pool (transactional import). | `postgresql://user:pass@ep-xxx-pooler.region.aws.neon.tech/db?sslmode=require` (Neon dashboard → Connection Details → Pooled connection) |
+| `BETTER_AUTH_SECRET` | Signing secret for Better Auth sessions.                                                                                                                        | `openssl rand -base64 32`                                                                                                                |
+| `BETTER_AUTH_URL`    | App origin used by Better Auth.                                                                                                                                 | `http://localhost:3000` locally; the deployed origin in production                                                                       |
+| `ANTHROPIC_API_KEY`  | Auth for the LLM calls; read automatically by `@ai-sdk/anthropic`.                                                                                              | `sk-ant-...` from [console.anthropic.com](https://console.anthropic.com)                                                                 |
 
 ## Local setup
 

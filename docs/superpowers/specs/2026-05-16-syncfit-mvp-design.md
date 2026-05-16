@@ -75,16 +75,17 @@ SyncFit's **end state** is a consumer of that package. Per §0, it gets there
 via a **copy-first interim shim**, not by blocking on publication.
 
 **Interim (until package published):** vendor scorigami's `--ds-*` token block
-+ shadcn HSL bridge + `@theme` radius map into `globals.css` — tokens/bridge
-ONLY, no furniture (per §0). All app code references `--ds-*` tokens / shadcn
-semantic classes so the swap is later mechanical.
+
+- shadcn HSL bridge + `@theme` radius map into `globals.css` — tokens/bridge
+  ONLY, no furniture (per §0). All app code references `--ds-*` tokens / shadcn
+  semantic classes so the swap is later mechanical.
 
 **End state (Next.js + Tailwind v4 + shadcn → import all three tiers in
 `globals.css`):**
 
 ```css
-@import "@dustinriley/design/tokens.css";   /* --ds-* constitution + resets */
-@import "@dustinriley/design/core.css";     /* .ds-btn, .ds-container, .ds-panel, .ds-page-header, ... */
+@import "@dustinriley/design/tokens.css"; /* --ds-* constitution + resets */
+@import "@dustinriley/design/core.css"; /* .ds-btn, .ds-container, .ds-panel, .ds-page-header, ... */
 @import "@dustinriley/design/tailwind.css"; /* Tailwind @theme + shadcn HSL bridge (generated from tokens, drift-free) */
 ```
 
@@ -113,7 +114,7 @@ Each unit has one purpose, a defined interface, and is independently testable.
 
 1. **Auth** — Better Auth, email login, sessions. Every data row scoped by
    `userId`; every server action/component resolves `userId` from the session.
-2. **Strong CSV parser** — *pure module.* CSV text → normalized workout/set
+2. **Strong CSV parser** — _pure module._ CSV text → normalized workout/set
    records. No DB, no HTTP. Standalone so a CLI could wrap it later.
 3. **Ingestion** — authenticated upload page (`/import`) + server action: calls
    the parser, writes user-scoped rows, dedupes re-uploads.
@@ -121,9 +122,9 @@ Each unit has one purpose, a defined interface, and is independently testable.
    session per day per user.
 5. **Dashboard** (`/`) — daily view + Analyze button, unified activity feed,
    light progression view.
-6. **AI engine** — *pure module.* `(plan + trailing load) → structured prompt →
-   Vercel AI SDK generateObject → Zod-typed result.` No DB/HTTP inside.
-7. **Trailing-load aggregator** — *pure module.* `(userId rows, now, window) →`
+6. **AI engine** — _pure module._ `(plan + trailing load) → structured prompt →
+Vercel AI SDK generateObject → Zod-typed result.` No DB/HTTP inside.
+7. **Trailing-load aggregator** — _pure module._ `(userId rows, now, window) →`
    structured load summary. Designed to compose strength + (future) endurance
    sources without refactor.
 
@@ -156,16 +157,20 @@ introduced with Strava — never retrofitted onto `workout_set`.
 ## 5. Strong CSV Format (reference)
 
 Header:
+
 ```
 Date,Workout Name,Duration,Exercise Name,Set Order,Weight,Reps,Distance,Seconds,Notes,Workout Notes,RPE
 ```
+
 Example:
+
 ```
 2022-07-26 10:39:06,"Day 1",27m,"Incline Bench Press (Barbell)",1,20.0,10.0,0,0.0,"","",
 2022-07-26 10:39:06,"Day 1",27m,"Pull Up",1,0,4.0,0,0.0,"","",
 ```
 
 Parsing rules:
+
 - A **workout** = all rows sharing the same `Date` timestamp. `Workout Name`
   repeats across dates and is **not** an identity.
 - `performedAt` = `Date` parsed as `America/New_York`.
@@ -182,9 +187,9 @@ Parsing rules:
    `userId`; all queries filtered by it.
 2. **Import** (`/import`) — user uploads `.csv`. Server action →
    `parser.parse(text)` → `[{ performedAt, title, exercises:[{ name,
-   equipment, sets:[{ setNumber, weight, reps }] }] }]` → write `workout` +
+equipment, sets:[{ setNumber, weight, reps }] }] }]` → write `workout` +
    `workout_set`, dedupe via `contentHash`. Returns `{ added, skipped,
-   warnings }`. Handles multiple workouts in one file.
+warnings }`. Handles multiple workouts in one file.
 3. **Plan** (`/plan`) — 7-day grid; edit each day's title/description/modality;
    server action upserts `planned_session`.
 4. **Dashboard** (`/`) — today's planned session (vs `APP_TZ`) +
@@ -205,6 +210,7 @@ Parsing rules:
 setCount, perExercise[], lastSessionAt, restDays }, units }`
 
 **Output schema (final shape; v1 leaves `modifications` empty):**
+
 ```ts
 {
   verdict: 'push_harder' | 'proceed_as_planned' | 'reduce_intensity' | 'rest',
@@ -219,7 +225,7 @@ setCount, perExercise[], lastSessionAt, restDays }, units }`
   leave `modifications` empty. v1.1 enriches the prompt to populate
   `modifications[]` — same schema, no migration, no UI rework.
 - `analyze(input)` calls `generateObject({ model: anthropic(...), schema,
-  prompt })`.
+prompt })`.
 
 ## 8. Error Handling
 

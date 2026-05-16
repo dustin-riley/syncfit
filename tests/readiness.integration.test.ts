@@ -1,7 +1,12 @@
 import { describe, it, expect, afterAll } from "vitest";
 import { inArray, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { plannedSession, workout, workoutSet, readinessAnalysis } from "@/db/schema";
+import {
+  plannedSession,
+  workout,
+  workoutSet,
+  readinessAnalysis,
+} from "@/db/schema";
 import { runReadinessAnalysis } from "@/lib/readiness";
 import { MODEL_ID } from "@/lib/ai-engine";
 
@@ -13,59 +18,108 @@ const U3 = "itest-readiness-fail-" + Date.now();
 const ALL_USERS = [U, U3];
 
 const goodGenerate = async () => ({
-  verdict: "reduce_intensity", headline: "Ease off",
-  rationale: "High volume, one rest day.", modifications: [],
+  verdict: "reduce_intensity",
+  headline: "Ease off",
+  rationale: "High volume, one rest day.",
+  modifications: [],
 });
 const badGenerate = async () => ({ verdict: "nonsense" });
 
 afterAll(async () => {
-  await db.delete(readinessAnalysis).where(inArray(readinessAnalysis.userId, ALL_USERS));
+  await db
+    .delete(readinessAnalysis)
+    .where(inArray(readinessAnalysis.userId, ALL_USERS));
   await db.delete(workout).where(inArray(workout.userId, ALL_USERS));
-  await db.delete(plannedSession).where(inArray(plannedSession.userId, ALL_USERS));
+  await db
+    .delete(plannedSession)
+    .where(inArray(plannedSession.userId, ALL_USERS));
 
-  const ra = await db.select({ id: readinessAnalysis.id })
-    .from(readinessAnalysis).where(inArray(readinessAnalysis.userId, ALL_USERS));
+  const ra = await db
+    .select({ id: readinessAnalysis.id })
+    .from(readinessAnalysis)
+    .where(inArray(readinessAnalysis.userId, ALL_USERS));
   expect(ra.length).toBe(0);
-  const w = await db.select({ id: workout.id })
-    .from(workout).where(inArray(workout.userId, ALL_USERS));
+  const w = await db
+    .select({ id: workout.id })
+    .from(workout)
+    .where(inArray(workout.userId, ALL_USERS));
   expect(w.length).toBe(0);
-  const ws = await db.select({ id: workoutSet.id })
-    .from(workoutSet).where(inArray(workoutSet.userId, ALL_USERS));
+  const ws = await db
+    .select({ id: workoutSet.id })
+    .from(workoutSet)
+    .where(inArray(workoutSet.userId, ALL_USERS));
   expect(ws.length).toBe(0);
-  const ps = await db.select({ id: plannedSession.id })
-    .from(plannedSession).where(inArray(plannedSession.userId, ALL_USERS));
+  const ps = await db
+    .select({ id: plannedSession.id })
+    .from(plannedSession)
+    .where(inArray(plannedSession.userId, ALL_USERS));
   expect(ps.length).toBe(0);
 });
 
 describe("runReadinessAnalysis (live Neon, LLM injected)", () => {
   it("A: no planned session returns friendly error and persists nothing", async () => {
-    const out = await runReadinessAnalysis({ userId: U, now: NOW, generate: goodGenerate });
+    const out = await runReadinessAnalysis({
+      userId: U,
+      now: NOW,
+      generate: goodGenerate,
+    });
     expect(out.result).toBeUndefined();
     expect(out.error).toMatch(/No planned session/);
-    const rows = await db.select({ id: readinessAnalysis.id })
-      .from(readinessAnalysis).where(eq(readinessAnalysis.userId, U));
+    const rows = await db
+      .select({ id: readinessAnalysis.id })
+      .from(readinessAnalysis)
+      .where(eq(readinessAnalysis.userId, U));
     expect(rows.length).toBe(0);
   });
 
   it("B: happy path persists analysis with correct snapshot math", async () => {
     await db.insert(plannedSession).values({
-      userId: U, dayOfWeek: 3, title: "Heavy Lower",
-      description: "Squat 5x5", modality: "strength",
+      userId: U,
+      dayOfWeek: 3,
+      title: "Heavy Lower",
+      description: "Squat 5x5",
+      modality: "strength",
     });
-    const [w] = await db.insert(workout).values({
-      userId: U, performedAt: new Date("2026-05-12T16:00:00Z"),
-      title: "Prev", source: "strong_csv", contentHash: "itest-readiness-hash-" + Date.now(),
-    }).returning();
+    const [w] = await db
+      .insert(workout)
+      .values({
+        userId: U,
+        performedAt: new Date("2026-05-12T16:00:00Z"),
+        title: "Prev",
+        source: "strong_csv",
+        contentHash: "itest-readiness-hash-" + Date.now(),
+      })
+      .returning();
     await db.insert(workoutSet).values([
-      { workoutId: w.id, userId: U, exerciseName: "Squat", setNumber: 1, weight: String(185), reps: 5 },
-      { workoutId: w.id, userId: U, exerciseName: "Bench", setNumber: 1, weight: String(135), reps: 8 },
+      {
+        workoutId: w.id,
+        userId: U,
+        exerciseName: "Squat",
+        setNumber: 1,
+        weight: String(185),
+        reps: 5,
+      },
+      {
+        workoutId: w.id,
+        userId: U,
+        exerciseName: "Bench",
+        setNumber: 1,
+        weight: String(135),
+        reps: 8,
+      },
     ]);
 
-    const out = await runReadinessAnalysis({ userId: U, now: NOW, generate: goodGenerate });
+    const out = await runReadinessAnalysis({
+      userId: U,
+      now: NOW,
+      generate: goodGenerate,
+    });
     expect(out.error).toBeUndefined();
     expect(out.result?.verdict).toBe("reduce_intensity");
 
-    const rows = await db.select().from(readinessAnalysis)
+    const rows = await db
+      .select()
+      .from(readinessAnalysis)
       .where(eq(readinessAnalysis.userId, U));
     expect(rows.length).toBe(1);
     const row = rows[0];
@@ -80,14 +134,23 @@ describe("runReadinessAnalysis (live Neon, LLM injected)", () => {
 
   it("C: AI failure returns friendly error and persists nothing", async () => {
     await db.insert(plannedSession).values({
-      userId: U3, dayOfWeek: 3, title: "Heavy Lower",
-      description: "Squat 5x5", modality: "strength",
+      userId: U3,
+      dayOfWeek: 3,
+      title: "Heavy Lower",
+      description: "Squat 5x5",
+      modality: "strength",
     });
-    const out = await runReadinessAnalysis({ userId: U3, now: NOW, generate: badGenerate });
+    const out = await runReadinessAnalysis({
+      userId: U3,
+      now: NOW,
+      generate: badGenerate,
+    });
     expect(out.result).toBeUndefined();
     expect(out.error).toMatch(/couldn't analyze/i);
-    const rows = await db.select({ id: readinessAnalysis.id })
-      .from(readinessAnalysis).where(eq(readinessAnalysis.userId, U3));
+    const rows = await db
+      .select({ id: readinessAnalysis.id })
+      .from(readinessAnalysis)
+      .where(eq(readinessAnalysis.userId, U3));
     expect(rows.length).toBe(0);
   });
 });

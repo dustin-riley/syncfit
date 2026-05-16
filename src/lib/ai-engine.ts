@@ -1,25 +1,38 @@
 import { z } from "zod";
 
 export const ReadinessSchema = z.object({
-  verdict: z.enum(["push_harder", "proceed_as_planned", "reduce_intensity", "rest"]),
+  verdict: z.enum([
+    "push_harder",
+    "proceed_as_planned",
+    "reduce_intensity",
+    "rest",
+  ]),
   headline: z.string().min(1),
   rationale: z.string().min(1),
-  modifications: z.array(z.object({ exercise: z.string(), change: z.string() })).default([]),
+  modifications: z
+    .array(z.object({ exercise: z.string(), change: z.string() }))
+    .default([]),
 });
 export type Readiness = z.infer<typeof ReadinessSchema>;
 
 export type AnalyzeInput = {
   plannedSession: { title: string; description: string; modality: string };
   trailingLoad: {
-    windowHours: number; sessions: number; setCount: number; totalVolume: number;
+    windowHours: number;
+    sessions: number;
+    setCount: number;
+    totalVolume: number;
     perExercise: { exerciseName: string; volume: number; setCount: number }[];
-    lastSessionAt: Date | null; restDays: number;
+    lastSessionAt: Date | null;
+    restDays: number;
   };
 };
 
 export function buildPrompt(i: AnalyzeInput): string {
   const tl = i.trailingLoad;
-  const per = tl.perExercise.map(e => `${e.exerciseName}: vol ${e.volume} (${e.setCount} sets)`).join("; ");
+  const per = tl.perExercise
+    .map((e) => `${e.exerciseName}: vol ${e.volume} (${e.setCount} sets)`)
+    .join("; ");
   return [
     "You are a strength coach. Auto-regulate today's planned session using only the data below.",
     `Planned (${i.plannedSession.modality}): ${i.plannedSession.title} — ${i.plannedSession.description}`,
@@ -38,13 +51,16 @@ async function defaultGenerate(prompt: string): Promise<unknown> {
   const { generateObject } = await import("ai");
   const { anthropic } = await import("@ai-sdk/anthropic");
   const { object } = await generateObject({
-    model: anthropic(MODEL_ID), schema: ReadinessSchema, prompt,
+    model: anthropic(MODEL_ID),
+    schema: ReadinessSchema,
+    prompt,
   });
   return object;
 }
 
 export async function analyzeReadiness(
-  i: AnalyzeInput, deps: { generate?: GenerateFn } = {},
+  i: AnalyzeInput,
+  deps: { generate?: GenerateFn } = {}
 ): Promise<Readiness> {
   const generate = deps.generate ?? defaultGenerate;
   const prompt = buildPrompt(i);
@@ -57,5 +73,7 @@ export async function analyzeReadiness(
       // fall through to retry / friendly error below
     }
   }
-  throw new Error("Sorry, we couldn't analyze your readiness right now. Please try again.");
+  throw new Error(
+    "Sorry, we couldn't analyze your readiness right now. Please try again."
+  );
 }

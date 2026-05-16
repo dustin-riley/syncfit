@@ -3,10 +3,30 @@ import { computeTrailingLoad, type SetRow } from "@/lib/trailing-load";
 
 const now = new Date("2026-05-14T12:00:00Z");
 const rows: SetRow[] = [
-  { exerciseName: "Bench Press", performedAt: new Date("2026-05-13T12:35:00Z"), weight: 115, reps: 8 },
-  { exerciseName: "Bench Press", performedAt: new Date("2026-05-13T12:35:00Z"), weight: 135, reps: 8 },
-  { exerciseName: "Squat", performedAt: new Date("2026-05-13T12:35:00Z"), weight: 185, reps: 5 },
-  { exerciseName: "Old", performedAt: new Date("2026-05-01T12:00:00Z"), weight: 100, reps: 5 },
+  {
+    exerciseName: "Bench Press",
+    performedAt: new Date("2026-05-13T12:35:00Z"),
+    weight: 115,
+    reps: 8,
+  },
+  {
+    exerciseName: "Bench Press",
+    performedAt: new Date("2026-05-13T12:35:00Z"),
+    weight: 135,
+    reps: 8,
+  },
+  {
+    exerciseName: "Squat",
+    performedAt: new Date("2026-05-13T12:35:00Z"),
+    weight: 185,
+    reps: 5,
+  },
+  {
+    exerciseName: "Old",
+    performedAt: new Date("2026-05-01T12:00:00Z"),
+    weight: 100,
+    reps: 5,
+  },
 ];
 
 describe("computeTrailingLoad", () => {
@@ -19,7 +39,11 @@ describe("computeTrailingLoad", () => {
   });
   it("breaks volume down per exercise", () => {
     const r = computeTrailingLoad(rows, now, 72);
-    expect(r.perExercise).toContainEqual({ exerciseName: "Bench Press", volume: 2000, setCount: 2 });
+    expect(r.perExercise).toContainEqual({
+      exerciseName: "Bench Press",
+      volume: 2000,
+      setCount: 2,
+    });
   });
   it("reports rest days and last session", () => {
     const r = computeTrailingLoad(rows, now, 72);
