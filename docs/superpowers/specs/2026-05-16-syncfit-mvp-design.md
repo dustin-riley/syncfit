@@ -3,17 +3,25 @@
 **Date:** 2026-05-16
 **Status:** Approved (brainstorming) — pending implementation plan
 
-## 0. External Prerequisites (blocking)
+## 0. Design-System Sequencing (copy-first, migrate later)
 
-SyncFit implementation **must not begin** until this is satisfied:
+SyncFit does **not** block on the `@dustinriley/design` package. Instead:
 
-- **`@dustinriley/design` published to npm**, with the `tokens.css`,
-  `core.css`, and `tailwind.css` tiers and the bundled `dustinriley-design`
-  Claude Skill. Tracked by
-  `../dustinriley.com/docs/superpowers/specs/2026-05-16-design-system-package-design.md`.
-  Per the user, this work is done before any SyncFit code is written. The
-  implementation plan's first step is to **verify the package installs and the
-  three imports resolve**, not to scaffold around a missing dependency.
+1. **Interim shim:** vendor scorigami's **`--ds-*` token block + shadcn HSL
+   bridge + `@theme` radius map ONLY** into `app/globals.css`. **No furniture**
+   (`.hero`/blobs, `.site-nav`, `.site-footer`, page-specific classes). This
+   shim sits behind the same conceptual boundary as the eventual imports — all
+   app code references `--ds-*` tokens / shadcn semantic classes, never the
+   shim's literal values.
+2. **Build the MVP in parallel** with the package extraction (tracked by
+   `../dustinriley.com/docs/superpowers/specs/2026-05-16-design-system-package-design.md`).
+3. **Scheduled migration task (see §11):** once `@dustinriley/design` is
+   published, replace the shim with the three package `@import`s and run a
+   visual-parity check.
+
+**Discipline that keeps migration ~30 min (enforced from commit 1):** no
+hard-coded hex/px anywhere (DESIGN.md rule); no design-system furniture copied;
+no invented tokens. Migration friction scales directly with any leak of these.
 
 ## 1. Goal & Scope
 
@@ -63,13 +71,16 @@ per-user data isolation. Not a public product yet.
 The design system is being extracted into a standalone public npm package
 (`@dustinriley/design`); its design spec lives at
 `../dustinriley.com/docs/superpowers/specs/2026-05-16-design-system-package-design.md`.
-SyncFit is a **consumer of that package** — it does not copy or vendor CSS.
+SyncFit's **end state** is a consumer of that package. Per §0, it gets there
+via a **copy-first interim shim**, not by blocking on publication.
 
-**Hard prerequisite (see §0):** the package must be published to npm before
-SyncFit implementation begins.
+**Interim (until package published):** vendor scorigami's `--ds-*` token block
++ shadcn HSL bridge + `@theme` radius map into `globals.css` — tokens/bridge
+ONLY, no furniture (per §0). All app code references `--ds-*` tokens / shadcn
+semantic classes so the swap is later mechanical.
 
-Consumption (SyncFit is Next.js + Tailwind v4 + shadcn → import all three
-tiers in `globals.css`):
+**End state (Next.js + Tailwind v4 + shadcn → import all three tiers in
+`globals.css`):**
 
 ```css
 @import "@dustinriley/design/tokens.css";   /* --ds-* constitution + resets */
@@ -247,3 +258,19 @@ setCount, perExercise[], lastSessionAt, restDays }, units }`
 - Pick the specific Anthropic model id (`claude-...`) at implementation.
 - Decide whether the progression view ships in v1 or slips to v1.1 based on
   remaining effort after the core loop works.
+
+## 11. Design-System Migration (scheduled)
+
+Triggered when `@dustinriley/design` is published (§0). Expected ~30 min + a
+visual-parity check; not on the MVP critical path.
+
+1. `npm i @dustinriley/design` pinned to an exact version (no `^`).
+2. In `globals.css`, delete the vendored shim block (tokens + bridge +
+   `@theme`) and replace with the three package `@import`s from §2a.
+3. **Visual-parity check:** the package generates the shadcn HSL bridge from
+   tokens, so values may differ slightly from scorigami's hand-converted copy.
+   Diff shadcn-themed surfaces (buttons, cards, the readiness card, form
+   controls) before/after; accept the generated values as canonical.
+4. Enable the bundled `dustinriley-design` Claude Skill.
+5. Confirm no hard-coded hex/px leaked (grep) — any found are migration debt to
+   fix here, not carry forward.
