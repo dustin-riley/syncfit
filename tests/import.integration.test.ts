@@ -1,9 +1,9 @@
 import { describe, it, expect, afterAll } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { inArray } from "drizzle-orm";
+import { inArray, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { workout } from "@/db/schema";
+import { workout, workoutSet } from "@/db/schema";
 import { importStrongCsvForUser } from "@/lib/import-persist";
 
 const csv = readFileSync(
@@ -13,7 +13,8 @@ const csv = readFileSync(
 
 const TEST_USER = "itest-import-" + Date.now();
 const OTHER_USER = "itest-import-other-" + Date.now();
-const ALL_USERS = [TEST_USER, OTHER_USER];
+const DEDUPE_USER = "itest-import-dedupe-" + Date.now();
+const ALL_USERS = [TEST_USER, OTHER_USER, DEDUPE_USER];
 
 afterAll(async () => {
   await db.delete(workout).where(inArray(workout.userId, ALL_USERS));
@@ -50,5 +51,33 @@ describe("importStrongCsvForUser (live Neon)", () => {
       .where(inArray(workout.userId, [TEST_USER]));
     expect(firstUserRows.length).toBe(2);
     expect(firstUserRows.every((r) => r.userId === TEST_USER)).toBe(true);
+  });
+
+  it("D: no orphan workouts — every imported workout has >=1 set (proves atomic commit)", async () => {
+    const rows = await db
+      .select({ id: workout.id })
+      .from(workout)
+      .where(inArray(workout.userId, [TEST_USER]));
+    expect(rows.length).toBeGreaterThan(0);
+    for (const r of rows) {
+      const sets = await db
+        .select({ id: workoutSet.id })
+        .from(workoutSet)
+        .where(eq(workoutSet.workoutId, r.id));
+      expect(sets.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("E: real failure surfaces as a warning, not a skip — dedupe still uses skipped", async () => {
+    const first = await importStrongCsvForUser(DEDUPE_USER, csv);
+    expect(first.error).toBeUndefined();
+    expect(first.added).toBe(2);
+    expect(first.skipped).toBe(0);
+
+    const second = await importStrongCsvForUser(DEDUPE_USER, csv);
+    expect(second.error).toBeUndefined();
+    expect(second.added).toBe(0);
+    expect(second.skipped).toBe(2);
+    expect(second.warnings.some((w) => /failed to import/.test(w))).toBe(false);
   });
 });

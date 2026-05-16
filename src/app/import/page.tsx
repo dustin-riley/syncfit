@@ -10,7 +10,8 @@ export default function ImportPage() {
       <h1>Import Strong CSV</h1>
       <p style={{ color: "var(--ds-text-muted)" }}>Export from Strong → Settings → Export Data, then upload the CSV.</p>
       <form onSubmit={async (e) => { e.preventDefault(); setBusy(true);
-        setRes(await importCsv(new FormData(e.currentTarget))); setBusy(false); }}>
+        try { setRes(await importCsv(new FormData(e.currentTarget))); }
+        finally { setBusy(false); } }}>
         <input className="my-3 block" type="file" name="file" accept=".csv" required />
         <button className="ds-btn ds-btn-primary" disabled={busy} type="submit">
           {busy ? "Importing…" : "Upload"}</button>
