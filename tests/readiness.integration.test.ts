@@ -16,7 +16,8 @@ const NOW = new Date("2026-05-13T16:00:00Z");
 
 const U = "itest-readiness-" + Date.now();
 const U3 = "itest-readiness-fail-" + Date.now();
-const ALL_USERS = [U, U3];
+const U4 = "itest-readiness-prog-" + Date.now();
+const ALL_USERS = [U, U3, U4];
 
 const goodGenerate = async () => ({
   verdict: "reduce_intensity",
@@ -26,6 +27,20 @@ const goodGenerate = async () => ({
   progressionSuggestions: [],
 });
 const badGenerate = async () => ({ verdict: "nonsense" });
+const progressingGenerate = async () => ({
+  verdict: "proceed_as_planned",
+  headline: "Solid",
+  rationale: "Clean reps at target.",
+  todayAdjustments: [],
+  progressionSuggestions: [
+    {
+      exercise: "Squat",
+      currentWeight: 245,
+      suggestedWeight: 250,
+      rationale: "stalled-clear",
+    },
+  ],
+});
 
 afterAll(async () => {
   await db
@@ -151,8 +166,47 @@ describe("runReadinessAnalysis (live Neon, LLM injected)", () => {
       { exercise: "Squat", change: "stop 1 rep short" },
     ]);
     expect(row.progressionSuggestions).toEqual([]);
-    const snap = row.planSnapshot as { exercises: unknown[] };
+    const snap = row.planSnapshot as {
+      session: { id: string };
+      exercises: unknown[];
+    };
     expect(snap.exercises.length).toBe(1);
+    expect(snap.session.id).toBe(ps.id);
+  });
+
+  it("B2: progression suggestions are stamped status 'pending' server-side", async () => {
+    const [ps2] = await db
+      .insert(plannedSession)
+      .values({
+        userId: U4,
+        dayOfWeek: 3,
+        title: "Lower",
+        notes: "",
+        modality: "strength",
+      })
+      .returning({ id: plannedSession.id });
+    await db.insert(plannedExercise).values({
+      plannedSessionId: ps2.id,
+      userId: U4,
+      name: "Squat",
+      targetSets: 5,
+      targetReps: 5,
+      targetWeight: "245",
+      orderIndex: 0,
+    });
+    const out = await runReadinessAnalysis({
+      userId: U4,
+      now: NOW,
+      generate: progressingGenerate,
+    });
+    expect(out.error).toBeUndefined();
+    const [row] = await db
+      .select()
+      .from(readinessAnalysis)
+      .where(eq(readinessAnalysis.userId, U4));
+    expect(row.progressionSuggestions.length).toBe(1);
+    expect(row.progressionSuggestions[0].status).toBe("pending");
+    expect(row.progressionSuggestions[0].suggestedWeight).toBe(250);
   });
 
   it("C: AI failure returns friendly error and persists nothing", async () => {

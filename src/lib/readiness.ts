@@ -127,7 +127,9 @@ export async function runReadinessAnalysis(opts: {
       model: MODEL_ID,
     });
     return { result };
-  } catch (e: any) {
-    return { error: e?.message ?? "Analysis failed." };
+  } catch (e: unknown) {
+    const msg =
+      e instanceof Error && typeof e.message === "string" ? e.message : "";
+    return { error: /couldn't analyze/i.test(msg) ? msg : "Analysis failed." };
   }
 }
