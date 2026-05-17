@@ -109,9 +109,7 @@ export function SiteNav({ email }: { email: string }) {
                   className="ds-btn ds-btn-ghost"
                   style={{
                     borderRadius: "var(--ds-radius-pill)",
-                    color: active
-                      ? "var(--ds-primary)"
-                      : "var(--ds-text-muted)",
+                    color: active ? "var(--ds-link)" : "var(--ds-text-muted)",
                     fontWeight: active ? 600 : 400,
                     background: active ? "var(--ds-surface)" : "transparent",
                     border: active
