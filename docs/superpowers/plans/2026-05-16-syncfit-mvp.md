@@ -45,7 +45,7 @@ src/
       plan.ts            # server action: upsert weekly plan
       analyze.ts         # server action: aggregate + AI + persist
   components/ui/         # shadcn primitives (CLI-generated)
-  middleware.ts          # route protection
+  proxy.ts               # route protection (Next 16 `proxy` convention)
 tests/
   strong-parser.test.ts
   trailing-load.test.ts
@@ -391,7 +391,7 @@ git add -A && git commit -m "feat: add Drizzle schema and Neon client"
 
 **Files:**
 
-- Create: `src/auth/auth.ts`, `src/auth/client.ts`, `src/app/api/auth/[...all]/route.ts`, `src/app/login/page.tsx`, `src/app/signup/page.tsx`, `src/middleware.ts`
+- Create: `src/auth/auth.ts`, `src/auth/client.ts`, `src/app/api/auth/[...all]/route.ts`, `src/app/login/page.tsx`, `src/app/signup/page.tsx`, `src/proxy.ts`
 - Modify: `.env.local`, `src/db/schema.ts` (Better Auth generated tables)
 
 - [ ] **Step 1: Install + env**
@@ -496,20 +496,20 @@ export default function Signup() {
 
 `src/app/login/page.tsx`: identical structure but `authClient.signIn.email({ email, password })` and heading "Sign in".
 
-- [ ] **Step 6: Route protection middleware**
+- [ ] **Step 6: Route protection (Next 16 `proxy` convention)**
 
-`src/middleware.ts`:
+`src/proxy.ts` (Next 16 renamed the `middleware` file convention to `proxy`; this avoids the deprecation warning):
 
 ```ts
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const session = getSessionCookie(req);
   if (!session) return NextResponse.redirect(new URL("/login", req.url));
   return NextResponse.next();
 }
-export const config = { matcher: ["/", "/import", "/plan"] };
+export const config = { matcher: ["/", "/import/:path*", "/plan/:path*"] };
 ```
 
 - [ ] **Step 7: Verify**
@@ -1716,7 +1716,7 @@ git add -A && git commit -m "docs: README and deployment notes"
 
 ### Post-MVP follow-ups (surfaced in final review — tracked, non-blocking for a few-tester v1)
 
-- **`middleware`→`proxy` rename** — Next.js 16 deprecates the `middleware` file convention (build warns, still works as `ƒ Proxy (Middleware)`). Rename `src/middleware.ts` → the `proxy` convention before a future Next major.
+- **`middleware`→`proxy` rename** — DONE (commit `8e879c0`). Next.js 16 deprecates the `middleware` file convention; the file is now `src/proxy.ts` exporting `proxy` and the build no longer emits the deprecation warning. (Implemented as part of this branch, not a follow-up.)
 - **Server-side concurrency guard for Analyze** — the one-in-flight guard is client-side only (`analyze-button.tsx`); two tabs/devices could double-bill the LLM. Add a per-user advisory lock or same-day short-circuit in v1.1. (Deliberately not a `unique(userId, analysisDate)` constraint — that would block legitimate same-day re-analysis.)
 - **Import loop perf** — `import-persist.ts` awaits per-workout sequentially; a multi-year Strong history (hundreds of workouts) could be slow / approach serverless timeouts. Batch/chunk in v1.1 if large histories appear.
 - **Billed-but-lost analysis** — if the `readiness_analysis` insert fails after a successful (billed) LLM call, the user sees a generic error and the result is lost (`readiness.ts` catch). Rare; consider persist-then-return or a more specific error in v1.1.

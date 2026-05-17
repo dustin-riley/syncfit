@@ -54,7 +54,7 @@ Two suites:
 
 - **Pure, testable modules:** `src/lib/strong-parser.ts`, `src/lib/trailing-load.ts`, `src/lib/ai-engine.ts`, `src/lib/readiness.ts`, `src/lib/import-persist.ts`, `src/lib/plan-store.ts`.
 - **Two Drizzle clients:** `src/db/index.ts` (neon-http, used for reads) and `src/db/tx.ts` (neon-serverless `Pool`, used only for the atomic multi-statement CSV import).
-- **Auth:** `middleware` is a presence-only UX gate. Server actions re-validate the session via Better Auth and scope every query by `userId`.
+- **Auth:** `src/proxy.ts` (Next 16 `proxy` file convention) is a presence-only UX gate. Server actions re-validate the session via Better Auth and scope every query by `userId`.
 - **Timezone:** a single fixed timezone, `America/New_York` (spec §0).
 
 ## Vercel deploy runbook
@@ -97,4 +97,4 @@ Route (app)
 ƒ  (Dynamic)  server-rendered on demand
 ```
 
-Note: Next.js 16 emits a deprecation warning that the `middleware` file convention should be renamed to `proxy`. This is a non-blocking warning; the middleware functions correctly and is reported as `ƒ Proxy (Middleware)` in the build output.
+Note: this project uses the Next.js 16 `proxy` file convention (`src/proxy.ts` exporting `proxy`), so the build emits no `middleware`→`proxy` deprecation warning. It is reported as `ƒ Proxy (Middleware)` in the build output.
