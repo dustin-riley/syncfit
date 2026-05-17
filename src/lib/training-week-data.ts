@@ -2,9 +2,8 @@
 // pattern: query here, derive in the pure lib. Imports "@/db" — DO NOT
 // import this from offline unit tests.
 import { db } from "@/db";
-import { workout, workoutSet } from "@/db/schema";
+import { workout, workoutSet, plannedSession } from "@/db/schema";
 import { and, eq, gte, lt, inArray, asc } from "drizzle-orm";
-import { getPlanForUser } from "@/lib/plan-store";
 import { paddedUtcRange, weekStartFor } from "@/lib/week";
 import {
   buildTrainingWeek,
@@ -62,10 +61,13 @@ export async function getTrainingWeek(
       })),
   }));
 
-  const planDays = (await getPlanForUser(userId)).map((p) => ({
-    dayOfWeek: p.dayOfWeek,
-    title: p.title,
-  }));
+  const planDays = await db
+    .select({
+      dayOfWeek: plannedSession.dayOfWeek,
+      title: plannedSession.title,
+    })
+    .from(plannedSession)
+    .where(eq(plannedSession.userId, userId));
 
   return buildTrainingWeek({
     weekStartYmd: week,
