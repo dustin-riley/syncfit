@@ -16,7 +16,7 @@ export default async function Home() {
   if (!session) redirect("/login");
   const userId = session.user.id;
   const now = new Date();
-  const { dow } = todayInfo(now);
+  const { dow, date } = todayInfo(now);
 
   const plan = await getPlanForUser(userId);
   const today = plan.find((p) => p.dayOfWeek === dow);
@@ -43,6 +43,15 @@ export default async function Home() {
     .where(eq(readinessAnalysis.userId, userId))
     .orderBy(desc(readinessAnalysis.createdAt))
     .limit(1);
+  const priorToday =
+    latest && latest.analysisDate === date
+      ? {
+          verdict: latest.verdict,
+          headline: latest.headline,
+          rationale: latest.rationale,
+          todayAdjustments: latest.todayAdjustments,
+        }
+      : null;
   const pastAnalyses = await db
     .select()
     .from(readinessAnalysis)
@@ -80,6 +89,7 @@ export default async function Home() {
               (now.getTime() - e.topSetAt.getTime()) / 86_400_000
             ),
           }))}
+          initialResult={priorToday}
         />
       ) : (
         <section className="ds-panel p-4 my-3">

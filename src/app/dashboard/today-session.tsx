@@ -17,6 +17,12 @@ type Actual = {
   topSetReps: number;
   agoDays: number;
 };
+type PriorResult = {
+  verdict: string;
+  headline: string;
+  rationale: string;
+  todayAdjustments: { exercise: string; change: string }[];
+};
 
 export function TodaySession({
   title,
@@ -24,24 +30,24 @@ export function TodaySession({
   notes,
   exercises,
   actuals,
+  initialResult,
 }: {
   title: string;
   modality: string;
   notes: string;
   exercises: Ex[];
   actuals: Actual[];
+  initialResult?: PriorResult | null;
 }) {
   const [busy, setBusy] = useState(false);
   const [out, setOut] = useState<Awaited<
     ReturnType<typeof analyzeToday>
   > | null>(null);
+  const result = out?.result ?? initialResult ?? undefined;
 
   const adjFor = (name: string) =>
-    findExerciseMatch(
-      name,
-      out?.result?.todayAdjustments ?? [],
-      (a) => a.exercise
-    )?.change;
+    findExerciseMatch(name, result?.todayAdjustments ?? [], (a) => a.exercise)
+      ?.change;
   const actualFor = (name: string) =>
     findExerciseMatch(name, actuals, (a) => a.exerciseName);
 
@@ -101,11 +107,11 @@ export function TodaySession({
         {busy ? "analyzing…" : "analyze readiness"}
       </button>
       {out?.error && <p style={{ color: "var(--ds-error)" }}>{out.error}</p>}
-      {out?.result && (
+      {result && (
         <VerdictBanner
-          verdict={out.result.verdict}
-          headline={out.result.headline}
-          rationale={out.result.rationale}
+          verdict={result.verdict}
+          headline={result.headline}
+          rationale={result.rationale}
         />
       )}
     </section>
