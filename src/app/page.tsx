@@ -26,7 +26,7 @@ export default async function Home() {
     .from(workout)
     .where(eq(workout.userId, userId))
     .orderBy(desc(workout.performedAt))
-    .limit(10);
+    .limit(30);
   const wIds = recentWorkouts.map((w) => w.id);
   const sets = wIds.length
     ? await db
