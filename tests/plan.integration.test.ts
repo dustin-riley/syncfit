@@ -49,7 +49,12 @@ describe("plan-store structured (live Neon)", () => {
       notes: "",
       modality: "strength",
       exercises: [
-        { name: "Front Squat", targetSets: 4, targetReps: 6, targetWeight: 205 },
+        {
+          name: "Front Squat",
+          targetSets: 4,
+          targetReps: 6,
+          targetWeight: 205,
+        },
       ],
     });
     const days = await getPlanForUser(U);
@@ -61,6 +66,70 @@ describe("plan-store structured (live Neon)", () => {
       .from(plannedExercise)
       .where(inArray(plannedExercise.userId, [U]));
     expect(allEx.length).toBe(1);
+  });
+
+  it("B2: re-saving the same exercises in a new order persists the new order", async () => {
+    await upsertPlanDayForUser(U, {
+      dayOfWeek: 4,
+      title: "Order",
+      notes: "",
+      modality: "strength",
+      exercises: [
+        { name: "Alpha", targetSets: 3, targetReps: 5, targetWeight: 100 },
+        { name: "Bravo", targetSets: 3, targetReps: 5, targetWeight: 110 },
+      ],
+    });
+    await upsertPlanDayForUser(U, {
+      dayOfWeek: 4,
+      title: "Order",
+      notes: "",
+      modality: "strength",
+      exercises: [
+        { name: "Bravo", targetSets: 3, targetReps: 5, targetWeight: 110 },
+        { name: "Alpha", targetSets: 3, targetReps: 5, targetWeight: 100 },
+      ],
+    });
+    const days = await getPlanForUser(U);
+    const d4 = days.find((d) => d.dayOfWeek === 4);
+    expect(d4?.exercises.map((e) => e.name)).toEqual(["Bravo", "Alpha"]);
+  });
+
+  it("B3: saving one day does not clobber a sibling day's exercises (same user)", async () => {
+    await upsertPlanDayForUser(U, {
+      dayOfWeek: 5,
+      title: "Day5",
+      notes: "",
+      modality: "strength",
+      exercises: [
+        { name: "Deadlift", targetSets: 1, targetReps: 5, targetWeight: 315 },
+      ],
+    });
+    await upsertPlanDayForUser(U, {
+      dayOfWeek: 6,
+      title: "Day6",
+      notes: "",
+      modality: "strength",
+      exercises: [
+        { name: "OHP", targetSets: 5, targetReps: 5, targetWeight: 95 },
+      ],
+    });
+    // Re-save day 5 only; day 6 must be untouched.
+    await upsertPlanDayForUser(U, {
+      dayOfWeek: 5,
+      title: "Day5 v2",
+      notes: "",
+      modality: "strength",
+      exercises: [
+        { name: "Deadlift", targetSets: 1, targetReps: 3, targetWeight: 335 },
+      ],
+    });
+    const days = await getPlanForUser(U);
+    expect(
+      days.find((d) => d.dayOfWeek === 6)?.exercises.map((e) => e.name)
+    ).toEqual(["OHP"]);
+    expect(days.find((d) => d.dayOfWeek === 5)?.exercises[0].targetWeight).toBe(
+      335
+    );
   });
 
   it("C: a zero-exercise day is valid (rest day)", async () => {

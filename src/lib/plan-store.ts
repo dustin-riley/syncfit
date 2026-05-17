@@ -15,13 +15,9 @@ export type PlanDayInput = {
   modality: string;
   exercises: PlanExerciseInput[];
 };
-export type PlanDay = {
-  dayOfWeek: number;
-  title: string;
-  notes: string;
-  modality: string;
-  exercises: PlanExerciseInput[];
-};
+// Read shape is structurally identical to the write input today; alias so the
+// two cannot silently drift.
+export type PlanDay = PlanDayInput;
 
 export async function getPlanForUser(userId: string): Promise<PlanDay[]> {
   const sessions = await db
@@ -32,6 +28,13 @@ export async function getPlanForUser(userId: string): Promise<PlanDay[]> {
     .select()
     .from(plannedExercise)
     .where(eq(plannedExercise.userId, userId));
+  const sessionIds = new Set(sessions.map((s) => s.id));
+  const orphans = exercises.filter((e) => !sessionIds.has(e.plannedSessionId));
+  if (orphans.length > 0) {
+    console.warn(
+      `plan-store: ${orphans.length} orphan planned_exercise row(s) for user ${userId} silently dropped`
+    );
+  }
   return sessions.map((s) => ({
     dayOfWeek: s.dayOfWeek,
     title: s.title,
@@ -65,6 +68,12 @@ export async function upsertPlanDayForUser(userId: string, v: PlanDayInput) {
     })
     .returning({ id: plannedSession.id });
 
+  // NOTE: session upsert + delete + re-insert are 3 separate neon-http
+  // statements (not a transaction). Accepted: the delete is scoped to one
+  // user's one weekday, write order is session→delete→insert, so the worst
+  // failure leaves that single day with no exercises until the user clicks
+  // Save again (the controlled editor still holds their input). Do NOT wire
+  // txDb here — it is reserved for CSV import by design (see CLAUDE.md).
   // replace-on-save: this day's exercise rows are fully authoritative
   await db
     .delete(plannedExercise)
