@@ -14,36 +14,37 @@
 
 ## File Structure
 
-| File | Responsibility | Action |
-|---|---|---|
-| `scripts/migrate-dashboard-redesign.mjs` | One-off idempotent SQL migration (rename, create table, split jsonb, backfill) | Create |
-| `src/db/schema.ts` | `planned_session.notes`, new `plannedExercise`, split `readiness_analysis` jsonb | Modify |
-| `src/lib/exercise-match.ts` | Pure name-normalization + fuzzy match used by prompt and accept action | Create |
-| `src/lib/trailing-load.ts` | Add per-exercise recent top set | Modify |
-| `src/lib/ai-engine.ts` | New `AnalyzeInput`, split output schema, rewritten prompt | Modify |
-| `src/lib/plan-store.ts` | Structured plan types, `getPlanWithExercises`, replace-on-save, `applyProgressionDecision` | Modify |
-| `src/lib/readiness.ts` | Build structured input, persist split fields, stamp `status:'pending'` | Modify |
-| `src/app/actions/plan.ts` | Parse structured form data; `applyProgression` action wrapper | Modify |
-| `src/app/plan/plan-editor.tsx` | Controlled structured editor (dynamic exercise rows) | Rewrite |
-| `src/app/plan/page.tsx` | Load structured plan | Modify |
-| `src/app/page.tsx` | Layout A dashboard (server) | Rewrite |
-| `src/app/dashboard/verdict-banner.tsx` | Verdict word + lucide icon + accent | Create |
-| `src/app/dashboard/today-session.tsx` | Hero: targets + analyze + inline adjustments/actuals | Create |
-| `src/app/dashboard/recent-activity.tsx` | Disclosure list of workouts with weights | Create |
-| `src/app/dashboard/progression-inbox.tsx` | Pending suggestions + accept/dismiss | Create |
-| `tests/exercise-match.test.ts` | Unit | Create |
-| `tests/trailing-load.test.ts` | Unit (extend) | Modify |
-| `tests/ai-engine.test.ts` | Unit (rewrite for new schema) | Modify |
-| `tests/plan.integration.test.ts` | Integration (structured) | Modify |
-| `tests/progression.integration.test.ts` | Integration (accept/dismiss) | Create |
-| `tests/readiness.integration.test.ts` | Integration (new fields/status) | Modify |
-| `CLAUDE.md` | Update gotchas (notes rename, planned_exercise, field-name scheme) | Modify |
+| File                                      | Responsibility                                                                             | Action  |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------ | ------- |
+| `scripts/migrate-dashboard-redesign.mjs`  | One-off idempotent SQL migration (rename, create table, split jsonb, backfill)             | Create  |
+| `src/db/schema.ts`                        | `planned_session.notes`, new `plannedExercise`, split `readiness_analysis` jsonb           | Modify  |
+| `src/lib/exercise-match.ts`               | Pure name-normalization + fuzzy match used by prompt and accept action                     | Create  |
+| `src/lib/trailing-load.ts`                | Add per-exercise recent top set                                                            | Modify  |
+| `src/lib/ai-engine.ts`                    | New `AnalyzeInput`, split output schema, rewritten prompt                                  | Modify  |
+| `src/lib/plan-store.ts`                   | Structured plan types, `getPlanWithExercises`, replace-on-save, `applyProgressionDecision` | Modify  |
+| `src/lib/readiness.ts`                    | Build structured input, persist split fields, stamp `status:'pending'`                     | Modify  |
+| `src/app/actions/plan.ts`                 | Parse structured form data; `applyProgression` action wrapper                              | Modify  |
+| `src/app/plan/plan-editor.tsx`            | Controlled structured editor (dynamic exercise rows)                                       | Rewrite |
+| `src/app/plan/page.tsx`                   | Load structured plan                                                                       | Modify  |
+| `src/app/page.tsx`                        | Layout A dashboard (server)                                                                | Rewrite |
+| `src/app/dashboard/verdict-banner.tsx`    | Verdict word + lucide icon + accent                                                        | Create  |
+| `src/app/dashboard/today-session.tsx`     | Hero: targets + analyze + inline adjustments/actuals                                       | Create  |
+| `src/app/dashboard/recent-activity.tsx`   | Disclosure list of workouts with weights                                                   | Create  |
+| `src/app/dashboard/progression-inbox.tsx` | Pending suggestions + accept/dismiss                                                       | Create  |
+| `tests/exercise-match.test.ts`            | Unit                                                                                       | Create  |
+| `tests/trailing-load.test.ts`             | Unit (extend)                                                                              | Modify  |
+| `tests/ai-engine.test.ts`                 | Unit (rewrite for new schema)                                                              | Modify  |
+| `tests/plan.integration.test.ts`          | Integration (structured)                                                                   | Modify  |
+| `tests/progression.integration.test.ts`   | Integration (accept/dismiss)                                                               | Create  |
+| `tests/readiness.integration.test.ts`     | Integration (new fields/status)                                                            | Modify  |
+| `CLAUDE.md`                               | Update gotchas (notes rename, planned_exercise, field-name scheme)                         | Modify  |
 
 ---
 
 ## Task 1: Schema changes + migration
 
 **Files:**
+
 - Modify: `src/db/schema.ts`
 - Create: `scripts/migrate-dashboard-redesign.mjs`
 
@@ -186,6 +187,7 @@ git commit -m "feat(db): structured planned_exercise + split readiness jsonb"
 ## Task 2: `exercise-match` pure helper
 
 **Files:**
+
 - Create: `src/lib/exercise-match.ts`
 - Test: `tests/exercise-match.test.ts`
 
@@ -275,6 +277,7 @@ git commit -m "feat(lib): pure exercise-name fuzzy match helper"
 ## Task 3: `trailing-load` — per-exercise recent top set
 
 **Files:**
+
 - Modify: `src/lib/trailing-load.ts`
 - Test: `tests/trailing-load.test.ts`
 
@@ -482,6 +485,7 @@ git commit -m "feat(lib): trailing-load tracks per-exercise recent top set"
 ## Task 4: `ai-engine` — split output schema + structured prompt
 
 **Files:**
+
 - Modify: `src/lib/ai-engine.ts`
 - Test: `tests/ai-engine.test.ts`
 
@@ -655,8 +659,7 @@ export function buildPrompt(i: AnalyzeInput): string {
   const planned =
     ps.exercises
       .map(
-        (e) =>
-          `${e.name}: ${e.targetSets}x${e.targetReps} @ ${e.targetWeight}`
+        (e) => `${e.name}: ${e.targetSets}x${e.targetReps} @ ${e.targetWeight}`
       )
       .join("; ") || "no structured exercises";
   const tl = i.trailingLoad;
@@ -734,6 +737,7 @@ git commit -m "feat(ai): split output into today adjustments + progression"
 ## Task 5: `plan-store` — structured types, read, replace-on-save
 
 **Files:**
+
 - Modify: `src/lib/plan-store.ts`
 - Test: `tests/plan.integration.test.ts`
 
@@ -893,7 +897,12 @@ describe("plan-store structured (live Neon)", () => {
       notes: "",
       modality: "strength",
       exercises: [
-        { name: "Front Squat", targetSets: 4, targetReps: 6, targetWeight: 205 },
+        {
+          name: "Front Squat",
+          targetSets: 4,
+          targetReps: 6,
+          targetWeight: 205,
+        },
       ],
     });
     const days = await getPlanForUser(U);
@@ -984,6 +993,7 @@ git commit -m "feat(plan): structured plan store with replace-on-save"
 ## Task 6: `applyProgressionDecision`
 
 **Files:**
+
 - Modify: `src/lib/plan-store.ts`
 - Test: `tests/progression.integration.test.ts`
 
@@ -992,7 +1002,11 @@ git commit -m "feat(plan): structured plan store with replace-on-save"
 First, **edit the existing schema import line** (do not add a second import from `@/db/schema`) so it reads:
 
 ```ts
-import { plannedSession, plannedExercise, readinessAnalysis } from "@/db/schema";
+import {
+  plannedSession,
+  plannedExercise,
+  readinessAnalysis,
+} from "@/db/schema";
 ```
 
 Then add one new import line below the existing imports:
@@ -1071,9 +1085,9 @@ export async function applyProgressionDecision(opts: {
     i === idx
       ? {
           ...s,
-          status: (opts.decision === "accept"
-            ? "accepted"
-            : "dismissed") as "accepted" | "dismissed",
+          status: (opts.decision === "accept" ? "accepted" : "dismissed") as
+            | "accepted"
+            | "dismissed",
         }
       : s
   );
@@ -1240,6 +1254,7 @@ git commit -m "feat(plan): applyProgressionDecision writes back to template"
 ## Task 7: `readiness.ts` — structured input, persist split fields
 
 **Files:**
+
 - Modify: `src/lib/readiness.ts`
 - Test: `tests/readiness.integration.test.ts`
 
@@ -1351,6 +1366,7 @@ Update the imports at the top of `src/lib/readiness.ts` to add `plannedExercise`
 - [ ] **Step 2: Update `tests/readiness.integration.test.ts`**
 
 Apply these edits to the existing file:
+
 1. Replace `goodGenerate`:
 
 ```ts
@@ -1402,7 +1418,9 @@ expect(snap.exercises.length).toBe(1);
 5. Add `plannedExercise` to the `@/db/schema` import and add this line to the `afterAll` cleanup before the `plannedSession` delete:
 
 ```ts
-await db.delete(plannedExercise).where(inArray(plannedExercise.userId, ALL_USERS));
+await db
+  .delete(plannedExercise)
+  .where(inArray(plannedExercise.userId, ALL_USERS));
 ```
 
 - [ ] **Step 3: Run integration test**
@@ -1422,6 +1440,7 @@ git commit -m "feat(readiness): structured input + persist split AI output"
 ## Task 8: Server actions — structured plan form + progression action
 
 **Files:**
+
 - Modify: `src/app/actions/plan.ts`
 
 - [ ] **Step 1: Rewrite `src/app/actions/plan.ts`**
@@ -1509,6 +1528,7 @@ git commit -m "feat(actions): structured plan form parse + progression action"
 ## Task 9: Plan editor rewrite (controlled, structured)
 
 **Files:**
+
 - Rewrite: `src/app/plan/plan-editor.tsx`
 - Modify: `src/app/plan/page.tsx`
 
@@ -1532,7 +1552,12 @@ const DAYS = [
   "Saturday",
 ];
 
-type Ex = { name: string; targetSets: number; targetReps: number; targetWeight: number };
+type Ex = {
+  name: string;
+  targetSets: number;
+  targetReps: number;
+  targetWeight: number;
+};
 type Day = { title: string; notes: string; modality: string; exercises: Ex[] };
 
 const emptyEx = (): Ex => ({
@@ -1580,7 +1605,11 @@ export function PlanEditor({ initial }: { initial: Day[] }) {
       {DAYS.map((name, dow) => (
         <section key={dow} className="ds-panel p-4 my-3">
           <h2 className="h4">{name.toLowerCase()}</h2>
-          <input type="hidden" name={`rowCount-${dow}`} value={days[dow].exercises.length} />
+          <input
+            type="hidden"
+            name={`rowCount-${dow}`}
+            value={days[dow].exercises.length}
+          />
           <input
             className="border rounded p-2 w-full my-1"
             name={`title-${dow}`}
@@ -1721,6 +1750,7 @@ git commit -m "feat(plan): controlled structured plan editor"
 ## Task 10: Dashboard rebuild (Layout A) + design-system conformance
 
 **Files:**
+
 - Create: `src/app/dashboard/verdict-banner.tsx`, `today-session.tsx`, `recent-activity.tsx`, `progression-inbox.tsx`
 - Rewrite: `src/app/page.tsx`
 - Delete: `src/app/analyze-button.tsx` (folded into `today-session.tsx`)
@@ -1736,9 +1766,17 @@ const MAP: Record<
   string,
   { label: string; Icon: typeof Check; token: string }
 > = {
-  proceed_as_planned: { label: "proceed as planned", Icon: Check, token: "--ds-accent-teal" },
+  proceed_as_planned: {
+    label: "proceed as planned",
+    Icon: Check,
+    token: "--ds-accent-teal",
+  },
   push_harder: { label: "push harder", Icon: ArrowUp, token: "--ds-primary" },
-  reduce_intensity: { label: "reduce intensity", Icon: ArrowDown, token: "--ds-accent-ochre" },
+  reduce_intensity: {
+    label: "reduce intensity",
+    Icon: ArrowDown,
+    token: "--ds-accent-ochre",
+  },
   rest: { label: "rest", Icon: Pause, token: "--ds-accent-ochre" },
 };
 
@@ -1783,8 +1821,17 @@ import { useState } from "react";
 import { analyzeToday } from "@/app/actions/analyze";
 import { VerdictBanner } from "./verdict-banner";
 
-type Ex = { name: string; targetSets: number; targetReps: number; targetWeight: number };
-type Actual = { exerciseName: string; topSetWeight: number; topSetReps: number };
+type Ex = {
+  name: string;
+  targetSets: number;
+  targetReps: number;
+  targetWeight: number;
+};
+type Actual = {
+  exerciseName: string;
+  topSetWeight: number;
+  topSetReps: number;
+};
 
 export function TodaySession({
   title,
@@ -1811,9 +1858,7 @@ export function TodaySession({
 
   return (
     <section className="ds-panel p-4 my-3">
-      <h2 className="h4">
-        today · {title || modality}
-      </h2>
+      <h2 className="h4">today · {title || modality}</h2>
       {exercises.length === 0 ? (
         <p className="ds-mono-note">
           no exercises planned.{" "}
@@ -1991,8 +2036,7 @@ export function ProgressionInbox({
       {err && <p style={{ color: "var(--ds-error)" }}>{err}</p>}
       {pending.map((s) => (
         <div key={s.exercise} className="ds-panel p-3 my-2">
-          <strong>{s.exercise}</strong>: {s.currentWeight} →{" "}
-          {s.suggestedWeight}
+          <strong>{s.exercise}</strong>: {s.currentWeight} → {s.suggestedWeight}
           {s.suggestedSets || s.suggestedReps ? (
             <span className="ds-mono-note">
               {" "}
@@ -2191,6 +2235,7 @@ git commit -m "feat(dashboard): Layout A — targets, actuals, progression inbox
 ## Task 11: Docs + full green gate
 
 **Files:**
+
 - Modify: `CLAUDE.md`
 
 - [ ] **Step 1: Update `CLAUDE.md`**

@@ -45,13 +45,13 @@ data model, the plan editor, the AI engine I/O, and the dashboard.
 
 ## 2. Decisions (from brainstorming)
 
-| Question | Decision |
-|---|---|
-| What does "AI edits the plan" mean? | Structured plan with target weights; AI proposes edits; user accepts/rejects; accepted edits update the recurring template. |
-| Plan day structure | Exercises with target **sets × reps × weight**, plus a per-day free-text notes field (AI reads both). |
-| Today-only vs. progression | **Two distinct AI outputs**: ephemeral today-only adjustments, and durable progression suggestions that write back to the template on accept. |
-| Planned↔actual exercise name matching | **Free text**, reconciled by name similarity inside the AI prompt. No autocomplete UI, no first-import requirement. |
-| Dashboard layout | **A — focused single column.** Today's session is the hero; readiness annotates it in place; progression is a secondary inbox. |
+| Question                              | Decision                                                                                                                                      |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| What does "AI edits the plan" mean?   | Structured plan with target weights; AI proposes edits; user accepts/rejects; accepted edits update the recurring template.                   |
+| Plan day structure                    | Exercises with target **sets × reps × weight**, plus a per-day free-text notes field (AI reads both).                                         |
+| Today-only vs. progression            | **Two distinct AI outputs**: ephemeral today-only adjustments, and durable progression suggestions that write back to the template on accept. |
+| Planned↔actual exercise name matching | **Free text**, reconciled by name similarity inside the AI prompt. No autocomplete UI, no first-import requirement.                           |
+| Dashboard layout                      | **A — focused single column.** Today's session is the hero; readiness annotates it in place; progression is a secondary inbox.                |
 
 ## 3. Data Model Changes (Postgres / Drizzle)
 
@@ -72,8 +72,8 @@ Migration copies existing `description` values into `notes`.
   display-only, never written back. `[]` when none.
 - `progressionSuggestions` jsonb
   `[{ exercise: string, currentWeight: number, suggestedWeight: number,
-  suggestedSets?: number, suggestedReps?: number, rationale: string,
-  status: 'pending' | 'accepted' | 'dismissed' }]`. Accept/dismiss mutates
+suggestedSets?: number, suggestedReps?: number, rationale: string,
+status: 'pending' | 'accepted' | 'dismissed' }]`. Accept/dismiss mutates
   `status` in place; accept also writes the target onto the matching
   `planned_exercise`. No separate decisions table (YAGNI).
 
@@ -132,7 +132,7 @@ stamps every emitted suggestion `status: 'pending'` on persist.
   actual names by similarity** (e.g. "Bench" ≈ "Bench Press"); unmatched
   planned exercises get no progression suggestion.
 - Separates the two outputs explicitly: `todayAdjustments` = "back off / push
-  *today only* given 72h load"; `progressionSuggestions` = "durable target
+  _today only_ given 72h load"; `progressionSuggestions` = "durable target
   change going forward, only on clear evidence" (clean reps at or above target
   across recent sessions, or a stall). Default both to `[]`; emit progression
   only with evidence.
