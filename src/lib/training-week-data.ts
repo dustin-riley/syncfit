@@ -2,7 +2,12 @@
 // pattern: query here, derive in the pure lib. Imports "@/db" — DO NOT
 // import this from offline unit tests.
 import { db } from "@/db";
-import { workout, workoutSet, plannedSession, enduranceActivity } from "@/db/schema";
+import {
+  workout,
+  workoutSet,
+  plannedSession,
+  enduranceActivity,
+} from "@/db/schema";
 import { and, eq, gte, lt, inArray, asc } from "drizzle-orm";
 import { paddedUtcRange, weekStartFor } from "@/lib/week";
 import {

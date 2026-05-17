@@ -133,7 +133,9 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                 </span>
                 <span className="ds-mono-note" style={{ flex: 1 }}>
                   {d.state === "done"
-                    ? `${d.workouts.map((w) => w.title).join(" · ")} — ${d.summary}`
+                    ? [d.workouts.map((w) => w.title).join(" · "), d.summary]
+                        .filter(Boolean)
+                        .join(" — ")
                     : d.state === "rest"
                       ? "no plan"
                       : d.plannedTitle}
