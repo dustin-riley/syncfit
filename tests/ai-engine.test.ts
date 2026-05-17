@@ -72,6 +72,8 @@ describe("ai-engine", () => {
           exercise: "Squat",
           currentWeight: 245,
           suggestedWeight: 255,
+          suggestedSets: 5,
+          suggestedReps: 3,
           rationale: "5x5 at 245 clean for two sessions.",
         },
       ],
@@ -79,6 +81,8 @@ describe("ai-engine", () => {
     const r = await analyzeReadiness(input, { generate: fake });
     expect(r.progressionSuggestions[0].suggestedWeight).toBe(255);
     expect(r.progressionSuggestions[0]).not.toHaveProperty("status");
+    expect(r.progressionSuggestions[0].suggestedSets).toBe(5);
+    expect(r.progressionSuggestions[0].suggestedReps).toBe(3);
   });
 
   it("retries once then throws a friendly error on persistent failure", async () => {
@@ -87,5 +91,15 @@ describe("ai-engine", () => {
       /couldn't analyze/i
     );
     expect(bad).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries then throws a friendly error when the model call throws", async () => {
+    const throwing = vi
+      .fn()
+      .mockRejectedValue(new Error("NoObjectGeneratedError: bad output"));
+    await expect(
+      analyzeReadiness(input, { generate: throwing })
+    ).rejects.toThrow(/couldn't analyze/i);
+    expect(throwing).toHaveBeenCalledTimes(2);
   });
 });
