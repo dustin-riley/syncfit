@@ -54,7 +54,10 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
         </button>
         <span
           className="ds-mono-note"
-          style={{ minWidth: "9ch" /* fits "may 11–17" */ }}
+          style={{
+            minWidth:
+              "9ch" /* keeps the nav arrows from shifting as the label width changes */,
+          }}
         >
           {data.label}
         </span>
