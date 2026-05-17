@@ -95,6 +95,29 @@ describe("buildTrainingWeek", () => {
     expect(tue.summary).toBe("Squat 225×5 · Curl 30×12");
   });
 
+  it("summarizes one entry per exercise using the top set, not per raw set", () => {
+    const data = buildTrainingWeek({
+      weekStartYmd: WEEK,
+      now: NOW,
+      workouts: [
+        wk("w1", "2026-05-11", "Push A", [
+          { exerciseName: "Bench", weight: 175, reps: 5 },
+          { exerciseName: "Bench", weight: 185, reps: 5 },
+          { exerciseName: "Bench", weight: 185, reps: 6 },
+          { exerciseName: "OHP", weight: 115, reps: 6 },
+          { exerciseName: "OHP", weight: 115, reps: 4 },
+          { exerciseName: "Incline", weight: 60, reps: 10 },
+          { exerciseName: "Fly", weight: 30, reps: 12 },
+        ]),
+      ],
+      planDays: [],
+    });
+    const mon = data.days[0];
+    // 4 distinct exercises; one entry each at its top set (heaviest, tie ->
+    // more reps); first 2 shown + "+2 more" (not "+5 more" off set count).
+    expect(mon.summary).toBe("Bench 185×6 · OHP 115×6 · +2 more");
+  });
+
   it("all-rest week when no plan and no workouts", () => {
     const data = buildTrainingWeek({
       weekStartYmd: WEEK,

@@ -33,11 +33,26 @@ const DOW_LABELS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 
 function summarize(sets: SetView[]): string | null {
   if (sets.length === 0) return null;
-  const head = sets
+  // Strong logs one row per set, so a real workout has many sets per
+  // exercise. Collapse to one entry per exercise (first-seen order) at its
+  // top set (heaviest; tie → more reps), matching the app's top-set notion.
+  const top = new Map<string, SetView>();
+  for (const s of sets) {
+    const best = top.get(s.exerciseName);
+    if (
+      !best ||
+      s.weight > best.weight ||
+      (s.weight === best.weight && s.reps > best.reps)
+    ) {
+      top.set(s.exerciseName, s);
+    }
+  }
+  const exercises = [...top.values()];
+  const head = exercises
     .slice(0, 2)
     .map((s) => `${s.exerciseName} ${s.weight}×${s.reps}`)
     .join(" · ");
-  const rest = sets.length - 2;
+  const rest = exercises.length - 2;
   return rest > 0 ? `${head} · +${rest} more` : head;
 }
 
