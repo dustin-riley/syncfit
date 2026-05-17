@@ -3,6 +3,7 @@ import { inArray, eq } from "drizzle-orm";
 import { db } from "@/db";
 import {
   plannedSession,
+  plannedExercise,
   workout,
   workoutSet,
   readinessAnalysis,
@@ -21,7 +22,8 @@ const goodGenerate = async () => ({
   verdict: "reduce_intensity",
   headline: "Ease off",
   rationale: "High volume, one rest day.",
-  modifications: [],
+  todayAdjustments: [{ exercise: "Squat", change: "stop 1 rep short" }],
+  progressionSuggestions: [],
 });
 const badGenerate = async () => ({ verdict: "nonsense" });
 
@@ -30,6 +32,9 @@ afterAll(async () => {
     .delete(readinessAnalysis)
     .where(inArray(readinessAnalysis.userId, ALL_USERS));
   await db.delete(workout).where(inArray(workout.userId, ALL_USERS));
+  await db
+    .delete(plannedExercise)
+    .where(inArray(plannedExercise.userId, ALL_USERS));
   await db
     .delete(plannedSession)
     .where(inArray(plannedSession.userId, ALL_USERS));
@@ -73,12 +78,24 @@ describe("runReadinessAnalysis (live Neon, LLM injected)", () => {
   });
 
   it("B: happy path persists analysis with correct snapshot math", async () => {
-    await db.insert(plannedSession).values({
+    const [ps] = await db
+      .insert(plannedSession)
+      .values({
+        userId: U,
+        dayOfWeek: 3,
+        title: "Heavy Lower",
+        notes: "knee ok",
+        modality: "strength",
+      })
+      .returning({ id: plannedSession.id });
+    await db.insert(plannedExercise).values({
+      plannedSessionId: ps.id,
       userId: U,
-      dayOfWeek: 3,
-      title: "Heavy Lower",
-      description: "Squat 5x5",
-      modality: "strength",
+      name: "Squat",
+      targetSets: 5,
+      targetReps: 5,
+      targetWeight: "245",
+      orderIndex: 0,
     });
     const [w] = await db
       .insert(workout)
@@ -130,6 +147,12 @@ describe("runReadinessAnalysis (live Neon, LLM injected)", () => {
     const load = row.loadSnapshot as Record<string, unknown>;
     expect(load.setCount).toBe(2);
     expect(load.totalVolume).toBe(185 * 5 + 135 * 8);
+    expect(row.todayAdjustments).toEqual([
+      { exercise: "Squat", change: "stop 1 rep short" },
+    ]);
+    expect(row.progressionSuggestions).toEqual([]);
+    const snap = row.planSnapshot as { exercises: unknown[] };
+    expect(snap.exercises.length).toBe(1);
   });
 
   it("C: AI failure returns friendly error and persists nothing", async () => {
@@ -137,7 +160,7 @@ describe("runReadinessAnalysis (live Neon, LLM injected)", () => {
       userId: U3,
       dayOfWeek: 3,
       title: "Heavy Lower",
-      description: "Squat 5x5",
+      notes: "Squat 5x5",
       modality: "strength",
     });
     const out = await runReadinessAnalysis({

@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import {
   plannedSession,
+  plannedExercise,
   workout,
   workoutSet,
   readinessAnalysis,
@@ -58,6 +59,24 @@ export async function runReadinessAnalysis(opts: {
       error: "No planned session for today. Add one on the Plan page first.",
     };
 
+  const plannedExercises = await db
+    .select()
+    .from(plannedExercise)
+    .where(
+      and(
+        eq(plannedExercise.userId, opts.userId),
+        eq(plannedExercise.plannedSessionId, planned.id)
+      )
+    );
+  const exercises = plannedExercises
+    .sort((a, b) => a.orderIndex - b.orderIndex)
+    .map((e) => ({
+      name: e.name,
+      targetSets: e.targetSets,
+      targetReps: e.targetReps,
+      targetWeight: Number(e.targetWeight),
+    }));
+
   const cutoff = new Date(now.getTime() - 72 * 3600_000);
   const rows = await db
     .select({
@@ -84,8 +103,9 @@ export async function runReadinessAnalysis(opts: {
       {
         plannedSession: {
           title: planned.title,
-          description: planned.description,
+          notes: planned.notes,
           modality: planned.modality,
+          exercises,
         },
         trailingLoad: load,
       },
@@ -94,12 +114,16 @@ export async function runReadinessAnalysis(opts: {
     await db.insert(readinessAnalysis).values({
       userId: opts.userId,
       analysisDate: date,
-      planSnapshot: planned,
+      planSnapshot: { session: planned, exercises },
       loadSnapshot: load,
       verdict: result.verdict,
       headline: result.headline,
       rationale: result.rationale,
-      modifications: result.modifications,
+      todayAdjustments: result.todayAdjustments,
+      progressionSuggestions: result.progressionSuggestions.map((s) => ({
+        ...s,
+        status: "pending" as const,
+      })),
       model: MODEL_ID,
     });
     return { result };
