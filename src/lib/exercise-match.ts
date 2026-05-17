@@ -1,5 +1,11 @@
+// Normalizes for fuzzy comparison: folds accented Latin to base letters
+// (NFKD + diacritic strip), lowercases, and collapses any other non-ascii /
+// punctuation to spaces. v1 scope cut: non-Latin scripts (e.g. CJK) normalize
+// to "" — unsupported by design; exercise names are expected ASCII/Latin.
 export function normalizeExerciseName(s: string): string {
   return s
+    .normalize("NFKD")
+    .replace(/\p{Diacritic}/gu, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim();

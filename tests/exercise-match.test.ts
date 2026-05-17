@@ -25,4 +25,21 @@ describe("exercise-match", () => {
     expect(findExerciseMatch("bench", items, (i) => i.n)?.n).toBe("Bench");
     expect(findExerciseMatch("Incline", items, (i) => i.n)).toBeUndefined();
   });
+
+  it("folds accented Latin to base letters", () => {
+    expect(normalizeExerciseName("Bíceps Cürl")).toBe("biceps curl");
+    expect(exerciseMatches("Biceps Curl", "Bíceps Cürl")).toBe(true);
+  });
+
+  it("equipment-only / punctuation-only input never matches", () => {
+    expect(exerciseMatches("(Barbell)", "Bench")).toBe(false);
+    expect(
+      findExerciseMatch("---", [{ n: "Bench" }], (i) => i.n)
+    ).toBeUndefined();
+  });
+
+  it("intentionally accepts substring matches (v1 design, pin behavior)", () => {
+    // "row" is contained in "narrow grip row" — accepted by design in v1.
+    expect(exerciseMatches("Row", "Narrow Grip Row")).toBe(true);
+  });
 });
