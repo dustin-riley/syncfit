@@ -32,7 +32,10 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
     });
   };
 
-  const hasAnyWorkout = data.days.some((d) => d.workouts.length > 0);
+  // Spec confines the import prompt to the new-user "no workouts and no
+  // plan" case. The plan recurs every week, so any plan yields planned/
+  // missed rows — an all-rest week is exactly that case.
+  const isEmptyWeek = data.days.every((d) => d.state === "rest");
 
   return (
     <div style={{ opacity: pending ? 0.6 : 1 }}>
@@ -168,7 +171,7 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
         })}
       </ul>
 
-      {!hasAnyWorkout && (
+      {isEmptyWeek && (
         <p className="ds-mono-note" style={{ marginTop: "var(--ds-space-2)" }}>
           no workouts this week.{" "}
           <Link href="/import" style={{ color: "var(--ds-link)" }}>
