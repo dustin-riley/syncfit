@@ -24,9 +24,13 @@ export type PlanDayInput = {
   modality: string;
   exercises: PlanExerciseInput[];
 };
-// Read shape is structurally identical to the write input today; alias so the
-// two cannot silently drift.
-export type PlanDay = PlanDayInput;
+// Read shape differs from the write input by exactly one field: reads carry
+// the durable plannedExercise.id (used as a stable React key by consumers);
+// writes don't supply it (the DB generates it). Keep the rest in lockstep.
+export type PlanExerciseRead = PlanExerciseInput & { id: string };
+export type PlanDay = Omit<PlanDayInput, "exercises"> & {
+  exercises: PlanExerciseRead[];
+};
 
 export async function getPlanForUser(userId: string): Promise<PlanDay[]> {
   const sessions = await db
@@ -53,6 +57,7 @@ export async function getPlanForUser(userId: string): Promise<PlanDay[]> {
       .filter((e) => e.plannedSessionId === s.id)
       .sort((a, b) => a.orderIndex - b.orderIndex)
       .map((e) => ({
+        id: e.id,
         name: e.name,
         targetSets: e.targetSets,
         targetReps: e.targetReps,

@@ -37,12 +37,15 @@ export default async function Home() {
 
   const load = await loadTrailingLoad(userId, now);
 
-  const [latest] = await db
+  // One query: limit(6) is a superset of the single latest row, so derive
+  // `latest` from pastAnalyses[0] rather than issuing a second round-trip.
+  const pastAnalyses = await db
     .select()
     .from(readinessAnalysis)
     .where(eq(readinessAnalysis.userId, userId))
     .orderBy(desc(readinessAnalysis.createdAt))
-    .limit(1);
+    .limit(6);
+  const latest = pastAnalyses[0];
   const priorToday =
     latest && latest.analysisDate === date
       ? {
@@ -52,12 +55,6 @@ export default async function Home() {
           todayAdjustments: latest.todayAdjustments,
         }
       : null;
-  const pastAnalyses = await db
-    .select()
-    .from(readinessAnalysis)
-    .where(eq(readinessAnalysis.userId, userId))
-    .orderBy(desc(readinessAnalysis.createdAt))
-    .limit(6);
 
   const workoutViews = recentWorkouts.map((w) => ({
     id: w.id,

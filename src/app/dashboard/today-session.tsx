@@ -7,6 +7,7 @@ import { MODEL_LABEL } from "@/lib/ai-engine";
 import { VerdictBanner } from "./verdict-banner";
 
 type Ex = {
+  id: string;
   name: string;
   targetSets: number;
   targetReps: number;
@@ -74,7 +75,7 @@ export function TodaySession({
             const a = actualFor(e.name);
             const adj = adjFor(e.name);
             return (
-              <li key={e.name} className="my-2">
+              <li key={e.id} className="my-2">
                 <strong>{e.name}</strong> — {e.targetSets}×{e.targetReps} @{" "}
                 {e.targetWeight}
                 {a && (
