@@ -84,3 +84,83 @@ export function enduranceContentHash(i: ManualEnduranceInput): string {
     durationSec: i.durationSec,
   });
 }
+
+export type LogResult = {
+  ok: boolean;
+  added: number;
+  skipped: number;
+  fieldErrors?: Record<string, string>;
+  error?: string;
+};
+
+export async function logStrengthWorkout(
+  userId: string,
+  input: ManualStrengthInput
+): Promise<LogResult> {
+  const { fieldErrors } = validateStrengthInput(input);
+  if (Object.keys(fieldErrors).length)
+    return { ok: false, added: 0, skipped: 0, fieldErrors };
+
+  // Dynamic import keeps unit tests offline (same pattern as ai-engine.ts).
+  const { db } = await import("@/db");
+  const { workout, workoutSet } = await import("@/db/schema");
+
+  const [row] = await db
+    .insert(workout)
+    .values({
+      userId,
+      performedAt: input.performedAt,
+      title: input.title.trim() || "Workout",
+      source: "manual",
+      contentHash: strengthContentHash(input),
+    })
+    .onConflictDoNothing({ target: [workout.userId, workout.contentHash] })
+    .returning();
+  if (!row) return { ok: true, added: 0, skipped: 1 }; // duplicate
+
+  await db.insert(workoutSet).values(
+    input.sets.map((s) => ({
+      workoutId: row.id,
+      userId,
+      exerciseName: s.exerciseName.trim(),
+      equipment: null,
+      setNumber: s.setNumber,
+      weight: String(s.weight),
+      reps: s.reps,
+    }))
+  );
+  return { ok: true, added: 1, skipped: 0 };
+}
+
+export async function logEnduranceActivity(
+  userId: string,
+  input: ManualEnduranceInput
+): Promise<LogResult> {
+  const { fieldErrors } = validateEnduranceInput(input);
+  if (Object.keys(fieldErrors).length)
+    return { ok: false, added: 0, skipped: 0, fieldErrors };
+
+  // Dynamic import keeps unit tests offline (same pattern as ai-engine.ts).
+  const { db } = await import("@/db");
+  const { enduranceActivity } = await import("@/db/schema");
+
+  const [row] = await db
+    .insert(enduranceActivity)
+    .values({
+      userId,
+      performedAt: input.performedAt,
+      activityType: input.activityType,
+      distance: input.distanceMi === null ? null : String(input.distanceMi),
+      durationSec: input.durationSec,
+      notes: input.notes,
+      source: "manual",
+      contentHash: enduranceContentHash(input),
+    })
+    .onConflictDoNothing({
+      target: [enduranceActivity.userId, enduranceActivity.contentHash],
+    })
+    .returning();
+  return row
+    ? { ok: true, added: 1, skipped: 0 }
+    : { ok: true, added: 0, skipped: 1 };
+}
