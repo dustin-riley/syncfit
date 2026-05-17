@@ -83,18 +83,19 @@ export function SiteNav({ email }: { email: string }) {
       >
         <Link
           href="/"
-          className="ds-display"
-          style={{ fontSize: "1rem", color: "var(--ds-text)" }}
+          style={{
+            fontFamily: "var(--ds-font-display)",
+            fontWeight: 600,
+            fontSize: "1rem",
+            color: "var(--ds-text)",
+          }}
         >
           SyncFit
         </Link>
 
         <ul
-          className="flex items-center"
+          className="flex items-center list-none m-0 p-0"
           style={{
-            listStyle: "none",
-            margin: 0,
-            padding: 0,
             gap: "var(--ds-space-2)",
           }}
         >
@@ -126,13 +127,14 @@ export function SiteNav({ email }: { email: string }) {
           })}
         </ul>
 
-        <div ref={menuRef} style={{ position: "relative" }}>
+        <div ref={menuRef} className="relative">
           <button
             ref={triggerRef}
             type="button"
             onClick={() => setMenuOpen((o) => !o)}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
+            aria-controls="account-menu"
             aria-label="Account menu"
             className="ds-btn ds-btn-ghost flex items-center"
             style={{
@@ -173,6 +175,7 @@ export function SiteNav({ email }: { email: string }) {
 
           {menuOpen ? (
             <div
+              id="account-menu"
               role="menu"
               aria-label="Account"
               className="ds-panel"
@@ -187,19 +190,21 @@ export function SiteNav({ email }: { email: string }) {
                 zIndex: 50,
               }}
             >
-              <p
-                className="ds-mono-note"
-                style={{
-                  margin: 0,
-                  padding: "var(--ds-space-2) var(--ds-space-3)",
-                  color: "var(--ds-text-muted)",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {email}
-              </p>
+              <div role="none">
+                <p
+                  className="ds-mono-note"
+                  style={{
+                    margin: 0,
+                    padding: "var(--ds-space-2) var(--ds-space-3)",
+                    color: "var(--ds-text-muted)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {email}
+                </p>
+              </div>
               {/* Reserved slot for a future settings link (spec §1) — intentionally empty. */}
               <button
                 type="button"
