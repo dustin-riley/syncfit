@@ -14,6 +14,7 @@ Apply this whenever you add or change UI in a project importing `@dustin-riley/d
 - Color is never the only state signal. Motion resolves under 300ms.
 - For text-as-link in burnt orange use `--ds-link`, never `--ds-primary` (WCAG AA).
 - Never hard-code a hex/px value — reference a `--ds-*` token.
+- AI-generated content uses `.ds-ai` (surface) + `.ds-ai-mark` (Lucide `cpu` + "the model says · <model>") together — never plum colour alone. Plum stays a usable tertiary accent. Write the byline sentence-case in source; `.ds-ai-mark` renders it uppercase (mono-meta carve-out, not an ALL-CAPS exception).
 
 ## How to consume
 - Always: `@import "@dustin-riley/design/tokens.css"; @import "@dustin-riley/design/core.css";`
@@ -29,7 +30,7 @@ Apply this whenever you add or change UI in a project importing `@dustin-riley/d
 Buttons `.ds-btn` + `.ds-btn-primary|secondary|ghost`; layout `.ds-container`,
 `.ds-section`; type `.ds-display`, `.ds-lede`, `.ds-caption`, `.ds-mono-note`,
 `.grid-label`, `.h1`–`.h6`; chrome bits `.ds-page-header`, `.ds-back-link`;
-surfaces `.ds-panel`, `.kbd`.
+surfaces `.ds-panel`, `.kbd`; AI `.ds-ai`, `.ds-ai-mark`.
 
 Site-specific furniture (nav, footer, hero, grids) is NOT in the package by
 design — build it per project from these primitives and tokens.
