@@ -3,13 +3,15 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/db";
-import { workout, workoutSet, readinessAnalysis } from "@/db/schema";
-import { eq, desc, inArray } from "drizzle-orm";
+import { readinessAnalysis } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { todayInfo, loadTrailingLoad } from "@/lib/readiness";
 import { getPlanForUser } from "@/lib/plan-store";
 import { TodaySession } from "./dashboard/today-session";
-import { RecentActivity } from "./dashboard/recent-activity";
 import { ProgressionInbox } from "./dashboard/progression-inbox";
+import { TrainingWeek } from "./dashboard/training-week";
+import { weekStartFor } from "@/lib/week";
+import { getTrainingWeek } from "@/lib/training-week-data";
 
 export default async function Home() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -21,21 +23,8 @@ export default async function Home() {
   const plan = await getPlanForUser(userId);
   const today = plan.find((p) => p.dayOfWeek === dow);
 
-  const recentWorkouts = await db
-    .select()
-    .from(workout)
-    .where(eq(workout.userId, userId))
-    .orderBy(desc(workout.performedAt))
-    .limit(30);
-  const wIds = recentWorkouts.map((w) => w.id);
-  const sets = wIds.length
-    ? await db
-        .select()
-        .from(workoutSet)
-        .where(inArray(workoutSet.workoutId, wIds))
-    : [];
-
   const load = await loadTrailingLoad(userId, now);
+  const initialWeek = await getTrainingWeek(userId, weekStartFor(now), now);
 
   // One query: limit(6) is a superset of the single latest row, so derive
   // `latest` from pastAnalyses[0] rather than issuing a second round-trip.
@@ -55,19 +44,6 @@ export default async function Home() {
           todayAdjustments: latest.todayAdjustments,
         }
       : null;
-
-  const workoutViews = recentWorkouts.map((w) => ({
-    id: w.id,
-    performedAt: w.performedAt.toDateString(),
-    title: w.title,
-    sets: sets
-      .filter((s) => s.workoutId === w.id)
-      .map((s) => ({
-        exerciseName: s.exerciseName,
-        weight: Number(s.weight),
-        reps: s.reps,
-      })),
-  }));
 
   return (
     <main className="ds-container p-8">
@@ -118,8 +94,8 @@ export default async function Home() {
         )}
 
       <section className="my-6">
-        <h2 className="h4">recent activity</h2>
-        <RecentActivity workouts={workoutViews} />
+        <h2 className="h4">training week</h2>
+        <TrainingWeek initial={initialWeek} />
       </section>
 
       <section className="my-6">
