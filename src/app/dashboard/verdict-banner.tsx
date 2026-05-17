@@ -1,4 +1,4 @@
-import { ArrowUp, ArrowDown, Check, Pause, Cpu } from "lucide-react";
+import { ArrowUp, ArrowDown, Check, Pause, Bot } from "lucide-react";
 
 const MAP: Record<
   string,
@@ -33,7 +33,7 @@ export function VerdictBanner({
   return (
     <div className="ds-panel ds-ai p-4 my-3">
       <span className="ds-ai-mark">
-        <Cpu size={13} aria-hidden="true" /> the model says · {model}
+        <Bot size={13} aria-hidden="true" /> the model says · {model}
       </span>
       <p
         className="flex items-center gap-2"
