@@ -3,7 +3,39 @@ import { auth } from "@/auth/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { upsertPlanWeekForUser, type PlanDayInput } from "@/lib/plan-store";
+import {
+  upsertPlanWeekForUser,
+  applyProgressionDecision,
+  type PlanDayInput,
+  type PlanExerciseInput,
+} from "@/lib/plan-store";
+
+// Form numbers arrive as strings; coerce defensively so a blank/garbled field
+// can never send NaN into the numeric plan columns (plan-store assumes clean
+// numbers — see its non-atomicity/precondition notes).
+function num(v: FormDataEntryValue | null): number {
+  const n = Number(v ?? 0);
+  return Number.isFinite(n) ? n : 0;
+}
+
+// Exercise rows are named ex-{day}-{row}-{field}; rowCount-{day} carries the
+// number of rows the editor rendered for that day. Blank-name rows are dropped
+// (an empty trailing row is not an exercise).
+function readExercises(fd: FormData, dow: number): PlanExerciseInput[] {
+  const count = num(fd.get(`rowCount-${dow}`));
+  const out: PlanExerciseInput[] = [];
+  for (let r = 0; r < count; r++) {
+    const name = String(fd.get(`ex-${dow}-${r}-name`) ?? "").trim();
+    if (!name) continue;
+    out.push({
+      name,
+      targetSets: num(fd.get(`ex-${dow}-${r}-sets`)),
+      targetReps: num(fd.get(`ex-${dow}-${r}-reps`)),
+      targetWeight: num(fd.get(`ex-${dow}-${r}-weight`)),
+    });
+  }
+  return out;
+}
 
 export async function savePlanWeek(formData: FormData) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -13,10 +45,27 @@ export async function savePlanWeek(formData: FormData) {
     days.push({
       dayOfWeek: dow,
       title: String(formData.get(`title-${dow}`) ?? ""),
-      description: String(formData.get(`description-${dow}`) ?? ""),
+      notes: String(formData.get(`notes-${dow}`) ?? ""),
       modality: String(formData.get(`modality-${dow}`) ?? "strength"),
+      exercises: readExercises(formData, dow),
     });
   }
   await upsertPlanWeekForUser(session.user.id, days);
   revalidatePath("/plan");
+  revalidatePath("/");
+}
+
+export async function applyProgression(input: {
+  analysisId: string;
+  exercise: string;
+  decision: "accept" | "dismiss";
+}) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { ok: false as const, error: "Not authenticated." };
+  const r = await applyProgressionDecision({
+    userId: session.user.id,
+    ...input,
+  });
+  if (r.ok) revalidatePath("/");
+  return r;
 }
