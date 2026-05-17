@@ -5,9 +5,8 @@ import Link from "next/link";
 import { db } from "@/db";
 import { workout, workoutSet, readinessAnalysis } from "@/db/schema";
 import { eq, desc, inArray } from "drizzle-orm";
-import { todayInfo } from "@/lib/readiness";
+import { todayInfo, loadTrailingLoad } from "@/lib/readiness";
 import { getPlanForUser } from "@/lib/plan-store";
-import { computeTrailingLoad, type SetRow } from "@/lib/trailing-load";
 import { TodaySession } from "./dashboard/today-session";
 import { RecentActivity } from "./dashboard/recent-activity";
 import { ProgressionInbox } from "./dashboard/progression-inbox";
@@ -36,19 +35,7 @@ export default async function Home() {
         .where(inArray(workoutSet.workoutId, wIds))
     : [];
 
-  const cutoff = new Date(now.getTime() - 72 * 3600_000);
-  const trailingRows: SetRow[] = sets
-    .map((s) => {
-      const w = recentWorkouts.find((x) => x.id === s.workoutId)!;
-      return {
-        exerciseName: s.exerciseName,
-        performedAt: w.performedAt,
-        weight: Number(s.weight),
-        reps: s.reps,
-      };
-    })
-    .filter((r) => r.performedAt >= cutoff);
-  const load = computeTrailingLoad(trailingRows, now, 72);
+  const load = await loadTrailingLoad(userId, now);
 
   const [latest] = await db
     .select()

@@ -7,7 +7,11 @@ import {
   readinessAnalysis,
 } from "@/db/schema";
 import { eq, and, gte } from "drizzle-orm";
-import { computeTrailingLoad, type SetRow } from "@/lib/trailing-load";
+import {
+  computeTrailingLoad,
+  type SetRow,
+  type TrailingLoad,
+} from "@/lib/trailing-load";
 import { analyzeReadiness, MODEL_ID, type Readiness } from "@/lib/ai-engine";
 import { APP_TZ } from "@/lib/units";
 
@@ -36,6 +40,32 @@ export function todayInfo(now: Date) {
 }
 
 export type AnalyzeOutcome = { result?: Readiness; error?: string };
+
+export async function loadTrailingLoad(
+  userId: string,
+  now: Date
+): Promise<TrailingLoad> {
+  const cutoff = new Date(now.getTime() - 72 * 3600_000);
+  const rows = await db
+    .select({
+      exerciseName: workoutSet.exerciseName,
+      performedAt: workout.performedAt,
+      weight: workoutSet.weight,
+      reps: workoutSet.reps,
+    })
+    .from(workoutSet)
+    .innerJoin(workout, eq(workoutSet.workoutId, workout.id))
+    .where(
+      and(eq(workoutSet.userId, userId), gte(workout.performedAt, cutoff))
+    );
+  const setRows: SetRow[] = rows.map((r) => ({
+    exerciseName: r.exerciseName,
+    performedAt: r.performedAt,
+    weight: Number(r.weight),
+    reps: r.reps,
+  }));
+  return computeTrailingLoad(setRows, now, 72);
+}
 
 export async function runReadinessAnalysis(opts: {
   userId: string;
@@ -77,27 +107,7 @@ export async function runReadinessAnalysis(opts: {
       targetWeight: Number(e.targetWeight),
     }));
 
-  const cutoff = new Date(now.getTime() - 72 * 3600_000);
-  const rows = await db
-    .select({
-      exerciseName: workoutSet.exerciseName,
-      performedAt: workout.performedAt,
-      weight: workoutSet.weight,
-      reps: workoutSet.reps,
-    })
-    .from(workoutSet)
-    .innerJoin(workout, eq(workoutSet.workoutId, workout.id))
-    .where(
-      and(eq(workoutSet.userId, opts.userId), gte(workout.performedAt, cutoff))
-    );
-  const setRows: SetRow[] = rows.map((r) => ({
-    exerciseName: r.exerciseName,
-    performedAt: r.performedAt,
-    weight: Number(r.weight),
-    reps: r.reps,
-  }));
-
-  const load = computeTrailingLoad(setRows, now, 72);
+  const load = await loadTrailingLoad(opts.userId, now);
   try {
     const result = await analyzeReadiness(
       {
