@@ -2,10 +2,11 @@ import { describe, it, expect } from "vitest";
 import { NAV_ITEMS, isActivePath } from "@/lib/nav";
 
 describe("NAV_ITEMS", () => {
-  it("lists the three signed-in routes in order with short labels", () => {
+  it("lists the four signed-in routes in order with short labels", () => {
     expect(NAV_ITEMS).toEqual([
       { href: "/", label: "Today", shortLabel: "Today" },
       { href: "/plan", label: "Weekly plan", shortLabel: "Plan" },
+      { href: "/log", label: "Log workout", shortLabel: "Log" },
       { href: "/import", label: "Import", shortLabel: "Import" },
     ]);
   });
