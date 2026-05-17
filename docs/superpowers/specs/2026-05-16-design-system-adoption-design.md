@@ -33,8 +33,11 @@ the swap is clean.
    package ships `skill/dustinriley-design/SKILL.md`; it is vendored verbatim
    into `.claude/skills/dustinriley-design/SKILL.md` and checked in, with a
    CLAUDE.md note to re-sync on version bump.
-3. **Exact version pin.** `@dustin-riley/design@0.2.3`, no `^` (MVP spec
-   §2a/§11 discipline — design surface must not shift mid-build).
+3. **Exact version pin.** `@dustin-riley/design@0.2.3`, no `^` — the design
+   surface must not shift under the app between installs.
+4. **No trace of the migration in living docs.** The MVP spec/plan and
+   CLAUDE.md are rewritten to read as if the package was always consumed; the
+   shim → package history survives only here and in git (see §4).
 
 ## Changes
 
@@ -73,23 +76,37 @@ override remains the source of the font families.
 - Add a CLAUDE.md note: re-sync this file from the package whenever the
   `@dustin-riley/design` version is bumped (drift bounded by the exact pin).
 
-### 4. Documentation truth-up
+### 4. Documentation — erase the migration, don't annotate it
 
-Replace every `@dustinriley/design` / `dustinriley/design` with
-`@dustin-riley/design`, and update stale status, in:
+Intent: the living docs must read as if SyncFit **always** consumed
+`@dustin-riley/design`. Leave **no trace** that a vendored shim or a migration
+ever existed — no "formerly", no "now adopted", no §0 copy-first sequencing, no
+§11 migration task, no breadcrumb comments. The historical record (that there
+was an interim shim, why, and how it was removed) lives **only** in git history
+and in this adoption spec, which is the audit trail. The MVP spec, MVP plan,
+and CLAUDE.md become trace-free.
 
-- **CLAUDE.md** — the "Design system is a vendored shim on this branch"
-  gotcha. Flip it: the package is now adopted (single
-  `@import "@dustin-riley/design/tailwind.css"`); the design rules still apply
+- **`globals.css`** — no `=== SHIM ===` / "replace with package imports"
+  comments survive. The final file is exactly the two `@import` lines in §2,
+  nothing else.
+- **CLAUDE.md** — delete the "Design system is a vendored shim on this branch"
+  gotcha entirely. Replace with a plain present-tense statement: the project
+  consumes `@dustin-riley/design` via a single
+  `@import "@dustin-riley/design/tailwind.css"`; the design rules apply
   (reference `--ds-*` tokens / `.ds-*` classes, never hard-code hex/px; 3 radii
-  8/16/999; warm shadows only; sentence case; no emoji). Add the skill re-sync
-  note from §3.
-- **MVP spec** (`2026-05-16-syncfit-mvp-design.md`) — §0, §2a, §11: correct the
-  package name; update §2a/§11 from "import all three tiers" to the single
-  `tailwind.css` import contract; mark the §11 migration task done with a
-  pointer to this spec.
-- **MVP plan** (`docs/superpowers/plans/2026-05-16-syncfit-mvp.md`) — intro
-  line, Task 1 shim notes, §11: correct the package name and reflect adoption.
+  8/16/999; warm shadows only; sentence case; no emoji); re-sync the vendored
+  skill on version bump (§3). No mention of a prior shim or migration.
+- **MVP spec** (`2026-05-16-syncfit-mvp-design.md`) — **remove** §0
+  (design-system sequencing / copy-first) and §11 (scheduled migration)
+  outright; renumber as needed. Rewrite §2a to describe steady state only:
+  SyncFit consumes `@dustin-riley/design` via the single `tailwind.css`
+  import, exact-pinned, fonts app-side, skill vendored. No "interim",
+  "shim", "until published", "end state", or three-import language.
+- **MVP plan** (`docs/superpowers/plans/2026-05-16-syncfit-mvp.md`) — remove
+  the shim build step / migration-later framing from the intro, Task 1, and
+  §11; the plan reads as if Task 1 always installed and imported the package.
+- Across all files: no surviving `@dustinriley/design` / `dustinriley/design`
+  string, and no surviving word that implies a transition occurred.
 
 ### 5. Verification (parity check)
 
