@@ -1,0 +1,92 @@
+// Pure day-state derivation for the weekly training view. Imports only
+// "@/lib/week" — no React, no DB. Output is fully serializable (no Date).
+import { appDate, weekDays, formatWeekLabel, weekNav } from "@/lib/week";
+
+export type SetView = { exerciseName: string; weight: number; reps: number };
+export type WorkoutInput = {
+  id: string;
+  performedAt: Date;
+  title: string;
+  sets: SetView[];
+};
+export type PlanDayLite = { dayOfWeek: number; title: string };
+export type DayState = "done" | "missed" | "planned" | "rest";
+export type DayCell = {
+  ymd: string;
+  label: string; // "mon 11"
+  isToday: boolean;
+  state: DayState;
+  workouts: { id: string; title: string; sets: SetView[] }[];
+  summary: string | null; // done only
+  plannedTitle: string | null; // missed/planned only
+};
+export type TrainingWeekData = {
+  weekStartYmd: string;
+  label: string;
+  days: DayCell[];
+  prevWeekYmd: string;
+  nextWeekYmd: string;
+  nextDisabled: boolean;
+};
+
+const DOW_LABELS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+
+function summarize(sets: SetView[]): string | null {
+  if (sets.length === 0) return null;
+  const head = sets
+    .slice(0, 2)
+    .map((s) => `${s.exerciseName} ${s.weight}×${s.reps}`)
+    .join(" · ");
+  const rest = sets.length - 2;
+  return rest > 0 ? `${head} · +${rest} more` : head;
+}
+
+export function buildTrainingWeek(args: {
+  weekStartYmd: string;
+  now: Date;
+  workouts: WorkoutInput[];
+  planDays: PlanDayLite[];
+}): TrainingWeekData {
+  const { weekStartYmd, now, workouts, planDays } = args;
+  const todayYmd = appDate(now);
+
+  const days: DayCell[] = weekDays(weekStartYmd).map((d, i) => {
+    const dayWorkouts = workouts
+      .filter((w) => appDate(w.performedAt) === d.ymd)
+      .sort((a, b) => a.performedAt.getTime() - b.performedAt.getTime());
+    const plan = planDays.find((p) => p.dayOfWeek === d.planDow) ?? null;
+    const dayNum = Number(d.ymd.slice(8, 10));
+    const label = `${DOW_LABELS[i]} ${dayNum}`;
+    const isToday = d.ymd === todayYmd;
+
+    let state: DayState;
+    if (dayWorkouts.length > 0) state = "done";
+    else if (plan) state = d.ymd < todayYmd ? "missed" : "planned";
+    else state = "rest";
+
+    const flatSets = dayWorkouts.flatMap((w) => w.sets);
+
+    return {
+      ymd: d.ymd,
+      label,
+      isToday,
+      state,
+      workouts: dayWorkouts.map((w) => ({
+        id: w.id,
+        title: w.title,
+        sets: w.sets,
+      })),
+      summary: state === "done" ? summarize(flatSets) : null,
+      plannedTitle:
+        state === "missed" || state === "planned" ? (plan?.title ?? "") : null,
+    };
+  });
+
+  const nav = weekNav(weekStartYmd, now);
+  return {
+    weekStartYmd,
+    label: formatWeekLabel(weekStartYmd),
+    days,
+    ...nav,
+  };
+}
