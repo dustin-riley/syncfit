@@ -39,6 +39,25 @@ export const workoutSet = pgTable("workout_set", {
   reps: integer("reps").notNull(),
 });
 
+export const enduranceActivity = pgTable(
+  "endurance_activity",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id").notNull(),
+    performedAt: timestamp("performed_at", { withTimezone: true }).notNull(),
+    activityType: text("activity_type").notNull(), // 'run' | 'ride' | 'swim' | 'other'
+    distance: numeric("distance"), // miles; nullable (e.g. unmeasured swim)
+    durationSec: integer("duration_sec").notNull(), // seconds
+    notes: text("notes").notNull().default(""),
+    source: text("source").notNull().default("manual"), // forward-compat: 'strava'
+    contentHash: text("content_hash").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({ uniqUserContent: unique().on(t.userId, t.contentHash) })
+);
+
 export const plannedSession = pgTable(
   "planned_session",
   {
