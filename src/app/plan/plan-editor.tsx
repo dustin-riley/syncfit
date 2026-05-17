@@ -141,7 +141,7 @@ export function PlanEditor({ initial }: { initial: Day[] }) {
                 className="border rounded p-2 w-20"
                 type="number"
                 min={0}
-                step={5}
+                step="any"
                 aria-label="weight"
                 name={`ex-${dow}-${ei}-weight`}
                 value={ex.targetWeight}
