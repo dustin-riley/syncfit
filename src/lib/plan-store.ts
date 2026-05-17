@@ -1,6 +1,7 @@
 import { db } from "@/db";
-import { plannedSession, plannedExercise } from "@/db/schema";
+import { plannedSession, plannedExercise, readinessAnalysis } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
+import { findExerciseMatch } from "@/lib/exercise-match";
 
 export type PlanExerciseInput = {
   name: string;
@@ -103,4 +104,84 @@ export async function upsertPlanWeekForUser(
   days: PlanDayInput[]
 ) {
   for (const d of days) await upsertPlanDayForUser(userId, d);
+}
+
+export type ProgressionDecision = "accept" | "dismiss";
+
+export async function applyProgressionDecision(opts: {
+  userId: string;
+  analysisId: string;
+  exercise: string;
+  decision: ProgressionDecision;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const [row] = await db
+    .select()
+    .from(readinessAnalysis)
+    .where(
+      and(
+        eq(readinessAnalysis.id, opts.analysisId),
+        eq(readinessAnalysis.userId, opts.userId)
+      )
+    );
+  if (!row) return { ok: false, error: "Analysis not found." };
+
+  const list = row.progressionSuggestions;
+  const idx = list.findIndex(
+    (s) => s.exercise === opts.exercise && s.status === "pending"
+  );
+  if (idx === -1)
+    return { ok: false, error: "That suggestion is no longer pending." };
+
+  if (opts.decision === "accept") {
+    const snap = row.planSnapshot as {
+      session?: { id?: string; dayOfWeek?: number };
+    };
+    const sessionId = snap.session?.id;
+    if (!sessionId)
+      return { ok: false, error: "Plan snapshot is missing its session." };
+    const liveExercises = await db
+      .select()
+      .from(plannedExercise)
+      .where(
+        and(
+          eq(plannedExercise.userId, opts.userId),
+          eq(plannedExercise.plannedSessionId, sessionId)
+        )
+      );
+    const target = findExerciseMatch(
+      list[idx].exercise,
+      liveExercises,
+      (e) => e.name
+    );
+    if (!target)
+      return {
+        ok: false,
+        error:
+          "Couldn't find that exercise in your current plan — it may have changed.",
+      };
+    await db
+      .update(plannedExercise)
+      .set({
+        targetWeight: String(list[idx].suggestedWeight),
+        targetSets: list[idx].suggestedSets ?? target.targetSets,
+        targetReps: list[idx].suggestedReps ?? target.targetReps,
+      })
+      .where(eq(plannedExercise.id, target.id));
+  }
+
+  const updated = list.map((s, i) =>
+    i === idx
+      ? {
+          ...s,
+          status: (opts.decision === "accept"
+            ? "accepted"
+            : "dismissed") as "accepted" | "dismissed",
+        }
+      : s
+  );
+  await db
+    .update(readinessAnalysis)
+    .set({ progressionSuggestions: updated })
+    .where(eq(readinessAnalysis.id, opts.analysisId));
+  return { ok: true };
 }
