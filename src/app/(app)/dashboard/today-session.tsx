@@ -15,9 +15,8 @@ type Ex = {
 };
 type Actual = {
   exerciseName: string;
-  topSetWeight: number;
-  topSetReps: number;
   agoDays: number;
+  sets: { weight: number; reps: number }[];
 };
 type PriorResult = {
   verdict: string;
@@ -78,11 +77,11 @@ export function TodaySession({
               <li key={e.id} className="my-2">
                 <strong>{e.name}</strong> — {e.targetSets}×{e.targetReps} @{" "}
                 {e.targetWeight}
-                {a && (
+                {a && a.sets.length > 0 && (
                   <span className="ds-mono-note">
                     {" "}
-                    · recent: {a.topSetWeight}×{a.topSetReps} (
-                    {a.agoDays === 0 ? "today" : `${a.agoDays}d ago`})
+                    · last ({a.agoDays === 0 ? "today" : `${a.agoDays}d ago`}):{" "}
+                    {a.sets.map((s) => `${s.weight}×${s.reps}`).join(", ")}
                   </span>
                 )}
                 {adj && (
