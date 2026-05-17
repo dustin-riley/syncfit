@@ -91,6 +91,20 @@ export function PlanEditor({ initial }: { initial: Day[] }) {
             <option value="rest">rest</option>
           </select>
 
+          {days[dow].exercises.length > 0 && (
+            <div className="flex gap-2 items-center" aria-hidden="true">
+              <span className="grid-label flex-1">exercise</span>
+              <span className="grid-label w-16">sets</span>
+              <span className="grid-label w-16">reps</span>
+              <span className="grid-label w-20">weight</span>
+              <span
+                className="ds-btn ds-btn-ghost"
+                style={{ visibility: "hidden", pointerEvents: "none" }}
+              >
+                <X size={16} aria-hidden="true" />
+              </span>
+            </div>
+          )}
           {days[dow].exercises.map((ex, ei) => (
             <div key={ex.id} className="flex gap-2 my-1 items-center">
               <input
