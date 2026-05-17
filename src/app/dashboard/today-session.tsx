@@ -3,6 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { analyzeToday } from "@/app/actions/analyze";
 import { findExerciseMatch } from "@/lib/exercise-match";
+import { MODEL_LABEL } from "@/lib/ai-engine";
 import { VerdictBanner } from "./verdict-banner";
 
 type Ex = {
@@ -122,6 +123,7 @@ export function TodaySession({
           verdict={result.verdict}
           headline={result.headline}
           rationale={result.rationale}
+          model={MODEL_LABEL}
         />
       )}
     </section>

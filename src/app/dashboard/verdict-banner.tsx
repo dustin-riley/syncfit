@@ -1,4 +1,4 @@
-import { ArrowUp, ArrowDown, Check, Pause } from "lucide-react";
+import { ArrowUp, ArrowDown, Check, Pause, Cpu } from "lucide-react";
 
 const MAP: Record<
   string,
@@ -7,35 +7,40 @@ const MAP: Record<
   proceed_as_planned: {
     label: "proceed as planned",
     Icon: Check,
-    token: "--ds-accent-teal",
+    token: "--ds-success",
   },
   push_harder: { label: "push harder", Icon: ArrowUp, token: "--ds-primary" },
   reduce_intensity: {
     label: "reduce intensity",
     Icon: ArrowDown,
-    token: "--ds-accent-ochre",
+    token: "--ds-warning",
   },
-  rest: { label: "rest", Icon: Pause, token: "--ds-accent-ochre" },
+  rest: { label: "rest", Icon: Pause, token: "--ds-text-muted" },
 };
 
 export function VerdictBanner({
   verdict,
   headline,
   rationale,
+  model,
 }: {
   verdict: string;
   headline: string;
   rationale: string;
+  model: string;
 }) {
   const v = MAP[verdict] ?? MAP.proceed_as_planned;
   return (
-    <div
-      className="ds-panel p-4 my-3 border-s-4"
-      style={{ borderInlineStartColor: `var(${v.token})` }}
-    >
-      <p className="ds-mono-note flex items-center gap-2">
+    <div className="ds-panel ds-ai p-4 my-3">
+      <span className="ds-ai-mark">
+        <Cpu size={13} aria-hidden="true" /> the model says · {model}
+      </span>
+      <p
+        className="flex items-center gap-2"
+        style={{ color: `var(${v.token})`, marginTop: "var(--ds-space-2)" }}
+      >
         <v.Icon size={16} aria-hidden="true" />
-        {v.label}
+        <strong>{v.label}</strong>
       </p>
       <strong>{headline}</strong>
       <p>{rationale}</p>
