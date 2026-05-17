@@ -1,10 +1,21 @@
 import { neon } from "@neondatabase/serverless";
 
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL env var is required (run via: node --env-file=.env.local scripts/migrate-dashboard-redesign.mjs)"
+  );
+}
+
 const sql = neon(process.env.DATABASE_URL);
 
 await sql`ALTER TABLE planned_session RENAME COLUMN description TO notes`.catch(
   (e) => {
-    if (!/column "description" does not exist|already exists/i.test(String(e)))
+    const m = String(e);
+    if (
+      !/column "description" does not exist|column "notes" of relation "planned_session" already exists/i.test(
+        m
+      )
+    )
       throw e;
   }
 );
