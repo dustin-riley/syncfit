@@ -1,7 +1,15 @@
 import { db } from "@/db";
-import { plannedSession, plannedExercise, readinessAnalysis } from "@/db/schema";
+import {
+  plannedSession,
+  plannedExercise,
+  readinessAnalysis,
+} from "@/db/schema";
 import { eq, and } from "drizzle-orm";
-import { findExerciseMatch } from "@/lib/exercise-match";
+import {
+  findExerciseMatch,
+  exerciseMatches,
+  normalizeExerciseName,
+} from "@/lib/exercise-match";
 
 export type PlanExerciseInput = {
   name: string;
@@ -125,6 +133,14 @@ export async function applyProgressionDecision(opts: {
     );
   if (!row) return { ok: false, error: "Analysis not found." };
 
+  // NOTE: this read-modify-writes the whole progression_suggestions jsonb and
+  // the plannedExercise row as separate non-transactional statements. Accepted
+  // for this single-user MVP: the status==="pending" guard makes a sequential
+  // re-accept a no-op, and accepted weights are absolute (re-applying is
+  // idempotent). The one residual race — two concurrent decisions on the SAME
+  // analysis row — is mitigated UI-side by serializing the progression inbox
+  // (one decision in flight at a time). Do NOT wire txDb here (CSV-import only,
+  // see CLAUDE.md).
   const list = row.progressionSuggestions;
   const idx = list.findIndex(
     (s) => s.exercise === opts.exercise && s.status === "pending"
@@ -133,6 +149,8 @@ export async function applyProgressionDecision(opts: {
     return { ok: false, error: "That suggestion is no longer pending." };
 
   if (opts.decision === "accept") {
+    // planSnapshot is historical jsonb; cast is deliberately permissive — we
+    // only need session.id, and a stale/missing one fails safe below.
     const snap = row.planSnapshot as {
       session?: { id?: string; dayOfWeek?: number };
     };
@@ -147,7 +165,8 @@ export async function applyProgressionDecision(opts: {
           eq(plannedExercise.userId, opts.userId),
           eq(plannedExercise.plannedSessionId, sessionId)
         )
-      );
+      )
+      .orderBy(plannedExercise.orderIndex);
     const target = findExerciseMatch(
       list[idx].exercise,
       liveExercises,
@@ -159,6 +178,23 @@ export async function applyProgressionDecision(opts: {
         error:
           "Couldn't find that exercise in your current plan — it may have changed.",
       };
+    // If the match was only a fuzzy (substring) hit and more than one live
+    // exercise fuzzily matches, refuse rather than risk bumping the wrong lift.
+    const norm = normalizeExerciseName(list[idx].exercise);
+    const hasExact = liveExercises.some(
+      (e) => normalizeExerciseName(e.name) === norm
+    );
+    if (!hasExact) {
+      const fuzzy = liveExercises.filter((e) =>
+        exerciseMatches(list[idx].exercise, e.name)
+      );
+      if (fuzzy.length > 1)
+        return {
+          ok: false,
+          error:
+            "That exercise is ambiguous in your current plan — open the plan to confirm.",
+        };
+    }
     await db
       .update(plannedExercise)
       .set({
@@ -173,9 +209,9 @@ export async function applyProgressionDecision(opts: {
     i === idx
       ? {
           ...s,
-          status: (opts.decision === "accept"
-            ? "accepted"
-            : "dismissed") as "accepted" | "dismissed",
+          status: (opts.decision === "accept" ? "accepted" : "dismissed") as
+            | "accepted"
+            | "dismissed",
         }
       : s
   );

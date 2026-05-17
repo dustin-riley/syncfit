@@ -102,6 +102,10 @@ describe("applyProgressionDecision (live Neon)", () => {
       decision: "accept",
     });
     expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/no longer pending/i);
+    // plan weight must not have been re-applied/changed by the rejected accept
+    const days = await getPlanForUser(U);
+    expect(days[0].exercises[0].targetWeight).toBe(255);
   });
 
   it("C: dismiss only flips status, no plan write", async () => {
@@ -121,13 +125,97 @@ describe("applyProgressionDecision (live Neon)", () => {
     ).toBe("dismissed");
   });
 
-  it("D: cross-user analysis id is not found", async () => {
+  it("D: cross-user analysis id is not found and writes nothing", async () => {
+    const before = await getPlanForUser(U);
     const r = await applyProgressionDecision({
       userId: "itest-prog-other",
       analysisId,
       exercise: "Squat",
-      decision: "dismiss",
+      decision: "accept",
     });
     expect(r.ok).toBe(false);
+    const after = await getPlanForUser(U);
+    expect(after[0].exercises[0].targetWeight).toBe(
+      before[0].exercises[0].targetWeight
+    );
+  });
+
+  it("E: suggestedSets/Reps override lands on the planned exercise", async () => {
+    const [a2] = await db
+      .insert(readinessAnalysis)
+      .values({
+        userId: U,
+        analysisDate: "2026-05-16",
+        planSnapshot: { session: { id: sessionId, dayOfWeek: 3 } },
+        loadSnapshot: {},
+        verdict: "push_harder",
+        headline: "Up",
+        rationale: "ready",
+        todayAdjustments: [],
+        progressionSuggestions: [
+          {
+            exercise: "Squat",
+            currentWeight: 255,
+            suggestedWeight: 265,
+            suggestedSets: 3,
+            suggestedReps: 3,
+            rationale: "peak",
+            status: "pending",
+          },
+        ],
+        model: "test",
+      })
+      .returning({ id: readinessAnalysis.id });
+    const r = await applyProgressionDecision({
+      userId: U,
+      analysisId: a2.id,
+      exercise: "Squat",
+      decision: "accept",
+    });
+    expect(r.ok).toBe(true);
+    const days = await getPlanForUser(U);
+    const sq = days[0].exercises[0];
+    expect(sq.targetWeight).toBe(265);
+    expect(sq.targetSets).toBe(3);
+    expect(sq.targetReps).toBe(3);
+  });
+
+  it("F: accept with no matching plan exercise fails and does not flip status", async () => {
+    const [a3] = await db
+      .insert(readinessAnalysis)
+      .values({
+        userId: U,
+        analysisDate: "2026-05-16",
+        planSnapshot: { session: { id: sessionId, dayOfWeek: 3 } },
+        loadSnapshot: {},
+        verdict: "proceed_as_planned",
+        headline: "x",
+        rationale: "y",
+        todayAdjustments: [],
+        progressionSuggestions: [
+          {
+            exercise: "Overhead Press",
+            currentWeight: 95,
+            suggestedWeight: 100,
+            rationale: "not in plan",
+            status: "pending",
+          },
+        ],
+        model: "test",
+      })
+      .returning({ id: readinessAnalysis.id });
+    const r = await applyProgressionDecision({
+      userId: U,
+      analysisId: a3.id,
+      exercise: "Overhead Press",
+      decision: "accept",
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/couldn't find that exercise/i);
+    const [row] = await db
+      .select()
+      .from(readinessAnalysis)
+      .where(eq(readinessAnalysis.id, a3.id));
+    expect(row.progressionSuggestions[0].status).toBe("pending");
   });
 });
