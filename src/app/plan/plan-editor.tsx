@@ -93,10 +93,10 @@ export function PlanEditor({ initial }: { initial: Day[] }) {
 
           {days[dow].exercises.length > 0 && (
             <div className="flex gap-2 items-center" aria-hidden="true">
-              <span className="ds-caption flex-1">exercise</span>
-              <span className="ds-caption w-16">sets</span>
-              <span className="ds-caption w-16">reps</span>
-              <span className="ds-caption w-20">weight</span>
+              <span className="grid-label flex-1">exercise</span>
+              <span className="grid-label w-16">sets</span>
+              <span className="grid-label w-16">reps</span>
+              <span className="grid-label w-20">weight</span>
               <span
                 className="ds-btn ds-btn-ghost"
                 style={{ visibility: "hidden", pointerEvents: "none" }}
