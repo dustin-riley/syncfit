@@ -3,6 +3,7 @@ import {
   buildPrompt,
   analyzeReadiness,
   ReadinessSchema,
+  MODEL_LABEL,
   type AnalyzeInput,
 } from "@/lib/ai-engine";
 
@@ -36,6 +37,12 @@ const input: AnalyzeInput = {
 };
 
 describe("ai-engine", () => {
+  it("exposes a short human model label", () => {
+    expect(typeof MODEL_LABEL).toBe("string");
+    expect(MODEL_LABEL.length).toBeGreaterThan(0);
+    expect(MODEL_LABEL).toBe("sonnet");
+  });
+
   it("buildPrompt is deterministic and includes plan + load + actual facts", () => {
     const a = buildPrompt(input);
     expect(a).toBe(buildPrompt(input));

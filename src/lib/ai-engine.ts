@@ -91,6 +91,8 @@ export function buildPrompt(i: AnalyzeInput): string {
 
 type GenerateFn = (prompt: string) => Promise<unknown>;
 export const MODEL_ID = "claude-sonnet-4-6";
+// Short, human label for the AI mark byline ("the model says · <MODEL_LABEL>").
+export const MODEL_LABEL = "sonnet";
 
 // `ai`/`@ai-sdk/anthropic` imported dynamically so injected-mock tests stay offline.
 async function defaultGenerate(prompt: string): Promise<unknown> {
