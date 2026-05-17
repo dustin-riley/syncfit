@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { authClient } from "@/auth/client";
 import { Field } from "./field";
@@ -85,7 +86,6 @@ export function AuthForm({ mode }: { mode: Mode }) {
         onChange={setEmail}
         autoComplete="email"
         required
-        error={!!error}
         describedById={describedById}
       />
 
@@ -98,7 +98,6 @@ export function AuthForm({ mode }: { mode: Mode }) {
         autoComplete={c.passwordAutoComplete}
         required
         hint={c.hint}
-        error={!!error}
         describedById={describedById}
         trailing={
           <button
@@ -132,7 +131,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       </button>
 
       <p className="ds-caption mt-4">
-        <a href={c.link.href}>{c.link.text}</a>
+        <Link href={c.link.href}>{c.link.text}</Link>
       </p>
     </form>
   );
