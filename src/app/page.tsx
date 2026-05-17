@@ -76,6 +76,9 @@ export default async function Home() {
             exerciseName: e.exerciseName,
             topSetWeight: e.topSetWeight,
             topSetReps: e.topSetReps,
+            agoDays: Math.floor(
+              (now.getTime() - e.topSetAt.getTime()) / 86_400_000
+            ),
           }))}
         />
       ) : (

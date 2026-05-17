@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { analyzeToday } from "@/app/actions/analyze";
+import { findExerciseMatch } from "@/lib/exercise-match";
 import { VerdictBanner } from "./verdict-banner";
 
 type Ex = {
@@ -14,6 +15,7 @@ type Actual = {
   exerciseName: string;
   topSetWeight: number;
   topSetReps: number;
+  agoDays: number;
 };
 
 export function TodaySession({
@@ -37,7 +39,7 @@ export function TodaySession({
   const adjFor = (name: string) =>
     out?.result?.todayAdjustments.find((a) => a.exercise === name)?.change;
   const actualFor = (name: string) =>
-    actuals.find((a) => a.exerciseName === name);
+    findExerciseMatch(name, actuals, (a) => a.exerciseName);
 
   return (
     <section className="ds-panel p-4 my-3">
@@ -62,7 +64,8 @@ export function TodaySession({
                 {a && (
                   <span className="ds-mono-note">
                     {" "}
-                    · recent: {a.topSetWeight}×{a.topSetReps}
+                    · recent: {a.topSetWeight}×{a.topSetReps} (
+                    {a.agoDays === 0 ? "today" : `${a.agoDays}d ago`})
                   </span>
                 )}
                 {adj && (

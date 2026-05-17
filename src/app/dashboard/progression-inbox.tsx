@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Check, X } from "lucide-react";
 import { applyProgression } from "@/app/actions/plan";
 
 type Suggestion = {
@@ -64,14 +65,14 @@ export function ProgressionInbox({
             disabled={busy}
             onClick={() => act(s, "accept")}
           >
-            accept
+            <Check size={16} aria-hidden="true" /> accept
           </button>{" "}
           <button
             className="ds-btn ds-btn-ghost"
             disabled={busy}
             onClick={() => act(s, "dismiss")}
           >
-            dismiss
+            <X size={16} aria-hidden="true" /> dismiss
           </button>
         </div>
       ))}
