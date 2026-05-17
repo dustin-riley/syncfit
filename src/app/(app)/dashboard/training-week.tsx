@@ -11,6 +11,7 @@ import {
   Minus,
 } from "lucide-react";
 import type { TrainingWeekData, DayState } from "@/lib/week-view";
+import { formatDuration } from "@/lib/duration";
 import { loadTrainingWeek } from "@/app/actions/training-week";
 
 const STATE_META: Record<DayState, { label: string; Icon: typeof Check }> = {
@@ -164,6 +165,13 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                       </li>
                     ))
                   )}
+                  {d.endurance.map((e, i) => (
+                    <li key={`end-${i}`}>
+                      {e.activityType}
+                      {e.distanceMi === null ? "" : ` ${e.distanceMi}mi`} ·{" "}
+                      {formatDuration(e.durationSec)}
+                    </li>
+                  ))}
                 </ul>
               )}
             </li>

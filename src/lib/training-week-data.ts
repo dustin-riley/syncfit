@@ -2,13 +2,14 @@
 // pattern: query here, derive in the pure lib. Imports "@/db" — DO NOT
 // import this from offline unit tests.
 import { db } from "@/db";
-import { workout, workoutSet, plannedSession } from "@/db/schema";
+import { workout, workoutSet, plannedSession, enduranceActivity } from "@/db/schema";
 import { and, eq, gte, lt, inArray, asc } from "drizzle-orm";
 import { paddedUtcRange, weekStartFor } from "@/lib/week";
 import {
   buildTrainingWeek,
   type TrainingWeekData,
   type WorkoutInput,
+  type EnduranceInput,
 } from "@/lib/week-view";
 
 export async function getTrainingWeek(
@@ -66,10 +67,29 @@ export async function getTrainingWeek(
     .from(plannedSession)
     .where(eq(plannedSession.userId, userId));
 
+  const enduranceRows = await db
+    .select()
+    .from(enduranceActivity)
+    .where(
+      and(
+        eq(enduranceActivity.userId, userId),
+        gte(enduranceActivity.performedAt, from),
+        lt(enduranceActivity.performedAt, to)
+      )
+    )
+    .orderBy(asc(enduranceActivity.performedAt));
+  const enduranceInputs: EnduranceInput[] = enduranceRows.map((e) => ({
+    performedAt: e.performedAt,
+    activityType: e.activityType,
+    distanceMi: e.distance === null ? null : Number(e.distance),
+    durationSec: e.durationSec,
+  }));
+
   return buildTrainingWeek({
     weekStartYmd: week,
     now,
     workouts: workoutInputs,
     planDays,
+    enduranceActivities: enduranceInputs,
   });
 }
