@@ -1,5 +1,5 @@
 // Pure "recent training" builder: raw recent strength sessions + endurance
-// activities over an N-day window. Replaces the old trailing-load aggregator.
+// activities over an N-day window.
 // No DB, no HTTP — unit-tested offline.
 
 export type StrengthRow = {

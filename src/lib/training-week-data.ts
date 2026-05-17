@@ -1,4 +1,4 @@
-// DB layer for the weekly training view. Mirrors the loadTrailingLoad
+// DB layer for the weekly training view. Mirrors the loadRecentTraining
 // pattern: query here, derive in the pure lib. Imports "@/db" — DO NOT
 // import this from offline unit tests.
 import { db } from "@/db";
