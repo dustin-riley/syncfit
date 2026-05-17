@@ -101,8 +101,9 @@ src/app/(auth)/
 - A real `<label htmlFor>` for every input.
 - `type="email"` + `autocomplete="email"`; password `autocomplete=
 "current-password"` (signin) / `"new-password"` (signup); `required`.
-- Error container `role="alert"` + `aria-live="polite"`, linked to inputs via
-  `aria-describedby`. Error state is text/icon + border, never color alone
+- Error container `role="alert"` (which already implies an assertive live
+  region — no explicit `aria-live`, which would conflict), linked to inputs
+  via `aria-describedby`. Error state is text/icon + border, never color alone
   (design rule: color is never the only state signal).
 - Visible focus ring (design system `:focus-visible` token), logical tab
   order, submit on Enter.
