@@ -1,7 +1,7 @@
 # Endurance Activities + Manual Workout Logging — Design Spec
 
 **Date:** 2026-05-17
-**Status:** Approved (brainstorming) — pending implementation plan
+**Status:** Implemented (2026-05-17)
 **Supersedes (partially):** the "endurance deferred to v2" line in
 `2026-05-16-syncfit-mvp-design.md` §1/§4. Endurance is now brought forward
 (distance + duration only); `activity_split` and Strava remain deferred.
