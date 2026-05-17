@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight, ChevronDown } from "lucide-react";
+import { ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 
 type WorkoutView = {
   id: string;
@@ -86,13 +86,22 @@ export function RecentActivity({ workouts }: { workouts: WorkoutView[] }) {
           );
         })}
       </ul>
-      {hidden > 0 && (
+      {workouts.length > INITIAL && (
         <button
           className="ds-btn ds-btn-ghost"
-          onClick={() => setShowAll(true)}
+          onClick={() => setShowAll((v) => !v)}
+          aria-expanded={showAll}
           style={{ marginTop: "var(--ds-space-2)" }}
         >
-          <ChevronDown size={16} aria-hidden="true" /> show more ({hidden})
+          {showAll ? (
+            <>
+              <ChevronUp size={16} aria-hidden="true" /> show less
+            </>
+          ) : (
+            <>
+              <ChevronDown size={16} aria-hidden="true" /> show more ({hidden})
+            </>
+          )}
         </button>
       )}
     </div>
