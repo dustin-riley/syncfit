@@ -140,6 +140,7 @@ export default function LogPage() {
                   type="button"
                   className="ds-btn ds-btn-ghost"
                   aria-label="remove set"
+                  disabled={rows.length <= 1}
                   onClick={() =>
                     setRows((rs) =>
                       rs.length > 1 ? rs.filter((_, j) => j !== i) : rs

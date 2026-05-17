@@ -7,4 +7,4 @@ export function proxy(req: NextRequest) {
   if (!session) return NextResponse.redirect(new URL("/login", req.url));
   return NextResponse.next();
 }
-export const config = { matcher: ["/", "/import/:path*", "/plan/:path*"] };
+export const config = { matcher: ["/", "/plan/:path*", "/log/:path*", "/import/:path*"] };
