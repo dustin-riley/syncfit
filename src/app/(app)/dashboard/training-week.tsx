@@ -55,7 +55,7 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
         >
           <ChevronLeft size={16} aria-hidden="true" />
         </button>
-        <span className="ds-mono-note" style={{ minWidth: "9ch" }}>
+        <span className="ds-mono-note" style={{ minWidth: "9ch" /* fits "may 11–17" */ }}>
           {data.label}
         </span>
         <button
@@ -81,20 +81,20 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                 borderBottom:
                   "var(--ds-border-width) solid var(--ds-border)",
                 borderLeft: d.isToday
-                  ? "2px solid var(--ds-primary)"
-                  : "2px solid transparent",
+                  ? "var(--ds-border-width) solid var(--ds-primary)"
+                  : "var(--ds-border-width) solid transparent",
                 paddingLeft: "var(--ds-space-2)",
               }}
             >
               <button
-                onClick={() =>
-                  canExpand ? setOpen(isOpen ? null : d.ymd) : undefined
+                onClick={
+                  canExpand ? () => setOpen(isOpen ? null : d.ymd) : undefined
                 }
                 aria-expanded={canExpand ? isOpen : undefined}
                 disabled={!canExpand}
                 style={{
                   display: "flex",
-                  alignItems: "baseline",
+                  alignItems: "center",
                   gap: "var(--ds-space-2)",
                   width: "100%",
                   padding: "var(--ds-space-2) 0",
