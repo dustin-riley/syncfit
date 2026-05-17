@@ -170,8 +170,10 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                   {d.endurance.map((e, i) => (
                     <li key={`end-${i}`}>
                       {e.activityType}
-                      {e.distanceMi === null ? "" : ` ${e.distanceMi}mi`} ·{" "}
-                      {formatDuration(e.durationSec)}
+                      {e.distanceMi === null
+                        ? ""
+                        : ` ${e.distanceMi.toFixed(1)}mi`}{" "}
+                      · {formatDuration(e.durationSec)}
                     </li>
                   ))}
                 </ul>

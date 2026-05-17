@@ -74,7 +74,7 @@ function summarizeEndurance(es: EnduranceCell[]): string | null {
   return es
     .map(
       (e) =>
-        `${e.activityType}${e.distanceMi === null ? "" : ` ${e.distanceMi}mi`} · ${formatDuration(e.durationSec)}`
+        `${e.activityType}${e.distanceMi === null ? "" : ` ${e.distanceMi.toFixed(1)}mi`} · ${formatDuration(e.durationSec)}`
     )
     .join(" · ");
 }
