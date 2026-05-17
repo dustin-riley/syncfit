@@ -43,6 +43,11 @@ export function TodaySession({
   const [out, setOut] = useState<Awaited<
     ReturnType<typeof analyzeToday>
   > | null>(null);
+  // out (a fresh in-component analyze) intentionally wins and stays sticky
+  // until unmount. The only flow that mints a new readiness row is the
+  // analyze button below (which sets `out`); progression-accept revalidates
+  // `/` but does not change readiness content, so initialResult can never be
+  // "newer" than a set `out`. initialResult only fills the pre-analyze load.
   const result = out?.result ?? initialResult ?? undefined;
 
   const adjFor = (name: string) =>
@@ -106,7 +111,12 @@ export function TodaySession({
       >
         {busy ? "analyzing…" : "analyze readiness"}
       </button>
-      {out?.error && <p style={{ color: "var(--ds-error)" }}>{out.error}</p>}
+      {out?.error && (
+        <p style={{ color: "var(--ds-error)" }}>
+          {out.error}
+          {result && " Showing your earlier result below."}
+        </p>
+      )}
       {result && (
         <VerdictBanner
           verdict={result.verdict}
