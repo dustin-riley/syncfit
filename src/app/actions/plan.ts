@@ -15,22 +15,28 @@ import {
 // numbers — see its non-atomicity/precondition notes).
 function num(v: FormDataEntryValue | null): number {
   const n = Number(v ?? 0);
-  return Number.isFinite(n) ? n : 0;
+  return Number.isFinite(n) ? Math.max(0, n) : 0;
+}
+
+// target_sets / target_reps are integer columns — Postgres rejects a float
+// like 3.5, so truncate (and floor at 0) before it reaches plan-store.
+function int(v: FormDataEntryValue | null): number {
+  return Math.trunc(num(v));
 }
 
 // Exercise rows are named ex-{day}-{row}-{field}; rowCount-{day} carries the
 // number of rows the editor rendered for that day. Blank-name rows are dropped
 // (an empty trailing row is not an exercise).
 function readExercises(fd: FormData, dow: number): PlanExerciseInput[] {
-  const count = num(fd.get(`rowCount-${dow}`));
+  const count = Math.min(int(fd.get(`rowCount-${dow}`)), 50);
   const out: PlanExerciseInput[] = [];
   for (let r = 0; r < count; r++) {
     const name = String(fd.get(`ex-${dow}-${r}-name`) ?? "").trim();
     if (!name) continue;
     out.push({
       name,
-      targetSets: num(fd.get(`ex-${dow}-${r}-sets`)),
-      targetReps: num(fd.get(`ex-${dow}-${r}-reps`)),
+      targetSets: int(fd.get(`ex-${dow}-${r}-sets`)),
+      targetReps: int(fd.get(`ex-${dow}-${r}-reps`)),
       targetWeight: num(fd.get(`ex-${dow}-${r}-weight`)),
     });
   }
@@ -66,6 +72,9 @@ export async function applyProgression(input: {
     userId: session.user.id,
     ...input,
   });
-  if (r.ok) revalidatePath("/");
+  if (r.ok) {
+    revalidatePath("/");
+    revalidatePath("/plan");
+  }
   return r;
 }
