@@ -5,6 +5,7 @@ import {
   workout,
   workoutSet,
   readinessAnalysis,
+  enduranceActivity,
 } from "@/db/schema";
 import { eq, and, gte } from "drizzle-orm";
 import {
@@ -12,6 +13,12 @@ import {
   type SetRow,
   type TrailingLoad,
 } from "@/lib/trailing-load";
+import {
+  computeRecentTraining,
+  type RecentTraining,
+  type StrengthRow,
+  type EnduranceRow,
+} from "@/lib/recent-training";
 import { analyzeReadiness, MODEL_ID, type Readiness } from "@/lib/ai-engine";
 import { APP_TZ } from "@/lib/units";
 
@@ -67,6 +74,57 @@ export async function loadTrailingLoad(
   return computeTrailingLoad(setRows, now, 72);
 }
 
+export async function loadRecentTraining(
+  userId: string,
+  now: Date
+): Promise<RecentTraining> {
+  const cutoff = new Date(now.getTime() - 7 * 86_400_000);
+  const sRows = await db
+    .select({
+      workoutId: workout.id,
+      performedAt: workout.performedAt,
+      title: workout.title,
+      exerciseName: workoutSet.exerciseName,
+      weight: workoutSet.weight,
+      reps: workoutSet.reps,
+      setNumber: workoutSet.setNumber,
+    })
+    .from(workoutSet)
+    .innerJoin(workout, eq(workoutSet.workoutId, workout.id))
+    .where(and(eq(workoutSet.userId, userId), gte(workout.performedAt, cutoff)))
+    .orderBy(workout.performedAt, workoutSet.setNumber);
+  const eRows = await db
+    .select({
+      performedAt: enduranceActivity.performedAt,
+      activityType: enduranceActivity.activityType,
+      distance: enduranceActivity.distance,
+      durationSec: enduranceActivity.durationSec,
+    })
+    .from(enduranceActivity)
+    .where(
+      and(
+        eq(enduranceActivity.userId, userId),
+        gte(enduranceActivity.performedAt, cutoff)
+      )
+    );
+
+  const strengthRows: StrengthRow[] = sRows.map((r) => ({
+    workoutId: r.workoutId,
+    performedAt: r.performedAt,
+    title: r.title,
+    exerciseName: r.exerciseName,
+    weight: Number(r.weight),
+    reps: r.reps,
+  }));
+  const enduranceRows: EnduranceRow[] = eRows.map((r) => ({
+    performedAt: r.performedAt,
+    activityType: r.activityType,
+    distanceMi: r.distance === null ? null : Number(r.distance),
+    durationSec: r.durationSec,
+  }));
+  return computeRecentTraining(strengthRows, enduranceRows, now, 7);
+}
+
 export async function runReadinessAnalysis(opts: {
   userId: string;
   now?: Date;
@@ -107,7 +165,7 @@ export async function runReadinessAnalysis(opts: {
       targetWeight: Number(e.targetWeight),
     }));
 
-  const load = await loadTrailingLoad(opts.userId, now);
+  const recentTraining = await loadRecentTraining(opts.userId, now);
   try {
     const result = await analyzeReadiness(
       {
@@ -117,7 +175,7 @@ export async function runReadinessAnalysis(opts: {
           modality: planned.modality,
           exercises,
         },
-        trailingLoad: load,
+        recentTraining,
       },
       { generate: opts.generate }
     );
@@ -125,7 +183,7 @@ export async function runReadinessAnalysis(opts: {
       userId: opts.userId,
       analysisDate: date,
       planSnapshot: { session: planned, exercises },
-      loadSnapshot: load,
+      loadSnapshot: recentTraining as unknown as Record<string, unknown>,
       verdict: result.verdict,
       headline: result.headline,
       rationale: result.rationale,
