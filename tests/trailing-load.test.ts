@@ -47,8 +47,30 @@ describe("computeTrailingLoad", () => {
     expect(bench?.topSetAt.toISOString()).toBe("2026-05-13T12:35:00.000Z");
   });
 
-  it("top set tie-breaks heavier weight, then more reps, then most recent", () => {
-    const tie: SetRow[] = [
+  it("top set: heavier weight beats more reps", () => {
+    const sets: SetRow[] = [
+      {
+        exerciseName: "Row",
+        performedAt: new Date("2026-05-13T10:00:00Z"),
+        weight: 95,
+        reps: 20,
+      },
+      {
+        exerciseName: "Row",
+        performedAt: new Date("2026-05-13T11:00:00Z"),
+        weight: 100,
+        reps: 8,
+      },
+    ];
+    const row = computeTrailingLoad(sets, now, 72).perExercise.find(
+      (e) => e.exerciseName === "Row"
+    );
+    expect(row?.topSetWeight).toBe(100);
+    expect(row?.topSetReps).toBe(8);
+  });
+
+  it("top set: equal weight → more reps wins", () => {
+    const sets: SetRow[] = [
       {
         exerciseName: "Row",
         performedAt: new Date("2026-05-13T10:00:00Z"),
@@ -62,9 +84,56 @@ describe("computeTrailingLoad", () => {
         reps: 8,
       },
     ];
-    const r = computeTrailingLoad(tie, now, 72);
-    const row = r.perExercise.find((e) => e.exerciseName === "Row");
+    const row = computeTrailingLoad(sets, now, 72).perExercise.find(
+      (e) => e.exerciseName === "Row"
+    );
     expect(row?.topSetReps).toBe(8);
+  });
+
+  it("top set: equal weight and reps → most recent wins; bodyweight (0) supported", () => {
+    const sets: SetRow[] = [
+      {
+        exerciseName: "Pull Up",
+        performedAt: new Date("2026-05-13T10:00:00Z"),
+        weight: 0,
+        reps: 8,
+      },
+      {
+        exerciseName: "Pull Up",
+        performedAt: new Date("2026-05-13T11:00:00Z"),
+        weight: 0,
+        reps: 8,
+      },
+      {
+        exerciseName: "Pull Up",
+        performedAt: new Date("2026-05-13T09:00:00Z"),
+        weight: 0,
+        reps: 12,
+      },
+    ];
+    const pu = computeTrailingLoad(sets, now, 72).perExercise.find(
+      (e) => e.exerciseName === "Pull Up"
+    );
+    expect(pu?.topSetWeight).toBe(0);
+    expect(pu?.topSetReps).toBe(12);
+    const tied: SetRow[] = [
+      {
+        exerciseName: "Press",
+        performedAt: new Date("2026-05-13T10:00:00Z"),
+        weight: 100,
+        reps: 5,
+      },
+      {
+        exerciseName: "Press",
+        performedAt: new Date("2026-05-13T11:00:00Z"),
+        weight: 100,
+        reps: 5,
+      },
+    ];
+    const press = computeTrailingLoad(tied, now, 72).perExercise.find(
+      (e) => e.exerciseName === "Press"
+    );
+    expect(press?.topSetAt.toISOString()).toBe("2026-05-13T11:00:00.000Z");
   });
 
   it("reports rest days and last session", () => {
