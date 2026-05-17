@@ -5,8 +5,18 @@ import { APP_TZ } from "@/lib/units";
 
 const MS_DAY = 86_400_000;
 const MONTHS = [
-  "jan", "feb", "mar", "apr", "may", "jun",
-  "jul", "aug", "sep", "oct", "nov", "dec",
+  "jan",
+  "feb",
+  "mar",
+  "apr",
+  "may",
+  "jun",
+  "jul",
+  "aug",
+  "sep",
+  "oct",
+  "nov",
+  "dec",
 ];
 
 function appParts(d: Date): { ymd: string; dow: number } {
@@ -19,7 +29,13 @@ function appParts(d: Date): { ymd: string; dow: number } {
   }).formatToParts(d);
   const get = (t: string) => parts.find((p) => p.type === t)!.value;
   const map: Record<string, number> = {
-    Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
   };
   return {
     ymd: `${get("year")}-${get("month")}-${get("day")}`,

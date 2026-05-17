@@ -41,6 +41,7 @@
 ## Task 1: Pure week math (`src/lib/week.ts`)
 
 **Files:**
+
 - Create: `src/lib/week.ts`
 - Test: `tests/week.test.ts`
 
@@ -102,8 +103,13 @@ describe("weekDays", () => {
   it("returns 7 days Mon..Sun with plan dayOfWeek (Sun=0..Sat=6)", () => {
     const d = weekDays("2026-05-11");
     expect(d.map((x) => x.ymd)).toEqual([
-      "2026-05-11", "2026-05-12", "2026-05-13", "2026-05-14",
-      "2026-05-15", "2026-05-16", "2026-05-17",
+      "2026-05-11",
+      "2026-05-12",
+      "2026-05-13",
+      "2026-05-14",
+      "2026-05-15",
+      "2026-05-16",
+      "2026-05-17",
     ]);
     expect(d.map((x) => x.planDow)).toEqual([1, 2, 3, 4, 5, 6, 0]);
   });
@@ -163,8 +169,18 @@ import { APP_TZ } from "@/lib/units";
 
 const MS_DAY = 86_400_000;
 const MONTHS = [
-  "jan", "feb", "mar", "apr", "may", "jun",
-  "jul", "aug", "sep", "oct", "nov", "dec",
+  "jan",
+  "feb",
+  "mar",
+  "apr",
+  "may",
+  "jun",
+  "jul",
+  "aug",
+  "sep",
+  "oct",
+  "nov",
+  "dec",
 ];
 
 function appParts(d: Date): { ymd: string; dow: number } {
@@ -177,7 +193,13 @@ function appParts(d: Date): { ymd: string; dow: number } {
   }).formatToParts(d);
   const get = (t: string) => parts.find((p) => p.type === t)!.value;
   const map: Record<string, number> = {
-    Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
   };
   return {
     ymd: `${get("year")}-${get("month")}-${get("day")}`,
@@ -265,6 +287,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 2: Pure day-state derivation (`src/lib/week-view.ts`)
 
 **Files:**
+
 - Create: `src/lib/week-view.ts`
 - Test: `tests/week-view.test.ts`
 
@@ -505,6 +528,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 3: DB layer (`src/lib/training-week-data.ts`) + integration test
 
 **Files:**
+
 - Create: `src/lib/training-week-data.ts`
 - Test: `tests/training-week.integration.test.ts`
 
@@ -647,10 +671,7 @@ export async function getTrainingWeek(
         .select()
         .from(workoutSet)
         .where(
-          and(
-            eq(workoutSet.userId, userId),
-            inArray(workoutSet.workoutId, ids)
-          )
+          and(eq(workoutSet.userId, userId), inArray(workoutSet.workoutId, ids))
         )
         .orderBy(asc(workoutSet.setNumber))
     : [];
@@ -701,6 +722,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 4: Server action (`src/app/actions/training-week.ts`)
 
 **Files:**
+
 - Create: `src/app/actions/training-week.ts`
 
 - [ ] **Step 1: Write minimal implementation**
@@ -745,6 +767,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 5: Client agenda component (`src/app/(app)/dashboard/training-week.tsx`)
 
 **Files:**
+
 - Create: `src/app/(app)/dashboard/training-week.tsx`
 
 Design-system rules (from CLAUDE.md / dustinriley-design): reference `--ds-*` tokens and `.ds-*` classes only — never hard-code hex/px; color is never the only state signal (always pair an icon **and** a text label); sentence-case copy; no emoji; the 3 radii are 8/16/999. This component mirrors the token/inline-style idiom of the now-deleted `recent-activity.tsx`.
@@ -769,10 +792,7 @@ import {
 import type { TrainingWeekData, DayState } from "@/lib/week-view";
 import { loadTrainingWeek } from "@/app/actions/training-week";
 
-const STATE_META: Record<
-  DayState,
-  { label: string; Icon: typeof Check }
-> = {
+const STATE_META: Record<DayState, { label: string; Icon: typeof Check }> = {
   done: { label: "done", Icon: Check },
   missed: { label: "missed", Icon: X },
   planned: { label: "planned", Icon: CalendarClock },
@@ -834,8 +854,7 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
             <li
               key={d.ymd}
               style={{
-                borderBottom:
-                  "var(--ds-border-width) solid var(--ds-border)",
+                borderBottom: "var(--ds-border-width) solid var(--ds-border)",
                 borderLeft: d.isToday
                   ? "2px solid var(--ds-primary)"
                   : "2px solid transparent",
@@ -904,8 +923,7 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                   className="ds-mono-note"
                   style={{
                     listStyle: "none",
-                    margin:
-                      "0 0 var(--ds-space-2) var(--ds-space-5)",
+                    margin: "0 0 var(--ds-space-2) var(--ds-space-5)",
                     padding: 0,
                   }}
                 >
@@ -956,6 +974,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 6: Wire into the dashboard; remove the old accordion
 
 **Files:**
+
 - Modify: `src/app/(app)/page.tsx`
 - Delete: `src/app/(app)/dashboard/recent-activity.tsx`
 
@@ -978,60 +997,60 @@ import { getTrainingWeek } from "@/lib/training-week-data";
 Remove the now-unused recent-workouts query block entirely — these lines:
 
 ```ts
-  const recentWorkouts = await db
-    .select()
-    .from(workout)
-    .where(eq(workout.userId, userId))
-    .orderBy(desc(workout.performedAt))
-    .limit(30);
-  const wIds = recentWorkouts.map((w) => w.id);
-  const sets = wIds.length
-    ? await db
-        .select()
-        .from(workoutSet)
-        .where(inArray(workoutSet.workoutId, wIds))
-    : [];
+const recentWorkouts = await db
+  .select()
+  .from(workout)
+  .where(eq(workout.userId, userId))
+  .orderBy(desc(workout.performedAt))
+  .limit(30);
+const wIds = recentWorkouts.map((w) => w.id);
+const sets = wIds.length
+  ? await db
+      .select()
+      .from(workoutSet)
+      .where(inArray(workoutSet.workoutId, wIds))
+  : [];
 ```
 
 and the `workoutViews` mapping block:
 
 ```ts
-  const workoutViews = recentWorkouts.map((w) => ({
-    id: w.id,
-    performedAt: w.performedAt.toDateString(),
-    title: w.title,
-    sets: sets
-      .filter((s) => s.workoutId === w.id)
-      .map((s) => ({
-        exerciseName: s.exerciseName,
-        weight: Number(s.weight),
-        reps: s.reps,
-      })),
-  }));
+const workoutViews = recentWorkouts.map((w) => ({
+  id: w.id,
+  performedAt: w.performedAt.toDateString(),
+  title: w.title,
+  sets: sets
+    .filter((s) => s.workoutId === w.id)
+    .map((s) => ({
+      exerciseName: s.exerciseName,
+      weight: Number(s.weight),
+      reps: s.reps,
+    })),
+}));
 ```
 
 After the `const load = await loadTrailingLoad(userId, now);` line, add:
 
 ```ts
-  const initialWeek = await getTrainingWeek(userId, weekStartFor(now), now);
+const initialWeek = await getTrainingWeek(userId, weekStartFor(now), now);
 ```
 
 Replace the recent-activity section:
 
 ```tsx
-      <section className="my-6">
-        <h2 className="h4">recent activity</h2>
-        <RecentActivity workouts={workoutViews} />
-      </section>
+<section className="my-6">
+  <h2 className="h4">recent activity</h2>
+  <RecentActivity workouts={workoutViews} />
+</section>
 ```
 
 with:
 
 ```tsx
-      <section className="my-6">
-        <h2 className="h4">training week</h2>
-        <TrainingWeek initial={initialWeek} />
-      </section>
+<section className="my-6">
+  <h2 className="h4">training week</h2>
+  <TrainingWeek initial={initialWeek} />
+</section>
 ```
 
 Now fix the leftover unused imports on the `drizzle-orm` / schema lines. After the edits, `workout`, `workoutSet`, `desc`, and `inArray` may no longer be used (`readinessAnalysis`, `eq`, `desc` are still used by the `pastAnalyses` query — verify). Update the two import lines to exactly what remains referenced:
@@ -1068,6 +1087,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 7: Full verification + docs
 
 **Files:**
+
 - Modify: `docs/superpowers/specs/2026-05-17-weekly-training-view-design.md`
 - Modify: this plan file
 

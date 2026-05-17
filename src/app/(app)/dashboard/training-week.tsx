@@ -13,10 +13,7 @@ import {
 import type { TrainingWeekData, DayState } from "@/lib/week-view";
 import { loadTrainingWeek } from "@/app/actions/training-week";
 
-const STATE_META: Record<
-  DayState,
-  { label: string; Icon: typeof Check }
-> = {
+const STATE_META: Record<DayState, { label: string; Icon: typeof Check }> = {
   done: { label: "done", Icon: Check },
   missed: { label: "missed", Icon: X },
   planned: { label: "planned", Icon: CalendarClock },
@@ -55,7 +52,10 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
         >
           <ChevronLeft size={16} aria-hidden="true" />
         </button>
-        <span className="ds-mono-note" style={{ minWidth: "9ch" /* fits "may 11–17" */ }}>
+        <span
+          className="ds-mono-note"
+          style={{ minWidth: "9ch" /* fits "may 11–17" */ }}
+        >
           {data.label}
         </span>
         <button
@@ -78,8 +78,7 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
             <li
               key={d.ymd}
               style={{
-                borderBottom:
-                  "var(--ds-border-width) solid var(--ds-border)",
+                borderBottom: "var(--ds-border-width) solid var(--ds-border)",
                 borderLeft: d.isToday
                   ? "var(--ds-border-width) solid var(--ds-primary)"
                   : "var(--ds-border-width) solid transparent",
@@ -148,8 +147,7 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                   className="ds-mono-note"
                   style={{
                     listStyle: "none",
-                    margin:
-                      "0 0 var(--ds-space-2) var(--ds-space-5)",
+                    margin: "0 0 var(--ds-space-2) var(--ds-space-5)",
                     padding: 0,
                   }}
                 >

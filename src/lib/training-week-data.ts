@@ -40,10 +40,7 @@ export async function getTrainingWeek(
         .select()
         .from(workoutSet)
         .where(
-          and(
-            eq(workoutSet.userId, userId),
-            inArray(workoutSet.workoutId, ids)
-          )
+          and(eq(workoutSet.userId, userId), inArray(workoutSet.workoutId, ids))
         )
         .orderBy(asc(workoutSet.setNumber))
     : [];

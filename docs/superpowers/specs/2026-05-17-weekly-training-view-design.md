@@ -35,12 +35,12 @@ expand give quick recall of what each session contained (content).
 
 Seven day-rows, Monday→Sunday. Each row resolves to exactly one state:
 
-| State     | Condition                                                              | Display                                                                 |
-| --------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| `done`    | ≥1 workout logged that day (regardless of whether a plan existed)       | session title + one-line lift summary (`bench 185×5 · ohp 115×6 · +3 more`); click expands the full set list (existing per-day accordion behavior) |
-| `missed`  | a `planned_session` exists for that weekday, day is strictly **before** today, no workout logged | planned session title, "missed" label                                   |
-| `planned` | a `planned_session` exists for that weekday, day is today or later this week, no workout logged | planned session title, "planned" label                                  |
-| `rest`    | no `planned_session` for that weekday and no workout logged            | "rest" / "no plan"                                                       |
+| State     | Condition                                                                                        | Display                                                                                                                                            |
+| --------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `done`    | ≥1 workout logged that day (regardless of whether a plan existed)                                | session title + one-line lift summary (`bench 185×5 · ohp 115×6 · +3 more`); click expands the full set list (existing per-day accordion behavior) |
+| `missed`  | a `planned_session` exists for that weekday, day is strictly **before** today, no workout logged | planned session title, "missed" label                                                                                                              |
+| `planned` | a `planned_session` exists for that weekday, day is today or later this week, no workout logged  | planned session title, "planned" label                                                                                                             |
+| `rest`    | no `planned_session` for that weekday and no workout logged                                      | "rest" / "no plan"                                                                                                                                 |
 
 Rules:
 
