@@ -15,6 +15,7 @@
 ## Task 1: Install the package (exact pin)
 
 **Files:**
+
 - Modify: `package.json` (dependencies), `package-lock.json`
 
 - [ ] **Step 1: Install exact version**
@@ -60,6 +61,7 @@ git commit -m "feat: add @dustin-riley/design@0.2.3 (exact pin)"
 ## Task 2: Collapse `globals.css` to the package import
 
 **Files:**
+
 - Modify: `src/app/globals.css` (currently 93 lines: line 1 `@import "tailwindcss";`, lines 3–92 the vendored shim block, ending `/* === END SHIM === */`)
 
 - [ ] **Step 1: Replace the entire file**
@@ -105,6 +107,7 @@ git commit -m "feat: consume @dustin-riley/design via globals.css import"
 ## Task 3: Vendor the bundled Claude skill into the repo
 
 **Files:**
+
 - Create: `.claude/skills/dustinriley-design/SKILL.md` (verbatim copy of `node_modules/@dustin-riley/design/skill/dustinriley-design/SKILL.md`)
 
 - [ ] **Step 1: Copy the skill file into the project**
@@ -141,6 +144,7 @@ git commit -m "chore: vendor dustinriley-design Claude skill from package"
 ## Task 4: CLAUDE.md — delete the shim gotcha, state steady state
 
 **Files:**
+
 - Modify: `CLAUDE.md:43` (the "Design system is a vendored shim on this branch." bullet, under "## Non-obvious gotchas")
 
 - [ ] **Step 1: Replace the bullet**
@@ -179,6 +183,7 @@ git commit -m "docs: CLAUDE.md states @dustin-riley/design as steady state"
 ## Task 5: MVP spec — remove §0 and §11, rewrite §2/§2a to steady state
 
 **Files:**
+
 - Modify: `docs/superpowers/specs/2026-05-16-syncfit-mvp-design.md`
 
 Note: `## 0.` and `## 11.` are the first/last numbered sections, so deleting them requires **no renumbering** of §1–§10; §2a stays.
@@ -262,6 +267,7 @@ git commit -m "docs: MVP spec — remove shim sequencing/migration, steady state
 ## Task 6: MVP plan — strip shim/migration framing
 
 **Files:**
+
 - Modify: `docs/superpowers/plans/2026-05-16-syncfit-mvp.md` (lines 7, 35, Task 1 Step 2 region 76–174, commit msg line ~239, and lines ~1695 / ~1712 / ~1728 — find by string, not number, as earlier edits shift them)
 
 - [ ] **Step 1: Fix the Architecture line (line 7)**
@@ -370,7 +376,7 @@ Delete the entire bullet line:
 Find the segment in the spec-coverage paragraph:
 
 ```
-§0 shim → Task 1; 
+§0 shim → Task 1;
 ```
 
 Delete that segment (the `§0 shim → Task 1; ` text only) so the sentence continues with `§2/§2a stack → Tasks 1–6;`. Then find at the end of the same paragraph:
@@ -403,6 +409,7 @@ git commit -m "docs: MVP plan — design system installed in Task 1, no migratio
 ## Task 7: README — fix package name and dangling §0/§11 pointers
 
 **Files:**
+
 - Modify: `README.md` (lines ~14, ~58, ~75 — find by string)
 
 - [ ] **Step 1: Fix the design-system status line (~14)**

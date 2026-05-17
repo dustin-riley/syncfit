@@ -8,6 +8,7 @@ description: Use when building or modifying any UI in a project that consumes @d
 Apply this whenever you add or change UI in a project importing `@dustin-riley/design`.
 
 ## Non-negotiables
+
 - One primary (burnt orange `#B8541C`), accents ochre + teal. Never invent colors.
 - Three radii only: 8 / 16 / 999px. Three warm-tinted shadows only: sm / md / lg.
 - Sentence case everywhere. First person. No emoji. Lucide icons or unicode arrows.
@@ -16,6 +17,7 @@ Apply this whenever you add or change UI in a project importing `@dustin-riley/d
 - Never hard-code a hex/px value — reference a `--ds-*` token.
 
 ## How to consume
+
 - Always: `@import "@dustin-riley/design/tokens.css"; @import "@dustin-riley/design/core.css";`
 - Tailwind v4 + shadcn projects additionally: `@import "@dustin-riley/design/tailwind.css";`
 - Base element styling ships inside `core.css` (no separate import, no
@@ -26,6 +28,7 @@ Apply this whenever you add or change UI in a project importing `@dustin-riley/d
   article body), never a system-wide default.
 
 ## Vocabulary (prefer extending these over inventing parallels)
+
 Buttons `.ds-btn` + `.ds-btn-primary|secondary|ghost`; layout `.ds-container`,
 `.ds-section`; type `.ds-display`, `.ds-lede`, `.ds-caption`, `.ds-mono-note`,
 `.grid-label`, `.h1`–`.h6`; chrome bits `.ds-page-header`, `.ds-back-link`;
