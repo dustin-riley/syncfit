@@ -1,7 +1,7 @@
 # Weekly training view — design
 
 Date: 2026-05-17
-Status: approved (brainstorm), pending implementation plan
+Status: implemented (2026-05-17)
 
 ## Problem
 
