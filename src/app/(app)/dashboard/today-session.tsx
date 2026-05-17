@@ -80,7 +80,9 @@ export function TodaySession({
                 {a && a.sets.length > 0 && (
                   <span className="ds-mono-note">
                     {" "}
-                    · last ({a.agoDays === 0 ? "today" : `${a.agoDays}d ago`}):{" "}
+                    · last ({a.agoDays === 0
+                      ? "today"
+                      : `${a.agoDays}d ago`}):{" "}
                     {a.sets.map((s) => `${s.weight}×${s.reps}`).join(", ")}
                   </span>
                 )}

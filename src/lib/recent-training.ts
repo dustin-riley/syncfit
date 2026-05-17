@@ -100,13 +100,21 @@ export function computeRecentTraining(
 export function lastSessionSetsByExercise(
   rt: RecentTraining,
   now: Date
-): { exerciseName: string; agoDays: number; sets: Omit<StrengthSetView, 'exerciseName'>[] }[] {
+): {
+  exerciseName: string;
+  agoDays: number;
+  sets: Omit<StrengthSetView, "exerciseName">[];
+}[] {
   const seen = new Map<
     string,
-    { exerciseName: string; agoDays: number; sets: Omit<StrengthSetView, 'exerciseName'>[] }
+    {
+      exerciseName: string;
+      agoDays: number;
+      sets: Omit<StrengthSetView, "exerciseName">[];
+    }
   >();
   for (const s of rt.strengthSessions) {
-    const byEx = new Map<string, Omit<StrengthSetView, 'exerciseName'>[]>();
+    const byEx = new Map<string, Omit<StrengthSetView, "exerciseName">[]>();
     for (const set of s.sets) {
       if (!byEx.has(set.exerciseName)) byEx.set(set.exerciseName, []);
       byEx.get(set.exerciseName)!.push({

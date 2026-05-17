@@ -10,7 +10,7 @@
 
 Two stacked capabilities:
 
-1. **Manual workout logging** — there is currently *no* manual entry path;
+1. **Manual workout logging** — there is currently _no_ manual entry path;
    strength only enters via Strong CSV import. Add a dedicated page to log a
    workout by hand, strength **or** endurance.
 2. **Endurance activities** — a new first-class activity type (run/ride/swim/
@@ -40,7 +40,7 @@ summary was low value); it is **not** a general AI-prompt-quality rework.
 - **km / metric units**; distance is miles, duration stored as seconds.
 - **Per-activity heart rate**, RPE, elevation.
 - **Editing or deleting** a logged workout/activity after creation.
-- **AI verdict-quality / prompt-reasoning redesign.** Only the *input shape*
+- **AI verdict-quality / prompt-reasoning redesign.** Only the _input shape_
   the model receives changes here; the verdict enum, retry path, and prompt
   reasoning are untouched. The known-weak "you lifted a lot, rest several
   days" behavior is acknowledged and left for a separate effort.
@@ -98,23 +98,33 @@ type EnduranceView = {
   distanceMi: number | null;
   durationSec: number;
   // derived, not stored:
-  pacePerMi: number | null;   // sec/mi; null when distance null/0
-  mph: number | null;         // null when distance null/0
+  pacePerMi: number | null; // sec/mi; null when distance null/0
+  mph: number | null; // null when distance null/0
 };
 type RecentTraining = {
-  windowDays: number;          // 7
-  strengthSessions: StrengthSession[];   // newest-first
-  enduranceActivities: EnduranceView[];  // newest-first
+  windowDays: number; // 7
+  strengthSessions: StrengthSession[]; // newest-first
+  enduranceActivities: EnduranceView[]; // newest-first
 };
 
 function computeRecentTraining(
-  strengthRows: { workoutId: string; performedAt: Date; title: string;
-                  exerciseName: string; weight: number; reps: number }[],
-  enduranceRows: { performedAt: Date; activityType: string;
-                   distanceMi: number | null; durationSec: number }[],
+  strengthRows: {
+    workoutId: string;
+    performedAt: Date;
+    title: string;
+    exerciseName: string;
+    weight: number;
+    reps: number;
+  }[],
+  enduranceRows: {
+    performedAt: Date;
+    activityType: string;
+    distanceMi: number | null;
+    durationSec: number;
+  }[],
   now: Date,
-  windowDays: number,           // 7
-): RecentTraining
+  windowDays: number // 7
+): RecentTraining;
 ```
 
 Pure: no DB, no HTTP. Windowing is `[now - windowDays, now]`. Strength rows
@@ -143,7 +153,7 @@ Two entry points, both `userId`-scoped, both idempotent via `contentHash` +
   shape as the Strong importer so dedupe semantics match).
 - `logEnduranceActivity(userId, input)` → writes one `endurance_activity`.
   `contentHash` = sha256 of normalized `{performedAt,activityType,distance,
-  durationSec}`.
+durationSec}`.
 
 Validation (numeric weight/reps/distance/duration, non-empty exercise names,
 valid `activityType`, parseable date) lives here and returns structured
@@ -202,7 +212,7 @@ fixture + the buildPrompt snapshot are updated to the new input shape.
 
 1. **Log** (`/log`) — user picks strength or endurance, fills the form →
    `logAction(FormData)` → `manual-log` validates + persists (`workout`+
-   `workout_set` *or* `endurance_activity`), dedupes via `contentHash` →
+   `workout_set` _or_ `endurance_activity`), dedupes via `contentHash` →
    `{ ok, added, skipped, fieldErrors? }` rendered inline.
 2. **Dashboard today card** — `loadRecentTraining(userId, now)` →
    `TodaySession` shows, per planned exercise, the **last actual session's

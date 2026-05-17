@@ -31,9 +31,9 @@ export default function LogPage() {
   const [duration, setDuration] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
-  const [res, setRes] = useState<Awaited<
-    ReturnType<typeof logWorkout>
-  > | null>(null);
+  const [res, setRes] = useState<Awaited<ReturnType<typeof logWorkout>> | null>(
+    null
+  );
 
   const setRow = (i: number, patch: Partial<SetRow>) =>
     setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
@@ -68,11 +68,7 @@ export default function LogPage() {
   return (
     <main className="ds-container p-8 max-w-lg">
       <h1 className="h2">log a workout</h1>
-      <div
-        className="flex gap-2 my-3"
-        role="group"
-        aria-label="workout kind"
-      >
+      <div className="flex gap-2 my-3" role="group" aria-label="workout kind">
         <button
           type="button"
           className={`ds-btn ${kind === "strength" ? "ds-btn-primary" : "ds-btn-ghost"}`}

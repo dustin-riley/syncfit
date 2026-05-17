@@ -11,18 +11,68 @@ const day = (n: number) => new Date(NOW.getTime() - n * 86_400_000);
 
 const strength: StrengthRow[] = [
   // newest session (1 day ago): Squat x2 + Bench x1
-  { workoutId: "w2", performedAt: day(1), title: "Lower B", exerciseName: "Squat", weight: 250, reps: 3 },
-  { workoutId: "w2", performedAt: day(1), title: "Lower B", exerciseName: "Squat", weight: 250, reps: 3 },
-  { workoutId: "w2", performedAt: day(1), title: "Lower B", exerciseName: "Bench", weight: 185, reps: 5 },
+  {
+    workoutId: "w2",
+    performedAt: day(1),
+    title: "Lower B",
+    exerciseName: "Squat",
+    weight: 250,
+    reps: 3,
+  },
+  {
+    workoutId: "w2",
+    performedAt: day(1),
+    title: "Lower B",
+    exerciseName: "Squat",
+    weight: 250,
+    reps: 3,
+  },
+  {
+    workoutId: "w2",
+    performedAt: day(1),
+    title: "Lower B",
+    exerciseName: "Bench",
+    weight: 185,
+    reps: 5,
+  },
   // older session (3 days ago): Squat x1
-  { workoutId: "w1", performedAt: day(3), title: "Lower A", exerciseName: "Squat", weight: 245, reps: 5 },
+  {
+    workoutId: "w1",
+    performedAt: day(3),
+    title: "Lower A",
+    exerciseName: "Squat",
+    weight: 245,
+    reps: 5,
+  },
   // outside the 7-day window: ignored
-  { workoutId: "w0", performedAt: day(9), title: "Old", exerciseName: "Squat", weight: 225, reps: 5 },
+  {
+    workoutId: "w0",
+    performedAt: day(9),
+    title: "Old",
+    exerciseName: "Squat",
+    weight: 225,
+    reps: 5,
+  },
 ];
 const endurance: EnduranceRow[] = [
-  { performedAt: day(2), activityType: "run", distanceMi: 6.2, durationSec: 2880 },
-  { performedAt: day(10), activityType: "ride", distanceMi: 30, durationSec: 7200 }, // out of window
-  { performedAt: day(4), activityType: "swim", distanceMi: null, durationSec: 1800 },
+  {
+    performedAt: day(2),
+    activityType: "run",
+    distanceMi: 6.2,
+    durationSec: 2880,
+  },
+  {
+    performedAt: day(10),
+    activityType: "ride",
+    distanceMi: 30,
+    durationSec: 7200,
+  }, // out of window
+  {
+    performedAt: day(4),
+    activityType: "swim",
+    distanceMi: null,
+    durationSec: 1800,
+  },
 ];
 
 describe("computeRecentTraining", () => {

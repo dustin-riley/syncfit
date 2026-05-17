@@ -11,6 +11,7 @@
 **Spec:** `docs/superpowers/specs/2026-05-17-endurance-and-manual-logging-design.md`
 
 **Conventions reused (read before starting):**
+
 - Controlled-input gotcha (React 19 form reset) — see `src/app/(app)/plan/plan-editor.tsx` and CLAUDE.md "Plan editor must stay controlled".
 - `contentHash` dedupe via `sha256(JSON.stringify(...))` + `onConflictDoNothing` — see `src/lib/import-persist.ts` / `src/lib/strong-parser.ts:135`.
 - Single-statement `db` (neon-http) for normal writes; `txDb` only for the CSV importer. Manual logging uses `db` (single workout, non-transactional — same precedent as `plan-store`).
@@ -22,6 +23,7 @@
 ### Task 1: `endurance_activity` schema + push to Neon
 
 **Files:**
+
 - Modify: `src/db/schema.ts`
 
 - [ ] **Step 1: Add the table to the schema**
@@ -73,6 +75,7 @@ git commit -m "feat(endurance): add endurance_activity table"
 Seconds is the stored unit; the UI and prompt need `h:mm:ss` formatting and a parser shared by the form and the server action.
 
 **Files:**
+
 - Create: `src/lib/duration.ts`
 - Test: `tests/duration.test.ts`
 
@@ -174,6 +177,7 @@ git commit -m "feat(duration): pure parse/format seconds helpers"
 Manual entry uses an `<input type="datetime-local">` whose value (`"YYYY-MM-DDTHH:mm"`) must be interpreted as `APP_TZ` wall time (the app is single-timezone; Vercel runs UTC). `strong-parser` has a private equivalent for CSV space-separated dates; do **not** refactor it (out of scope) — add a sibling helper next to `APP_TZ`.
 
 **Files:**
+
 - Modify: `src/lib/units.ts`
 - Test: `tests/units.test.ts`
 
@@ -271,6 +275,7 @@ git commit -m "feat(units): parseAppDateTime for datetime-local input"
 New module; `trailing-load.ts` stays until Task 8 so the build stays green. Provides `computeRecentTraining` (raw 7-day strength sessions + endurance activities) and `lastSessionSetsByExercise` (for the today card).
 
 **Files:**
+
 - Create: `src/lib/recent-training.ts`
 - Test: `tests/recent-training.test.ts`
 
@@ -292,18 +297,68 @@ const day = (n: number) => new Date(NOW.getTime() - n * 86_400_000);
 
 const strength: StrengthRow[] = [
   // newest session (1 day ago): Squat x2 + Bench x1
-  { workoutId: "w2", performedAt: day(1), title: "Lower B", exerciseName: "Squat", weight: 250, reps: 3 },
-  { workoutId: "w2", performedAt: day(1), title: "Lower B", exerciseName: "Squat", weight: 250, reps: 3 },
-  { workoutId: "w2", performedAt: day(1), title: "Lower B", exerciseName: "Bench", weight: 185, reps: 5 },
+  {
+    workoutId: "w2",
+    performedAt: day(1),
+    title: "Lower B",
+    exerciseName: "Squat",
+    weight: 250,
+    reps: 3,
+  },
+  {
+    workoutId: "w2",
+    performedAt: day(1),
+    title: "Lower B",
+    exerciseName: "Squat",
+    weight: 250,
+    reps: 3,
+  },
+  {
+    workoutId: "w2",
+    performedAt: day(1),
+    title: "Lower B",
+    exerciseName: "Bench",
+    weight: 185,
+    reps: 5,
+  },
   // older session (3 days ago): Squat x1
-  { workoutId: "w1", performedAt: day(3), title: "Lower A", exerciseName: "Squat", weight: 245, reps: 5 },
+  {
+    workoutId: "w1",
+    performedAt: day(3),
+    title: "Lower A",
+    exerciseName: "Squat",
+    weight: 245,
+    reps: 5,
+  },
   // outside the 7-day window: ignored
-  { workoutId: "w0", performedAt: day(9), title: "Old", exerciseName: "Squat", weight: 225, reps: 5 },
+  {
+    workoutId: "w0",
+    performedAt: day(9),
+    title: "Old",
+    exerciseName: "Squat",
+    weight: 225,
+    reps: 5,
+  },
 ];
 const endurance: EnduranceRow[] = [
-  { performedAt: day(2), activityType: "run", distanceMi: 6.2, durationSec: 2880 },
-  { performedAt: day(10), activityType: "ride", distanceMi: 30, durationSec: 7200 }, // out of window
-  { performedAt: day(4), activityType: "swim", distanceMi: null, durationSec: 1800 },
+  {
+    performedAt: day(2),
+    activityType: "run",
+    distanceMi: 6.2,
+    durationSec: 2880,
+  },
+  {
+    performedAt: day(10),
+    activityType: "ride",
+    distanceMi: 30,
+    durationSec: 7200,
+  }, // out of window
+  {
+    performedAt: day(4),
+    activityType: "swim",
+    distanceMi: null,
+    durationSec: 1800,
+  },
 ];
 
 describe("computeRecentTraining", () => {
@@ -509,6 +564,7 @@ git commit -m "feat(recent-training): pure 7-day raw training builder"
 Validation and hashing are pure (offline-tested here); DB persistence is added in Task 5 and integration-tested in Task 11.
 
 **Files:**
+
 - Create: `src/lib/manual-log.ts`
 - Test: `tests/manual-log.test.ts`
 
@@ -577,8 +633,7 @@ describe("validateEnduranceInput", () => {
   it("accepts valid input incl. null distance", () => {
     expect(validateEnduranceInput(goodEndurance).fieldErrors).toEqual({});
     expect(
-      validateEnduranceInput({ ...goodEndurance, distanceMi: null })
-        .fieldErrors
+      validateEnduranceInput({ ...goodEndurance, distanceMi: null }).fieldErrors
     ).toEqual({});
   });
   it("flags unknown type, non-positive duration, negative distance", () => {
@@ -735,6 +790,7 @@ git commit -m "feat(manual-log): pure validation + content hashing"
 Adds DB writes to `manual-log.ts` and the thin action. Persistence is integration-tested in Task 11.
 
 **Files:**
+
 - Modify: `src/lib/manual-log.ts`
 - Create: `src/app/actions/log.ts`
 
@@ -867,10 +923,7 @@ export async function logWorkout(formData: FormData): Promise<LogResult> {
     new Date(NaN);
 
   if (kind === "strength") {
-    const count = Math.min(
-      Math.trunc(num(formData.get("rowCount")) || 0),
-      100
-    );
+    const count = Math.min(Math.trunc(num(formData.get("rowCount")) || 0), 100);
     const perExerciseSeq = new Map<string, number>();
     const sets: {
       exerciseName: string;
@@ -933,6 +986,7 @@ git commit -m "feat(manual-log): persistence + log server action"
 ### Task 6: `/log` page (client component) + nav link
 
 **Files:**
+
 - Create: `src/app/(app)/log/page.tsx`
 - Modify: `src/lib/nav.ts`
 - Modify: `tests/nav.test.ts`
@@ -942,14 +996,14 @@ git commit -m "feat(manual-log): persistence + log server action"
 In `tests/nav.test.ts`, replace the first `it` body's `toEqual` array and its title:
 
 ```ts
-  it("lists the four signed-in routes in order with short labels", () => {
-    expect(NAV_ITEMS).toEqual([
-      { href: "/", label: "Today", shortLabel: "Today" },
-      { href: "/plan", label: "Weekly plan", shortLabel: "Plan" },
-      { href: "/log", label: "Log workout", shortLabel: "Log" },
-      { href: "/import", label: "Import", shortLabel: "Import" },
-    ]);
-  });
+it("lists the four signed-in routes in order with short labels", () => {
+  expect(NAV_ITEMS).toEqual([
+    { href: "/", label: "Today", shortLabel: "Today" },
+    { href: "/plan", label: "Weekly plan", shortLabel: "Plan" },
+    { href: "/log", label: "Log workout", shortLabel: "Log" },
+    { href: "/import", label: "Import", shortLabel: "Import" },
+  ]);
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -1013,9 +1067,9 @@ export default function LogPage() {
   const [duration, setDuration] = useState("");
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
-  const [res, setRes] = useState<Awaited<
-    ReturnType<typeof logWorkout>
-  > | null>(null);
+  const [res, setRes] = useState<Awaited<ReturnType<typeof logWorkout>> | null>(
+    null
+  );
 
   const setRow = (i: number, patch: Partial<SetRow>) =>
     setRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
@@ -1050,11 +1104,7 @@ export default function LogPage() {
   return (
     <main className="ds-container p-8 max-w-lg">
       <h1 className="h2">log a workout</h1>
-      <div
-        className="flex gap-2 my-3"
-        role="group"
-        aria-label="workout kind"
-      >
+      <div className="flex gap-2 my-3" role="group" aria-label="workout kind">
         <button
           type="button"
           className={`ds-btn ${kind === "strength" ? "ds-btn-primary" : "ds-btn-ghost"}`}
@@ -1230,6 +1280,7 @@ git commit -m "feat(log): manual workout entry page + nav link"
 Replaces the AI's `trailingLoad` input with `recentTraining`. `trailing-load.ts` and `loadTrailingLoad` stay (still used by the dashboard) until Tasks 8–9. Single commit so the build stays green.
 
 **Files:**
+
 - Modify: `src/lib/ai-engine.ts`
 - Modify: `src/lib/readiness.ts`
 - Modify: `tests/ai-engine.test.ts`
@@ -1279,9 +1330,9 @@ const input: AnalyzeInput = {
 Then in the `"buildPrompt is deterministic ..."` test, replace the `8200` assertion line with endurance + raw-set assertions:
 
 ```ts
-    expect(a).toContain("Squat 245×5");
-    expect(a).toContain("run");
-    expect(a).toContain("6.2");
+expect(a).toContain("Squat 245×5");
+expect(a).toContain("run");
+expect(a).toContain("6.2");
 ```
 
 Leave the other `it` blocks (validation/retry) unchanged — they only depend on `analyzeReadiness` + the mocked generate, not the input shape.
@@ -1306,7 +1357,7 @@ import type { RecentTraining } from "@/lib/recent-training";
 b) Replace the `trailingLoad: { ... }` member of `AnalyzeInput` with:
 
 ```ts
-  recentTraining: RecentTraining;
+recentTraining: RecentTraining;
 ```
 
 c) Replace the `buildPrompt` function body's `tl`/`actual` derivation and the returned array with:
@@ -1446,7 +1497,7 @@ export async function loadRecentTraining(
 d) In `runReadinessAnalysis`, replace the line `const load = await loadTrailingLoad(opts.userId, now);` with:
 
 ```ts
-  const recentTraining = await loadRecentTraining(opts.userId, now);
+const recentTraining = await loadRecentTraining(opts.userId, now);
 ```
 
 e) In the `analyzeReadiness({ ... })` call, replace `trailingLoad: load,` with:
@@ -1466,21 +1517,21 @@ f) In the `db.insert(readinessAnalysis).values({ ... })`, replace `loadSnapshot:
 In `tests/readiness.integration.test.ts`, the block currently reading:
 
 ```ts
-    const load = row.loadSnapshot as Record<string, unknown>;
-    expect(load.setCount).toBe(2);
-    expect(load.totalVolume).toBe(185 * 5 + 135 * 8);
+const load = row.loadSnapshot as Record<string, unknown>;
+expect(load.setCount).toBe(2);
+expect(load.totalVolume).toBe(185 * 5 + 135 * 8);
 ```
 
 Replace those three lines with:
 
 ```ts
-    const load = row.loadSnapshot as {
-      windowDays: number;
-      strengthSessions: { sets: unknown[] }[];
-    };
-    expect(load.windowDays).toBe(7);
-    expect(load.strengthSessions.length).toBe(1);
-    expect(load.strengthSessions[0].sets.length).toBe(2);
+const load = row.loadSnapshot as {
+  windowDays: number;
+  strengthSessions: { sets: unknown[] }[];
+};
+expect(load.windowDays).toBe(7);
+expect(load.strengthSessions.length).toBe(1);
+expect(load.strengthSessions[0].sets.length).toBe(2);
 ```
 
 - [ ] **Step 6: Run unit tests + type-check**
@@ -1507,6 +1558,7 @@ git commit -m "feat(ai): feed raw 7-day recent training (strength+endurance) to 
 Switch the dashboard off `loadTrailingLoad` onto `loadRecentTraining` + `lastSessionSetsByExercise`, and reshape the `TodaySession` `actuals` to show the last session's sets per planned exercise.
 
 **Files:**
+
 - Modify: `src/app/(app)/page.tsx`
 - Modify: `src/app/(app)/dashboard/today-session.tsx`
 
@@ -1527,13 +1579,15 @@ type Actual = {
 b) Replace the `{a && ( ... )}` recent-note block inside the `exercises.map` with:
 
 ```tsx
-                {a && a.sets.length > 0 && (
-                  <span className="ds-mono-note">
-                    {" "}
-                    · last ({a.agoDays === 0 ? "today" : `${a.agoDays}d ago`}):{" "}
-                    {a.sets.map((s) => `${s.weight}×${s.reps}`).join(", ")}
-                  </span>
-                )}
+{
+  a && a.sets.length > 0 && (
+    <span className="ds-mono-note">
+      {" "}
+      · last ({a.agoDays === 0 ? "today" : `${a.agoDays}d ago`}):{" "}
+      {a.sets.map((s) => `${s.weight}×${s.reps}`).join(", ")}
+    </span>
+  );
+}
 ```
 
 `actualFor` (the `findExerciseMatch` call) is unchanged — it still matches on `exerciseName`.
@@ -1552,8 +1606,8 @@ import { lastSessionSetsByExercise } from "@/lib/recent-training";
 b) Replace `const load = await loadTrailingLoad(userId, now);` with:
 
 ```ts
-  const recentTraining = await loadRecentTraining(userId, now);
-  const lastSets = lastSessionSetsByExercise(recentTraining, now);
+const recentTraining = await loadRecentTraining(userId, now);
+const lastSets = lastSessionSetsByExercise(recentTraining, now);
 ```
 
 c) Replace the `actuals={load.perExercise.map(...)}` prop on `<TodaySession>` with:
@@ -1585,6 +1639,7 @@ git commit -m "feat(dashboard): show last session's sets per planned exercise"
 `computeTrailingLoad` / `loadTrailingLoad` now have zero references.
 
 **Files:**
+
 - Delete: `src/lib/trailing-load.ts`
 - Delete: `tests/trailing-load.test.ts`
 
@@ -1617,6 +1672,7 @@ git commit -m "refactor: remove dead trailing-load aggregator"
 Endurance activities render in the weekly view; an endurance-only day counts as `done`.
 
 **Files:**
+
 - Modify: `src/lib/week-view.ts`
 - Modify: `tests/week-view.test.ts`
 - Modify: `src/lib/training-week-data.ts`
@@ -1627,28 +1683,28 @@ Endurance activities render in the weekly view; an endurance-only day counts as 
 Append to `tests/week-view.test.ts` (inside the existing `describe("buildTrainingWeek", ...)` block — reuse the file's existing `NOW`/`WEEK` constants):
 
 ```ts
-  it("counts an endurance-only day as done and summarizes it", () => {
-    const data = buildTrainingWeek({
-      weekStartYmd: WEEK,
-      now: NOW,
-      workouts: [],
-      planDays: [],
-      enduranceActivities: [
-        {
-          performedAt: new Date("2026-05-12T16:00:00Z"), // Tue 2026-05-12
-          activityType: "run",
-          distanceMi: 6.2,
-          durationSec: 2880,
-        },
-      ],
-    });
-    const tue = data.days.find((d) => d.ymd === "2026-05-12")!;
-    expect(tue.state).toBe("done");
-    expect(tue.endurance).toEqual([
-      { activityType: "run", distanceMi: 6.2, durationSec: 2880 },
-    ]);
-    expect(tue.summary).toContain("run 6.2mi · 48:00");
+it("counts an endurance-only day as done and summarizes it", () => {
+  const data = buildTrainingWeek({
+    weekStartYmd: WEEK,
+    now: NOW,
+    workouts: [],
+    planDays: [],
+    enduranceActivities: [
+      {
+        performedAt: new Date("2026-05-12T16:00:00Z"), // Tue 2026-05-12
+        activityType: "run",
+        distanceMi: 6.2,
+        durationSec: 2880,
+      },
+    ],
   });
+  const tue = data.days.find((d) => d.ymd === "2026-05-12")!;
+  expect(tue.state).toBe("done");
+  expect(tue.endurance).toEqual([
+    { activityType: "run", distanceMi: 6.2, durationSec: 2880 },
+  ]);
+  expect(tue.summary).toContain("run 6.2mi · 48:00");
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -1715,49 +1771,48 @@ export function buildTrainingWeek(args: {
 f) Inside the `weekDays(...).map(...)`, after the `dayWorkouts` line, add the per-day endurance and fold it into state + summary. Replace the `let state: DayState; ... ` block and the `return { ... }` object with:
 
 ```ts
-    const dayEndurance: EnduranceCell[] = enduranceActivities
-      .filter((e) => appDate(e.performedAt) === d.ymd)
-      .sort((a, b) => a.performedAt.getTime() - b.performedAt.getTime())
-      .map((e) => ({
-        activityType: e.activityType,
-        distanceMi: e.distanceMi,
-        durationSec: e.durationSec,
-      }));
-    const plan = planDays.find((p) => p.dayOfWeek === d.planDow) ?? null;
-    const dayNum = Number(d.ymd.slice(8, 10));
-    const label = `${DOW_LABELS[i]} ${dayNum}`;
-    const isToday = d.ymd === todayYmd;
+const dayEndurance: EnduranceCell[] = enduranceActivities
+  .filter((e) => appDate(e.performedAt) === d.ymd)
+  .sort((a, b) => a.performedAt.getTime() - b.performedAt.getTime())
+  .map((e) => ({
+    activityType: e.activityType,
+    distanceMi: e.distanceMi,
+    durationSec: e.durationSec,
+  }));
+const plan = planDays.find((p) => p.dayOfWeek === d.planDow) ?? null;
+const dayNum = Number(d.ymd.slice(8, 10));
+const label = `${DOW_LABELS[i]} ${dayNum}`;
+const isToday = d.ymd === todayYmd;
 
-    const didTrain = dayWorkouts.length > 0 || dayEndurance.length > 0;
-    let state: DayState;
-    if (didTrain) state = "done";
-    else if (plan) state = d.ymd < todayYmd ? "missed" : "planned";
-    else state = "rest";
+const didTrain = dayWorkouts.length > 0 || dayEndurance.length > 0;
+let state: DayState;
+if (didTrain) state = "done";
+else if (plan) state = d.ymd < todayYmd ? "missed" : "planned";
+else state = "rest";
 
-    const flatSets = dayWorkouts.flatMap((w) => w.sets);
-    const strengthSummary = summarize(flatSets);
-    const enduranceSummary = summarizeEndurance(dayEndurance);
-    const summary =
-      state === "done"
-        ? [strengthSummary, enduranceSummary].filter(Boolean).join(" · ") ||
-          null
-        : null;
+const flatSets = dayWorkouts.flatMap((w) => w.sets);
+const strengthSummary = summarize(flatSets);
+const enduranceSummary = summarizeEndurance(dayEndurance);
+const summary =
+  state === "done"
+    ? [strengthSummary, enduranceSummary].filter(Boolean).join(" · ") || null
+    : null;
 
-    return {
-      ymd: d.ymd,
-      label,
-      isToday,
-      state,
-      workouts: dayWorkouts.map((w) => ({
-        id: w.id,
-        title: w.title,
-        sets: w.sets,
-      })),
-      endurance: dayEndurance,
-      summary,
-      plannedTitle:
-        state === "missed" || state === "planned" ? (plan?.title ?? "") : null,
-    };
+return {
+  ymd: d.ymd,
+  label,
+  isToday,
+  state,
+  workouts: dayWorkouts.map((w) => ({
+    id: w.id,
+    title: w.title,
+    sets: w.sets,
+  })),
+  endurance: dayEndurance,
+  summary,
+  plannedTitle:
+    state === "missed" || state === "planned" ? (plan?.title ?? "") : null,
+};
 ```
 
 (Delete the now-replaced original `const plan = ...`, `const dayNum`, `const label`, `const isToday`, `let state`, `const flatSets`, and `return {...}` lines so they are not duplicated.)
@@ -1796,23 +1851,23 @@ import {
 c) After the `planDays` query and before the `return buildTrainingWeek({...})`, add the endurance query:
 
 ```ts
-  const enduranceRows = await db
-    .select()
-    .from(enduranceActivity)
-    .where(
-      and(
-        eq(enduranceActivity.userId, userId),
-        gte(enduranceActivity.performedAt, from),
-        lt(enduranceActivity.performedAt, to)
-      )
+const enduranceRows = await db
+  .select()
+  .from(enduranceActivity)
+  .where(
+    and(
+      eq(enduranceActivity.userId, userId),
+      gte(enduranceActivity.performedAt, from),
+      lt(enduranceActivity.performedAt, to)
     )
-    .orderBy(asc(enduranceActivity.performedAt));
-  const enduranceInputs: EnduranceInput[] = enduranceRows.map((e) => ({
-    performedAt: e.performedAt,
-    activityType: e.activityType,
-    distanceMi: e.distance === null ? null : Number(e.distance),
-    durationSec: e.durationSec,
-  }));
+  )
+  .orderBy(asc(enduranceActivity.performedAt));
+const enduranceInputs: EnduranceInput[] = enduranceRows.map((e) => ({
+  performedAt: e.performedAt,
+  activityType: e.activityType,
+  distanceMi: e.distance === null ? null : Number(e.distance),
+  durationSec: e.durationSec,
+}));
 ```
 
 d) Add `enduranceActivities: enduranceInputs,` to the `buildTrainingWeek({ ... })` call.
@@ -1822,31 +1877,33 @@ d) Add `enduranceActivities: enduranceInputs,` to the `buildTrainingWeek({ ... }
 In `src/app/(app)/dashboard/training-week.tsx`, the expand list currently maps `d.workouts.flatMap((w) => w.sets...)`. Replace the `{isOpen && canExpand && ( <ul ...> ... </ul> )}` block's inner list contents so endurance lines also render:
 
 ```tsx
-              {isOpen && canExpand && (
-                <ul
-                  className="ds-mono-note"
-                  style={{
-                    listStyle: "none",
-                    margin: "0 0 var(--ds-space-2) var(--ds-space-5)",
-                    padding: 0,
-                  }}
-                >
-                  {d.workouts.flatMap((w) =>
-                    w.sets.map((s, i) => (
-                      <li key={`${w.id}-${i}`}>
-                        {s.exerciseName}: {s.weight} × {s.reps}
-                      </li>
-                    ))
-                  )}
-                  {d.endurance.map((e, i) => (
-                    <li key={`end-${i}`}>
-                      {e.activityType}
-                      {e.distanceMi === null ? "" : ` ${e.distanceMi}mi`} ·{" "}
-                      {formatDuration(e.durationSec)}
-                    </li>
-                  ))}
-                </ul>
-              )}
+{
+  isOpen && canExpand && (
+    <ul
+      className="ds-mono-note"
+      style={{
+        listStyle: "none",
+        margin: "0 0 var(--ds-space-2) var(--ds-space-5)",
+        padding: 0,
+      }}
+    >
+      {d.workouts.flatMap((w) =>
+        w.sets.map((s, i) => (
+          <li key={`${w.id}-${i}`}>
+            {s.exerciseName}: {s.weight} × {s.reps}
+          </li>
+        ))
+      )}
+      {d.endurance.map((e, i) => (
+        <li key={`end-${i}`}>
+          {e.activityType}
+          {e.distanceMi === null ? "" : ` ${e.distanceMi}mi`} ·{" "}
+          {formatDuration(e.durationSec)}
+        </li>
+      ))}
+    </ul>
+  );
+}
 ```
 
 Add the import at the top of the file (next to the `@/lib/week-view` type import):
@@ -1872,6 +1929,7 @@ git commit -m "feat(week): render endurance activities in the weekly training vi
 ### Task 11: Integration test for the log action + endurance in readiness/week
 
 **Files:**
+
 - Create: `tests/log.integration.test.ts`
 
 - [ ] **Step 1: Write the integration test**
@@ -1883,10 +1941,7 @@ import { describe, it, expect, afterAll } from "vitest";
 import { inArray, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { workout, workoutSet, enduranceActivity } from "@/db/schema";
-import {
-  logStrengthWorkout,
-  logEnduranceActivity,
-} from "@/lib/manual-log";
+import { logStrengthWorkout, logEnduranceActivity } from "@/lib/manual-log";
 
 const SU = "itest-log-strength-" + Date.now();
 const EU = "itest-log-endurance-" + Date.now();
@@ -1922,10 +1977,7 @@ describe("logStrengthWorkout (live Neon)", () => {
   it("adds a workout + its sets, then dedupes a re-submit", async () => {
     const a = await logStrengthWorkout(SU, input);
     expect(a).toMatchObject({ ok: true, added: 1, skipped: 0 });
-    const rows = await db
-      .select()
-      .from(workout)
-      .where(eq(workout.userId, SU));
+    const rows = await db.select().from(workout).where(eq(workout.userId, SU));
     expect(rows.length).toBe(1);
     const sets = await db
       .select()
@@ -1998,6 +2050,7 @@ git commit -m "test(log): integration coverage for manual strength + endurance l
 ### Task 12: Mark spec implemented + final green-bar verification
 
 **Files:**
+
 - Modify: `docs/superpowers/specs/2026-05-17-endurance-and-manual-logging-design.md`
 
 - [ ] **Step 1: Run the full required gate**

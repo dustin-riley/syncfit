@@ -58,8 +58,7 @@ describe("validateEnduranceInput", () => {
   it("accepts valid input incl. null distance", () => {
     expect(validateEnduranceInput(goodEndurance).fieldErrors).toEqual({});
     expect(
-      validateEnduranceInput({ ...goodEndurance, distanceMi: null })
-        .fieldErrors
+      validateEnduranceInput({ ...goodEndurance, distanceMi: null }).fieldErrors
     ).toEqual({});
   });
   it("flags unknown type, non-positive duration, negative distance", () => {

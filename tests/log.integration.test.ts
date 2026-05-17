@@ -2,10 +2,7 @@ import { describe, it, expect, afterAll } from "vitest";
 import { inArray, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { workout, workoutSet, enduranceActivity } from "@/db/schema";
-import {
-  logStrengthWorkout,
-  logEnduranceActivity,
-} from "@/lib/manual-log";
+import { logStrengthWorkout, logEnduranceActivity } from "@/lib/manual-log";
 
 const SU = "itest-log-strength-" + Date.now();
 const EU = "itest-log-endurance-" + Date.now();
@@ -41,10 +38,7 @@ describe("logStrengthWorkout (live Neon)", () => {
   it("adds a workout + its sets, then dedupes a re-submit", async () => {
     const a = await logStrengthWorkout(SU, input);
     expect(a).toMatchObject({ ok: true, added: 1, skipped: 0 });
-    const rows = await db
-      .select()
-      .from(workout)
-      .where(eq(workout.userId, SU));
+    const rows = await db.select().from(workout).where(eq(workout.userId, SU));
     expect(rows.length).toBe(1);
     const sets = await db
       .select()

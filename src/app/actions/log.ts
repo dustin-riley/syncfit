@@ -27,10 +27,7 @@ export async function logWorkout(formData: FormData): Promise<LogResult> {
     new Date(NaN);
 
   if (kind === "strength") {
-    const count = Math.min(
-      Math.trunc(num(formData.get("rowCount")) || 0),
-      100
-    );
+    const count = Math.min(Math.trunc(num(formData.get("rowCount")) || 0), 100);
     const perExerciseSeq = new Map<string, number>();
     const sets: {
       exerciseName: string;
