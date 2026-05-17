@@ -4,7 +4,7 @@
 
 **Goal:** Ship a multi-user web app where a user logs in, uploads their Strong CSV, enters a weekly plan, and clicks "Analyze Readiness" to get an AI verdict on today's session based on trailing strength load.
 
-**Architecture:** Next.js App Router on Vercel. Pure, independently-tested modules for the Strong CSV parser, trailing-load aggregator, and AI engine. Neon Postgres via Drizzle, Better Auth (email+password) for auth, Vercel AI SDK + Anthropic for the coaching engine. Design system vendored as a copy-first shim (spec §0), migrated to `@dustinriley/design` later as an off-critical-path task.
+**Architecture:** Next.js App Router on Vercel. Pure, independently-tested modules for the Strong CSV parser, trailing-load aggregator, and AI engine. Neon Postgres via Drizzle, Better Auth (email+password) for auth, Vercel AI SDK + Anthropic for the coaching engine. Design system consumed from the `@dustin-riley/design` npm package (spec §2a).
 
 **Tech Stack:** Next.js 16 (App Router, TypeScript; `create-next-app@latest` resolved to 16.2.6 — accepted deliberately, all stack deps support it), Tailwind CSS v4, shadcn/ui, Drizzle ORM, Neon Postgres, Better Auth, Vercel AI SDK (`ai` + `@ai-sdk/anthropic`), Vitest.
 
@@ -32,7 +32,7 @@ src/
     ai-engine.ts         # PURE-ish: schema + buildPrompt + analyze (model injected)
     units.ts             # shared constants (APP_TZ)
   app/
-    globals.css          # Tailwind v4 + vendored design-system shim (spec §0)
+    globals.css          # Tailwind v4 + @dustin-riley/design import (spec §2a)
     layout.tsx           # fonts + html shell
     page.tsx             # dashboard (today + feed + Analyze)
     login/page.tsx
@@ -57,7 +57,7 @@ vitest.config.ts
 
 ---
 
-## Task 1: Project scaffold + design-system shim
+## Task 1: Project scaffold + design system
 
 **Files:**
 
@@ -73,105 +73,22 @@ npx create-next-app@latest . --typescript --tailwind --app --src-dir --no-eslint
 
 Expected: project files created in cwd (the repo already has `vision.md`/`docs/`; accept overwrite prompts only for scaffold files, keep `docs/` and `vision.md`).
 
-- [ ] **Step 2: Add the design-system shim to `globals.css`**
+- [ ] **Step 2: Install the design system and import it in `globals.css`**
 
-Replace `src/app/globals.css` with the vendored token block + shadcn HSL bridge + `@theme` radius map (tokens/bridge ONLY — no `.hero`/blobs/`.site-nav`, per spec §0). Source values from `../scorigami/src/app/globals.css` lines 1–260.
+Run:
+
+```bash
+npm i --save-exact @dustin-riley/design@0.2.3
+```
+
+Then replace `src/app/globals.css` with exactly:
 
 ```css
 @import "tailwindcss";
-
-/* === VENDORED DESIGN-SYSTEM SHIM (spec §0) — replace with @dustinriley/design imports on migration (spec §11) === */
-:root {
-  --ds-bg: #faf6f0;
-  --ds-surface: #f3ece0;
-  --ds-surface-sunken: #ede4d3;
-  --ds-border: #e0d5c2;
-  --ds-text: #1f1a14;
-  --ds-text-muted: #6b5f50;
-  --ds-primary: #b8541c;
-  --ds-primary-hover: #9e4615;
-  --ds-primary-pressed: #85390f;
-  --ds-on-primary: #faf6f0;
-  --ds-link: #9e4615;
-  --ds-link-hover: #85390f;
-  --ds-accent-ochre: #c9922b;
-  --ds-accent-teal: #2e7d7a;
-  --ds-success: #5c7a3e;
-  --ds-error: #a8392e;
-  --ds-warning: #c9922b;
-  --ds-shadow-sm:
-    0 1px 2px rgba(74, 52, 28, 0.06), 0 1px 1px rgba(74, 52, 28, 0.04);
-  --ds-shadow-md:
-    0 4px 8px rgba(74, 52, 28, 0.08), 0 2px 4px rgba(74, 52, 28, 0.05);
-  --ds-shadow-lg:
-    0 16px 32px rgba(74, 52, 28, 0.12), 0 4px 8px rgba(74, 52, 28, 0.06);
-  --ds-font-display: "Outfit", system-ui, sans-serif;
-  --ds-font-body: "DM Sans", system-ui, sans-serif;
-  --ds-font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --ds-radius-sm: 8px;
-  --ds-radius-md: 16px;
-  --ds-radius-pill: 999px;
-  /* shadcn HSL bridge (matches scorigami; will be regenerated drift-free on migration) */
-  --background: 36 48% 96%;
-  --foreground: 33 20% 10%;
-  --card: 36 48% 96%;
-  --card-foreground: 33 20% 10%;
-  --primary: 22 74% 42%;
-  --primary-foreground: 36 48% 96%;
-  --secondary: 36 40% 91%;
-  --secondary-foreground: 33 20% 10%;
-  --muted: 36 40% 91%;
-  --muted-foreground: 33 12% 37%;
-  --border: 36 30% 82%;
-  --input: 36 30% 82%;
-  --ring: 22 74% 42%;
-  --destructive: 4 57% 42%;
-  --destructive-foreground: 36 48% 96%;
-  --radius: 8px;
-}
-@theme inline {
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-secondary: hsl(var(--secondary));
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-  --color-destructive: hsl(var(--destructive));
-  --radius-sm: 8px;
-  --radius-md: 8px;
-  --radius-lg: 16px;
-  --radius-xl: 16px;
-  --font-sans: var(--ds-font-body);
-}
-body {
-  background: var(--ds-bg);
-  color: var(--ds-text);
-  font-family: var(--ds-font-body);
-}
-h1,
-h2,
-h3 {
-  font-family: var(--ds-font-display);
-  letter-spacing: -0.02em;
-}
-a {
-  color: var(--ds-link);
-}
-a:hover {
-  color: var(--ds-link-hover);
-}
-:focus-visible {
-  outline: 2px solid var(--ds-primary);
-  outline-offset: 2px;
-}
-/* === END SHIM === */
+@import "@dustin-riley/design/tailwind.css";
 ```
+
+The package's `tailwind.css` pulls in `core.css` (the `.ds-*` primitives + base element styling) and `tokens.css` (`--ds-*` + focus ring). Never add tokens or hex/px to `globals.css`.
 
 - [ ] **Step 3: Load the 3 Google fonts in `layout.tsx`**
 
@@ -236,7 +153,7 @@ Expected: `OK`. Stop the server.
 
 ```bash
 git add -A
-git commit -m "feat: scaffold Next.js app with vendored design-system shim"
+git commit -m "feat: scaffold Next.js app with @dustin-riley/design"
 ```
 
 ---
@@ -1692,7 +1609,7 @@ git add -A && git commit -m "feat: dashboard with activity feed and Analyze Read
 
 - [ ] **Step 1: README with env + deploy notes**
 
-`README.md`: document required env vars (`DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `ANTHROPIC_API_KEY`), `npx drizzle-kit push`, `npm test`, and the design-system migration pointer (spec §11).
+`README.md`: document required env vars (`DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `ANTHROPIC_API_KEY`), `npx drizzle-kit push`, and `npm test`.
 
 - [ ] **Step 2: Deploy**
 
@@ -1709,7 +1626,6 @@ git add -A && git commit -m "docs: README and deployment notes"
 
 ## Deferred (not in this plan)
 
-- **Design-system package migration** — spec §11. Scheduled when `@dustinriley/design` publishes; replace the shim block in `globals.css` with the three package imports + visual-parity check. Off critical path.
 - **Progression view** — spec §10. Top-set weight charts; v1.1.
 - **AI `modifications[]`** — spec §1. Prompt enrichment only; schema/UI already support it.
 - **Strava + endurance model** — spec v2 (`endurance_activity` + `activity_split`).
@@ -1725,6 +1641,6 @@ git add -A && git commit -m "docs: README and deployment notes"
 
 ## Self-Review
 
-- **Spec coverage:** §0 shim → Task 1; §2/§2a stack → Tasks 1–6; §3 units → Tasks 4 (parser), 5 (aggregator), 6 (AI), 3 (auth); §4 data model → Task 2; §5 CSV format → Task 4 (fixture mirrors real header incl. cardio row); §6 data flow → Tasks 3,7,8,9; §7 AI schema/prompt → Task 6; §8 error handling → parser errors (T4), dedupe (T7), AI retry/friendly error (T6/T9), auth redirect (T3), empty states (T9); §9 testing → Tasks 4,5,6 TDD; §10 open items → resolved in header (auth=email+pw, model=sonnet-4-6, progression deferred); §11 migration → Deferred section + Task 10 README pointer.
+- **Spec coverage:** §2/§2a stack → Tasks 1–6; §3 units → Tasks 4 (parser), 5 (aggregator), 6 (AI), 3 (auth); §4 data model → Task 2; §5 CSV format → Task 4 (fixture mirrors real header incl. cardio row); §6 data flow → Tasks 3,7,8,9; §7 AI schema/prompt → Task 6; §8 error handling → parser errors (T4), dedupe (T7), AI retry/friendly error (T6/T9), auth redirect (T3), empty states (T9); §9 testing → Tasks 4,5,6 TDD; §10 open items → resolved in header (auth=email+pw, model=sonnet-4-6, progression deferred).
 - **Placeholder scan:** no TBD/TODO; every code step has complete code; the one `restDays` assertion ambiguity in Task 5 Step 1 is explicitly resolved in the note.
 - **Type consistency:** `ParsedWorkout`/`ParsedExercise`/`ParsedSet` (T4) consumed unchanged in T7; `SetRow`/`TrailingLoad` (T5) consumed in T9; `AnalyzeInput`/`Readiness`/`ReadinessSchema`/`MODEL_ID` (T6) consumed in T9; `analyzeReadiness(input, {generate})` signature consistent T6↔T9 (T9 uses default generate).

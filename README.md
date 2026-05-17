@@ -11,7 +11,7 @@ SyncFit is a hybrid-athlete training-readiness MVP. Import your strength history
 - **Vercel AI SDK** + **Anthropic** (`claude-sonnet-4-6`)
 - **Vitest** (unit + integration)
 
-The design system is currently a vendored shim pending the `@dustinriley/design` package (see spec §11).
+The design system comes from the `@dustin-riley/design` npm package (see spec §2a).
 
 ## Prerequisites
 
@@ -55,7 +55,7 @@ Two suites:
 - **Pure, testable modules:** `src/lib/strong-parser.ts`, `src/lib/trailing-load.ts`, `src/lib/ai-engine.ts`, `src/lib/readiness.ts`, `src/lib/import-persist.ts`, `src/lib/plan-store.ts`.
 - **Two Drizzle clients:** `src/db/index.ts` (neon-http, used for reads) and `src/db/tx.ts` (neon-serverless `Pool`, used only for the atomic multi-statement CSV import).
 - **Auth:** `src/proxy.ts` (Next 16 `proxy` file convention) is a presence-only UX gate. Server actions re-validate the session via Better Auth and scope every query by `userId`.
-- **Timezone:** a single fixed timezone, `America/New_York` (spec §0).
+- **Timezone:** a single fixed timezone, `America/New_York` (spec §1).
 
 ## Vercel deploy runbook
 
@@ -72,7 +72,6 @@ The deploy is interactive and tied to your Vercel account plus the Neon↔Vercel
 
 The following are intentionally out of scope for v1 (see `docs/superpowers/specs/2026-05-16-syncfit-mvp-design.md` and the implementation plan):
 
-- **Design-system package migration** — vendored shim now; migrate to `@dustinriley/design` later (spec §11).
 - **Progression charts** — deferred to v1.1 (spec §10).
 - **AI `modifications[]` population** — the field exists but is unpopulated in v1; deferred to v1.1 (spec §1).
 - **Strava integration + endurance model** — deferred to v2 (spec, v2 section).

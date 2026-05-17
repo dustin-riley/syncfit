@@ -3,26 +3,6 @@
 **Date:** 2026-05-16
 **Status:** Approved (brainstorming) — pending implementation plan
 
-## 0. Design-System Sequencing (copy-first, migrate later)
-
-SyncFit does **not** block on the `@dustinriley/design` package. Instead:
-
-1. **Interim shim:** vendor scorigami's **`--ds-*` token block + shadcn HSL
-   bridge + `@theme` radius map ONLY** into `app/globals.css`. **No furniture**
-   (`.hero`/blobs, `.site-nav`, `.site-footer`, page-specific classes). This
-   shim sits behind the same conceptual boundary as the eventual imports — all
-   app code references `--ds-*` tokens / shadcn semantic classes, never the
-   shim's literal values.
-2. **Build the MVP in parallel** with the package extraction (tracked by
-   `../dustinriley.com/docs/superpowers/specs/2026-05-16-design-system-package-design.md`).
-3. **Scheduled migration task (see §11):** once `@dustinriley/design` is
-   published, replace the shim with the three package `@import`s and run a
-   visual-parity check.
-
-**Discipline that keeps migration ~30 min (enforced from commit 1):** no
-hard-coded hex/px anywhere (DESIGN.md rule); no design-system furniture copied;
-no invented tokens. Migration friction scales directly with any leak of these.
-
 ## 1. Goal & Scope
 
 Ship the thinnest vertical slice that delivers SyncFit's core value: a logged-in
@@ -45,7 +25,7 @@ per-user data isolation. Not a public product yet.
 
 - **v2:** Strava OAuth + endurance model (`endurance_activity` + `activity_split`).
 - **v1.1:** Populate AI `modifications[]` (per-exercise plan edits). Schema is
-  built in v1; only the prompt changes — no migration, no UI rework.
+  built in v1; only the prompt changes — no schema change, no UI rework.
 
 ### Known v1 limitations (documented, accepted)
 
@@ -63,44 +43,29 @@ per-user data isolation. Not a public product yet.
 - **Auth:** Better Auth (email).
 - **AI:** Vercel AI SDK (`ai`) + `@ai-sdk/anthropic`. Provider-agnostic
   interface; model swappable later.
-- **Design system:** Consumed **day one** from the published npm package
-  **`@dustinriley/design`** (not copied from another repo). See §2a.
+- **Design system:** `@dustin-riley/design` (npm, exact-pinned). See §2a.
 
-## 2a. Design System (`@dustinriley/design`, npm)
+## 2a. Design System (`@dustin-riley/design`, npm)
 
-The design system is being extracted into a standalone public npm package
-(`@dustinriley/design`); its design spec lives at
-`../dustinriley.com/docs/superpowers/specs/2026-05-16-design-system-package-design.md`.
-SyncFit's **end state** is a consumer of that package. Per §0, it gets there
-via a **copy-first interim shim**, not by blocking on publication.
+SyncFit consumes the published `@dustin-riley/design` package. `globals.css` is
+two imports — `@import "tailwindcss";` then
+`@import "@dustin-riley/design/tailwind.css";`. The package's `tailwind.css`
+transitively pulls in `core.css` (the `.ds-*` primitive vocabulary +
+`:where()`-wrapped base element styling) and `tokens.css` (`--ds-*` constitution
 
-**Interim (until package published):** vendor scorigami's `--ds-*` token block
+- focus ring), and adds the Tailwind v4 `@theme` radius map + shadcn HSL bridge
+  generated from the tokens.
 
-- shadcn HSL bridge + `@theme` radius map into `globals.css` — tokens/bridge
-  ONLY, no furniture (per §0). All app code references `--ds-*` tokens / shadcn
-  semantic classes so the swap is later mechanical.
-
-**End state (Next.js + Tailwind v4 + shadcn → import all three tiers in
-`globals.css`):**
-
-```css
-@import "@dustinriley/design/tokens.css"; /* --ds-* constitution + resets */
-@import "@dustinriley/design/core.css"; /* .ds-btn, .ds-container, .ds-panel, .ds-page-header, ... */
-@import "@dustinriley/design/tailwind.css"; /* Tailwind @theme + shadcn HSL bridge (generated from tokens, drift-free) */
-```
-
-- **shadcn React primitives are NOT in the package** (explicitly deferred there
-  under YAGNI). SyncFit adds its own shadcn/ui components (Button, Card, etc.)
-  via the shadcn CLI; the package's `tailwind.css` bridge themes them
-  automatically — **no hand-copied HSL variables, no drift.**
-- **Fonts stay app-side** (the package is framework-free CSS): load the 3
-  Google fonts in `layout.tsx` — **Outfit** (display), **DM Sans** (body),
-  **JetBrains Mono** (caption/mono).
-- The package bundles the **`dustinriley-design` Claude Skill** and a
-  project-neutral **`DESIGN.md`**; enable the skill so AI tooling applies the
-  system consistently.
-- Pin an exact package version in `package.json` (no `^`) so the design surface
-  can't shift under the MVP mid-build.
+* **shadcn React primitives are not in the package** (deferred there under
+  YAGNI). If SyncFit adds shadcn/ui components, the bridge themes them
+  automatically — no hand-copied HSL, no drift.
+* **Fonts are app-side** (the package is framework-free CSS): `layout.tsx`
+  loads Outfit (display), DM Sans (body), JetBrains Mono (mono) via
+  `next/font` and binds them to `--ds-font-*`.
+* The package version is exact-pinned (no `^`) so the design surface can't
+  shift under the app. The bundled `dustinriley-design` Claude skill is
+  vendored at `.claude/skills/dustinriley-design/SKILL.md`; re-sync on version
+  bump.
 
 **`DESIGN.md` constraints are spec rules:** reference `--ds-*` tokens, never
 hard-code hex/px; exactly 3 radii (8/16/999px), warm-tinted shadows only;
@@ -223,7 +188,7 @@ setCount, perExercise[], lastSessionAt, restDays }, units }`
 - `buildPrompt(input)` is a pure function (snapshot-testable).
 - v1 prompt instructs the model to return verdict + headline + rationale and
   leave `modifications` empty. v1.1 enriches the prompt to populate
-  `modifications[]` — same schema, no migration, no UI rework.
+  `modifications[]` — same schema, no schema change, no UI rework.
 - `analyze(input)` calls `generateObject({ model: anthropic(...), schema,
 prompt })`.
 
@@ -264,19 +229,3 @@ prompt })`.
 - Pick the specific Anthropic model id (`claude-...`) at implementation.
 - Decide whether the progression view ships in v1 or slips to v1.1 based on
   remaining effort after the core loop works.
-
-## 11. Design-System Migration (scheduled)
-
-Triggered when `@dustinriley/design` is published (§0). Expected ~30 min + a
-visual-parity check; not on the MVP critical path.
-
-1. `npm i @dustinriley/design` pinned to an exact version (no `^`).
-2. In `globals.css`, delete the vendored shim block (tokens + bridge +
-   `@theme`) and replace with the three package `@import`s from §2a.
-3. **Visual-parity check:** the package generates the shadcn HSL bridge from
-   tokens, so values may differ slightly from scorigami's hand-converted copy.
-   Diff shadcn-themed surfaces (buttons, cards, the readiness card, form
-   controls) before/after; accept the generated values as canonical.
-4. Enable the bundled `dustinriley-design` Claude Skill.
-5. Confirm no hard-coded hex/px leaked (grep) — any found are migration debt to
-   fix here, not carry forward.
