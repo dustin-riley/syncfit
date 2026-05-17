@@ -37,7 +37,11 @@ export function TodaySession({
   > | null>(null);
 
   const adjFor = (name: string) =>
-    out?.result?.todayAdjustments.find((a) => a.exercise === name)?.change;
+    findExerciseMatch(
+      name,
+      out?.result?.todayAdjustments ?? [],
+      (a) => a.exercise
+    )?.change;
   const actualFor = (name: string) =>
     findExerciseMatch(name, actuals, (a) => a.exerciseName);
 

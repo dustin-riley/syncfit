@@ -30,13 +30,10 @@ export function VerdictBanner({
   const v = MAP[verdict] ?? MAP.proceed_as_planned;
   return (
     <div
-      className="ds-panel p-4 my-3"
-      style={{ borderInlineStart: `4px solid var(${v.token})` }}
+      className="ds-panel p-4 my-3 border-s-4"
+      style={{ borderInlineStartColor: `var(${v.token})` }}
     >
-      <p
-        className="ds-mono-note"
-        style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
-      >
+      <p className="ds-mono-note flex items-center gap-2">
         <v.Icon size={16} aria-hidden="true" />
         {v.label}
       </p>

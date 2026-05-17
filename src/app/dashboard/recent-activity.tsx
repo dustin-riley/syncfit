@@ -38,7 +38,8 @@ export function RecentActivity({ workouts }: { workouts: WorkoutView[] }) {
           return (
             <li
               key={w.id}
-              style={{ borderBottom: "1px solid var(--ds-border)" }}
+              className="border-b"
+              style={{ borderBottomColor: "var(--ds-border)" }}
             >
               <button
                 onClick={() => setOpen(isOpen ? null : w.id)}
