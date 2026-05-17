@@ -1,7 +1,7 @@
 # SyncFit Navigation — Design Spec
 
 **Date:** 2026-05-17
-**Status:** Approved (brainstorming) — pending implementation plan
+**Status:** Implemented (2026-05-17)
 **Relationship to prior specs:** Additive. The MVP spec
 (`2026-05-16-syncfit-mvp-design.md`) and the dashboard/auth/design-system specs
 all stand unchanged. This spec only adds shared in-app navigation; it changes no
