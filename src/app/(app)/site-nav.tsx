@@ -86,7 +86,7 @@ export function SiteNav({ email }: { email: string }) {
           style={{
             fontFamily: "var(--ds-font-display)",
             fontWeight: 600,
-            fontSize: "1rem",
+            fontSize: "var(--ds-fs-body)",
             color: "var(--ds-text)",
           }}
         >
@@ -132,7 +132,9 @@ export function SiteNav({ email }: { email: string }) {
             onClick={() => setMenuOpen((o) => !o)}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
-            aria-controls="account-menu"
+            // Only reference the panel while it is mounted; aria-controls
+            // must not point at a non-existent element (WAI-ARIA).
+            aria-controls={menuOpen ? "account-menu" : undefined}
             aria-label="Account menu"
             className="ds-btn ds-btn-ghost flex items-center"
             style={{
@@ -142,25 +144,22 @@ export function SiteNav({ email }: { email: string }) {
           >
             <span
               aria-hidden="true"
-              className="flex items-center justify-center"
+              className="flex items-center justify-center h-7 w-7"
               style={{
-                width: "1.75rem",
-                height: "1.75rem",
                 borderRadius: "var(--ds-radius-pill)",
                 background: "var(--ds-accent-ochre)",
                 color: "var(--ds-on-primary)",
                 fontWeight: 600,
-                fontSize: "0.8rem",
+                fontSize: "var(--ds-fs-caption)",
               }}
             >
               {initial}
             </span>
             <span
-              className="hidden sm:inline"
+              className="hidden sm:inline max-w-48"
               style={{
                 color: "var(--ds-text-muted)",
-                fontSize: "0.85rem",
-                maxWidth: "12rem",
+                fontSize: "var(--ds-fs-body-sm)",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -176,16 +175,12 @@ export function SiteNav({ email }: { email: string }) {
               id="account-menu"
               role="menu"
               aria-label="Account"
-              className="ds-panel"
+              className="ds-panel absolute right-0 z-50 min-w-56"
               style={{
-                position: "absolute",
-                right: 0,
                 top: "calc(100% + var(--ds-space-2))",
-                minWidth: "14rem",
                 borderRadius: "var(--ds-radius-sm)",
                 boxShadow: "var(--ds-shadow-lg)",
                 padding: "var(--ds-space-2)",
-                zIndex: 50,
               }}
             >
               <div role="none">
