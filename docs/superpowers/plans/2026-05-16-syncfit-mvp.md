@@ -45,7 +45,7 @@ src/
       plan.ts            # server action: upsert weekly plan
       analyze.ts         # server action: aggregate + AI + persist
   components/ui/         # shadcn primitives (CLI-generated)
-  proxy.ts               # route protection (Next 16 `proxy` convention)
+  proxy.ts               # route protection
 tests/
   strong-parser.test.ts
   trailing-load.test.ts

@@ -97,4 +97,4 @@ Route (app)
 ƒ  (Dynamic)  server-rendered on demand
 ```
 
-Note: this project uses the Next.js 16 `proxy` file convention (`src/proxy.ts` exporting `proxy`), so the build emits no `middleware`→`proxy` deprecation warning. It is reported as `ƒ Proxy (Middleware)` in the build output.
+The route gate (`src/proxy.ts`) is reported as `ƒ Proxy (Middleware)` above.
