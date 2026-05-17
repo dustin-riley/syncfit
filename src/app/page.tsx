@@ -1,72 +1,136 @@
 import { auth } from "@/auth/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { db } from "@/db";
-import { plannedSession, workout, readinessAnalysis } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
-import { todayInfo } from "@/lib/readiness";
-import { AnalyzeButton } from "./analyze-button";
+import { workout, workoutSet, readinessAnalysis } from "@/db/schema";
+import { eq, desc, inArray } from "drizzle-orm";
+import { todayInfo, loadTrailingLoad } from "@/lib/readiness";
+import { getPlanForUser } from "@/lib/plan-store";
+import { TodaySession } from "./dashboard/today-session";
+import { RecentActivity } from "./dashboard/recent-activity";
+import { ProgressionInbox } from "./dashboard/progression-inbox";
 
 export default async function Home() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/login");
   const userId = session.user.id;
-  const { dow } = todayInfo(new Date());
-  const [planned] = await db
-    .select()
-    .from(plannedSession)
-    .where(
-      and(eq(plannedSession.userId, userId), eq(plannedSession.dayOfWeek, dow))
-    );
+  const now = new Date();
+  const { dow, date } = todayInfo(now);
+
+  const plan = await getPlanForUser(userId);
+  const today = plan.find((p) => p.dayOfWeek === dow);
+
   const recentWorkouts = await db
     .select()
     .from(workout)
     .where(eq(workout.userId, userId))
     .orderBy(desc(workout.performedAt))
-    .limit(10);
+    .limit(30);
+  const wIds = recentWorkouts.map((w) => w.id);
+  const sets = wIds.length
+    ? await db
+        .select()
+        .from(workoutSet)
+        .where(inArray(workoutSet.workoutId, wIds))
+    : [];
+
+  const load = await loadTrailingLoad(userId, now);
+
+  // One query: limit(6) is a superset of the single latest row, so derive
+  // `latest` from pastAnalyses[0] rather than issuing a second round-trip.
   const pastAnalyses = await db
     .select()
     .from(readinessAnalysis)
     .where(eq(readinessAnalysis.userId, userId))
     .orderBy(desc(readinessAnalysis.createdAt))
-    .limit(5);
+    .limit(6);
+  const latest = pastAnalyses[0];
+  const priorToday =
+    latest && latest.analysisDate === date
+      ? {
+          verdict: latest.verdict,
+          headline: latest.headline,
+          rationale: latest.rationale,
+          todayAdjustments: latest.todayAdjustments,
+        }
+      : null;
+
+  const workoutViews = recentWorkouts.map((w) => ({
+    id: w.id,
+    performedAt: w.performedAt.toDateString(),
+    title: w.title,
+    sets: sets
+      .filter((s) => s.workoutId === w.id)
+      .map((s) => ({
+        exerciseName: s.exerciseName,
+        weight: Number(s.weight),
+        reps: s.reps,
+      })),
+  }));
 
   return (
     <main className="ds-container p-8">
-      <h1>Today</h1>
-      <section className="ds-panel p-4 my-3">
-        <h2>Planned session</h2>
-        {planned ? (
-          <p>
-            {planned.title} — {planned.description}
+      <h1 className="h2">today</h1>
+      {today ? (
+        <TodaySession
+          title={today.title}
+          modality={today.modality}
+          notes={today.notes}
+          exercises={today.exercises}
+          actuals={load.perExercise.map((e) => ({
+            exerciseName: e.exerciseName,
+            topSetWeight: e.topSetWeight,
+            topSetReps: e.topSetReps,
+            agoDays: Math.floor(
+              (now.getTime() - e.topSetAt.getTime()) / 86_400_000
+            ),
+          }))}
+          initialResult={priorToday}
+        />
+      ) : (
+        <section className="ds-panel p-4 my-3">
+          <p className="ds-mono-note">
+            no plan for today.{" "}
+            <Link href="/plan" style={{ color: "var(--ds-link)" }}>
+              build your plan
+            </Link>
+            .
           </p>
-        ) : (
-          <p>
-            No plan set. <a href="/plan">Add one</a>.
-          </p>
+        </section>
+      )}
+
+      {latest &&
+        latest.progressionSuggestions.some((s) => s.status === "pending") && (
+          <ProgressionInbox
+            analysisId={latest.id}
+            suggestions={latest.progressionSuggestions
+              .filter((s) => s.status === "pending")
+              .map((s) => ({
+                exercise: s.exercise,
+                currentWeight: s.currentWeight,
+                suggestedWeight: s.suggestedWeight,
+                suggestedSets: s.suggestedSets,
+                suggestedReps: s.suggestedReps,
+                rationale: s.rationale,
+              }))}
+          />
         )}
-        <AnalyzeButton />
-      </section>
+
       <section className="my-6">
-        <h2>Activity feed</h2>
-        {recentWorkouts.length === 0 ? (
-          <p>
-            No workouts yet. <a href="/import">Import your Strong CSV</a>.
-          </p>
-        ) : (
-          <ul>
-            {recentWorkouts.map((w) => (
-              <li key={w.id} className="ds-mono-note">
-                {w.performedAt.toDateString()} — {w.title}
-              </li>
-            ))}
-          </ul>
-        )}
-        <h3 className="mt-4">Recent readiness checks</h3>
-        <ul>
+        <h2 className="h4">recent activity</h2>
+        <RecentActivity workouts={workoutViews} />
+      </section>
+
+      <section className="my-6">
+        <h2 className="h4">past readiness checks</h2>
+        <ul style={{ listStyle: "none", padding: 0 }}>
           {pastAnalyses.map((a) => (
             <li key={a.id} className="ds-panel p-3 my-2">
-              <strong>{a.headline}</strong> — {a.rationale}
+              <span className="ds-mono-note">
+                {a.analysisDate} · {a.verdict.replace(/_/g, " ")}
+              </span>{" "}
+              <strong>{a.headline}</strong>
             </li>
           ))}
         </ul>

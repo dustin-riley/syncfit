@@ -1,12 +1,17 @@
 import { db } from "@/db";
 import {
   plannedSession,
+  plannedExercise,
   workout,
   workoutSet,
   readinessAnalysis,
 } from "@/db/schema";
 import { eq, and, gte } from "drizzle-orm";
-import { computeTrailingLoad, type SetRow } from "@/lib/trailing-load";
+import {
+  computeTrailingLoad,
+  type SetRow,
+  type TrailingLoad,
+} from "@/lib/trailing-load";
 import { analyzeReadiness, MODEL_ID, type Readiness } from "@/lib/ai-engine";
 import { APP_TZ } from "@/lib/units";
 
@@ -36,6 +41,32 @@ export function todayInfo(now: Date) {
 
 export type AnalyzeOutcome = { result?: Readiness; error?: string };
 
+export async function loadTrailingLoad(
+  userId: string,
+  now: Date
+): Promise<TrailingLoad> {
+  const cutoff = new Date(now.getTime() - 72 * 3600_000);
+  const rows = await db
+    .select({
+      exerciseName: workoutSet.exerciseName,
+      performedAt: workout.performedAt,
+      weight: workoutSet.weight,
+      reps: workoutSet.reps,
+    })
+    .from(workoutSet)
+    .innerJoin(workout, eq(workoutSet.workoutId, workout.id))
+    .where(
+      and(eq(workoutSet.userId, userId), gte(workout.performedAt, cutoff))
+    );
+  const setRows: SetRow[] = rows.map((r) => ({
+    exerciseName: r.exerciseName,
+    performedAt: r.performedAt,
+    weight: Number(r.weight),
+    reps: r.reps,
+  }));
+  return computeTrailingLoad(setRows, now, 72);
+}
+
 export async function runReadinessAnalysis(opts: {
   userId: string;
   now?: Date;
@@ -58,34 +89,33 @@ export async function runReadinessAnalysis(opts: {
       error: "No planned session for today. Add one on the Plan page first.",
     };
 
-  const cutoff = new Date(now.getTime() - 72 * 3600_000);
-  const rows = await db
-    .select({
-      exerciseName: workoutSet.exerciseName,
-      performedAt: workout.performedAt,
-      weight: workoutSet.weight,
-      reps: workoutSet.reps,
-    })
-    .from(workoutSet)
-    .innerJoin(workout, eq(workoutSet.workoutId, workout.id))
+  const plannedExercises = await db
+    .select()
+    .from(plannedExercise)
     .where(
-      and(eq(workoutSet.userId, opts.userId), gte(workout.performedAt, cutoff))
+      and(
+        eq(plannedExercise.userId, opts.userId),
+        eq(plannedExercise.plannedSessionId, planned.id)
+      )
     );
-  const setRows: SetRow[] = rows.map((r) => ({
-    exerciseName: r.exerciseName,
-    performedAt: r.performedAt,
-    weight: Number(r.weight),
-    reps: r.reps,
-  }));
+  const exercises = plannedExercises
+    .sort((a, b) => a.orderIndex - b.orderIndex)
+    .map((e) => ({
+      name: e.name,
+      targetSets: e.targetSets,
+      targetReps: e.targetReps,
+      targetWeight: Number(e.targetWeight),
+    }));
 
-  const load = computeTrailingLoad(setRows, now, 72);
+  const load = await loadTrailingLoad(opts.userId, now);
   try {
     const result = await analyzeReadiness(
       {
         plannedSession: {
           title: planned.title,
-          description: planned.description,
+          notes: planned.notes,
           modality: planned.modality,
+          exercises,
         },
         trailingLoad: load,
       },
@@ -94,16 +124,22 @@ export async function runReadinessAnalysis(opts: {
     await db.insert(readinessAnalysis).values({
       userId: opts.userId,
       analysisDate: date,
-      planSnapshot: planned,
+      planSnapshot: { session: planned, exercises },
       loadSnapshot: load,
       verdict: result.verdict,
       headline: result.headline,
       rationale: result.rationale,
-      modifications: result.modifications,
+      todayAdjustments: result.todayAdjustments,
+      progressionSuggestions: result.progressionSuggestions.map((s) => ({
+        ...s,
+        status: "pending" as const,
+      })),
       model: MODEL_ID,
     });
     return { result };
-  } catch (e: any) {
-    return { error: e?.message ?? "Analysis failed." };
+  } catch (e: unknown) {
+    const msg =
+      e instanceof Error && typeof e.message === "string" ? e.message : "";
+    return { error: /couldn't analyze/i.test(msg) ? msg : "Analysis failed." };
   }
 }

@@ -8,6 +8,9 @@ export type PerExercise = {
   exerciseName: string;
   volume: number;
   setCount: number;
+  topSetWeight: number;
+  topSetReps: number;
+  topSetAt: Date;
 };
 export type TrailingLoad = {
   windowHours: number;
@@ -18,6 +21,13 @@ export type TrailingLoad = {
   lastSessionAt: Date | null;
   restDays: number;
 };
+
+// heavier weight wins; tie → more reps; tie → more recent
+function isBetterTopSet(c: SetRow, best: PerExercise): boolean {
+  if (c.weight !== best.topSetWeight) return c.weight > best.topSetWeight;
+  if (c.reps !== best.topSetReps) return c.reps > best.topSetReps;
+  return c.performedAt.getTime() > best.topSetAt.getTime();
+}
 
 export function computeTrailingLoad(
   rows: SetRow[],
@@ -35,14 +45,25 @@ export function computeTrailingLoad(
   for (const r of inWin) {
     const v = r.weight * r.reps;
     totalVolume += v;
-    const e = perMap.get(r.exerciseName) ?? {
-      exerciseName: r.exerciseName,
-      volume: 0,
-      setCount: 0,
-    };
+    const e = perMap.get(r.exerciseName);
+    if (!e) {
+      perMap.set(r.exerciseName, {
+        exerciseName: r.exerciseName,
+        volume: v,
+        setCount: 1,
+        topSetWeight: r.weight,
+        topSetReps: r.reps,
+        topSetAt: r.performedAt,
+      });
+      continue;
+    }
     e.volume += v;
     e.setCount += 1;
-    perMap.set(r.exerciseName, e);
+    if (isBetterTopSet(r, e)) {
+      e.topSetWeight = r.weight;
+      e.topSetReps = r.reps;
+      e.topSetAt = r.performedAt;
+    }
   }
   const sessionKeys = new Set(inWin.map((r) => r.performedAt.toISOString()));
   const lastSessionAt = inWin.length

@@ -46,11 +46,24 @@ export const plannedSession = pgTable(
     userId: text("user_id").notNull(),
     dayOfWeek: integer("day_of_week").notNull(),
     title: text("title").notNull().default(""),
-    description: text("description").notNull().default(""),
+    notes: text("notes").notNull().default(""),
     modality: text("modality").notNull().default("strength"),
   },
   (t) => ({ uniqUserDay: unique().on(t.userId, t.dayOfWeek) })
 );
+
+export const plannedExercise = pgTable("planned_exercise", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  plannedSessionId: uuid("planned_session_id")
+    .notNull()
+    .references(() => plannedSession.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull(),
+  name: text("name").notNull(),
+  targetSets: integer("target_sets").notNull(),
+  targetReps: integer("target_reps").notNull(),
+  targetWeight: numeric("target_weight").notNull(),
+  orderIndex: integer("order_index").notNull(),
+});
 
 export const readinessAnalysis = pgTable("readiness_analysis", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -65,8 +78,22 @@ export const readinessAnalysis = pgTable("readiness_analysis", {
   verdict: text("verdict").notNull(),
   headline: text("headline").notNull(),
   rationale: text("rationale").notNull(),
-  modifications: jsonb("modifications")
+  todayAdjustments: jsonb("today_adjustments")
     .$type<Array<{ exercise: string; change: string }>>()
+    .notNull()
+    .default([]),
+  progressionSuggestions: jsonb("progression_suggestions")
+    .$type<
+      Array<{
+        exercise: string;
+        currentWeight: number;
+        suggestedWeight: number;
+        suggestedSets?: number;
+        suggestedReps?: number;
+        rationale: string;
+        status: "pending" | "accepted" | "dismissed";
+      }>
+    >()
     .notNull()
     .default([]),
   model: text("model").notNull(),

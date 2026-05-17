@@ -13,13 +13,17 @@ export default async function PlanPage() {
     const p = byDay.get(dow);
     return {
       title: p?.title ?? "",
-      description: p?.description ?? "",
+      notes: p?.notes ?? "",
       modality: p?.modality ?? "strength",
+      exercises: (p?.exercises ?? []).map((e) => ({
+        ...e,
+        id: crypto.randomUUID(),
+      })),
     };
   });
   return (
     <main className="ds-container p-8">
-      <h1>Weekly plan</h1>
+      <h1 className="h2">weekly plan</h1>
       <PlanEditor initial={initial} />
     </main>
   );
