@@ -14,18 +14,18 @@
 
 ## File Structure
 
-| File | Responsibility |
-|---|---|
-| `src/app/(app)/page.tsx` | Today/dashboard (moved from `src/app/page.tsx`, unchanged) |
-| `src/app/(app)/dashboard/*` | Dashboard widgets (moved from `src/app/dashboard/`, unchanged) — moved so `./dashboard/...` relative imports in `page.tsx` keep resolving |
-| `src/app/(app)/plan/*` | Weekly-plan page + editor (moved from `src/app/plan/`, unchanged) |
-| `src/app/(app)/import/*` | Import page (moved from `src/app/import/`, unchanged) |
-| `src/app/(app)/layout.tsx` | **New.** Server component: session resolve + `redirect`, renders `SiteNav` + children |
-| `src/app/(app)/site-nav.tsx` | **New.** `"use client"` pill nav: brand, links, user-menu dropdown, sign-out |
-| `src/lib/nav.ts` | **New.** Pure: `NAV_ITEMS` + `isActivePath()` (no React, no DOM) |
-| `tests/nav.test.ts` | **New.** Unit tests for `isActivePath` (offline, Vitest) |
-| `CLAUDE.md` | Modify: architecture note about the `(app)` route group |
-| `docs/superpowers/specs/2026-05-17-navigation-design.md` | Modify: status → implemented |
+| File                                                     | Responsibility                                                                                                                            |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/app/(app)/page.tsx`                                 | Today/dashboard (moved from `src/app/page.tsx`, unchanged)                                                                                |
+| `src/app/(app)/dashboard/*`                              | Dashboard widgets (moved from `src/app/dashboard/`, unchanged) — moved so `./dashboard/...` relative imports in `page.tsx` keep resolving |
+| `src/app/(app)/plan/*`                                   | Weekly-plan page + editor (moved from `src/app/plan/`, unchanged)                                                                         |
+| `src/app/(app)/import/*`                                 | Import page (moved from `src/app/import/`, unchanged)                                                                                     |
+| `src/app/(app)/layout.tsx`                               | **New.** Server component: session resolve + `redirect`, renders `SiteNav` + children                                                     |
+| `src/app/(app)/site-nav.tsx`                             | **New.** `"use client"` pill nav: brand, links, user-menu dropdown, sign-out                                                              |
+| `src/lib/nav.ts`                                         | **New.** Pure: `NAV_ITEMS` + `isActivePath()` (no React, no DOM)                                                                          |
+| `tests/nav.test.ts`                                      | **New.** Unit tests for `isActivePath` (offline, Vitest)                                                                                  |
+| `CLAUDE.md`                                              | Modify: architecture note about the `(app)` route group                                                                                   |
+| `docs/superpowers/specs/2026-05-17-navigation-design.md` | Modify: status → implemented                                                                                                              |
 
 The `src/proxy.ts` matcher (`["/", "/import/:path*", "/plan/:path*"]`) needs **no change** — route groups do not change URLs. The root layout and `(auth)` layout are **not touched**, so login/signup stay nav-free.
 
@@ -36,6 +36,7 @@ The `src/proxy.ts` matcher (`["/", "/import/:path*", "/plan/:path*"]`) needs **n
 No URL changes. Relative imports (`page.tsx` → `./dashboard/...`) keep resolving because `dashboard/` moves alongside `page.tsx`. All other imports are `@/...` absolute and unaffected.
 
 **Files:**
+
 - Move: `src/app/page.tsx` → `src/app/(app)/page.tsx`
 - Move: `src/app/dashboard/` → `src/app/(app)/dashboard/`
 - Move: `src/app/plan/` → `src/app/(app)/plan/`
@@ -79,6 +80,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 `NAV_ITEMS` is the single source of truth for nav links; `isActivePath` decides which is highlighted. Exact match for `/` (so it is not "active" on every page); prefix match for the others.
 
 **Files:**
+
 - Create: `src/lib/nav.ts`
 - Test: `tests/nav.test.ts`
 
@@ -179,6 +181,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 The pill: brand wordmark, the three links (active = filled inset pill, responsive label), and a user-menu dropdown (email header + sign-out, dismiss on outside-click / `Escape` / select). Styling uses only `--ds-*` tokens / `.ds-*` classes via inline `style={{ ... var(--ds-*) }}` — the same pattern already used in `src/app/(app)/page.tsx` (`style={{ color: "var(--ds-link)" }}`). No hex/px literals, sentence-case copy, no emoji.
 
 **Files:**
+
 - Create: `src/app/(app)/site-nav.tsx`
 
 - [ ] **Step 1: Write the component**
@@ -277,7 +280,12 @@ export function SiteNav({ email }: { email: string }) {
 
         <ul
           className="flex items-center"
-          style={{ listStyle: "none", margin: 0, padding: 0, gap: "var(--ds-space-2)" }}
+          style={{
+            listStyle: "none",
+            margin: 0,
+            padding: 0,
+            gap: "var(--ds-space-2)",
+          }}
         >
           {NAV_ITEMS.map((item) => {
             const active = isActivePath(pathname, item.href);
@@ -289,7 +297,9 @@ export function SiteNav({ email }: { email: string }) {
                   className="ds-btn ds-btn-ghost"
                   style={{
                     borderRadius: "var(--ds-radius-pill)",
-                    color: active ? "var(--ds-primary)" : "var(--ds-text-muted)",
+                    color: active
+                      ? "var(--ds-primary)"
+                      : "var(--ds-text-muted)",
                     fontWeight: active ? 600 : 400,
                     background: active ? "var(--ds-surface)" : "transparent",
                     border: active
@@ -314,7 +324,10 @@ export function SiteNav({ email }: { email: string }) {
             aria-expanded={menuOpen}
             aria-label="Account menu"
             className="ds-btn ds-btn-ghost flex items-center"
-            style={{ gap: "var(--ds-space-2)", borderRadius: "var(--ds-radius-pill)" }}
+            style={{
+              gap: "var(--ds-space-2)",
+              borderRadius: "var(--ds-radius-pill)",
+            }}
           >
             <span
               aria-hidden="true"
@@ -430,6 +443,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 Server component that resolves the session, redirects unauthenticated users, and renders `SiteNav` above page content. Mirrors the existing session pattern in `src/app/(app)/page.tsx` (`auth.api.getSession({ headers: await headers() })`).
 
 **Files:**
+
 - Create: `src/app/(app)/layout.tsx`
 
 - [ ] **Step 1: Write the layout**
@@ -469,6 +483,7 @@ Expected: PASS. Build still lists `/`, `/plan`, `/import`.
 - [ ] **Step 3: Manual verification**
 
 Run: `npm run dev`, then in a browser (signed in):
+
 - `/`, `/plan`, `/import` each show the pill; the current page's link is the filled/primary one (`aria-current="page"`).
 - `/login` and `/signup` show **no** pill (they are not under `(app)`).
 - The account button opens the dropdown; it closes on outside-click, on `Escape` (focus returns to the trigger), and on clicking an item.
@@ -491,6 +506,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 5: Documentation
 
 **Files:**
+
 - Modify: `CLAUDE.md` (the "Architecture" section)
 - Modify: `docs/superpowers/specs/2026-05-17-navigation-design.md` (status line)
 
@@ -507,10 +523,13 @@ In `CLAUDE.md`, find the `**Auth & scoping.**` paragraph in the "Architecture" s
 In `docs/superpowers/specs/2026-05-17-navigation-design.md`, change the status line:
 
 From:
+
 ```markdown
 **Status:** Approved (brainstorming) — pending implementation plan
 ```
+
 To:
+
 ```markdown
 **Status:** Implemented (2026-05-17)
 ```
@@ -546,4 +565,7 @@ No server-action or DB path changed (only a route-group move + new layout/compon
 
 Run: `git status --porcelain`
 Expected: empty (everything committed across Tasks 1–5).
+
+```
+
 ```
