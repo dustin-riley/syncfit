@@ -14,6 +14,7 @@ const DAYS = [
 ];
 
 type Ex = {
+  id: string;
   name: string;
   targetSets: number;
   targetReps: number;
@@ -22,6 +23,7 @@ type Ex = {
 type Day = { title: string; notes: string; modality: string; exercises: Ex[] };
 
 const emptyEx = (): Ex => ({
+  id: crypto.randomUUID(),
   name: "",
   targetSets: 3,
   targetReps: 5,
@@ -90,9 +92,10 @@ export function PlanEditor({ initial }: { initial: Day[] }) {
           </select>
 
           {days[dow].exercises.map((ex, ei) => (
-            <div key={ei} className="flex gap-2 my-1 items-center">
+            <div key={ex.id} className="flex gap-2 my-1 items-center">
               <input
                 className="border rounded p-2 flex-1"
+                aria-label="exercise name"
                 name={`ex-${dow}-${ei}-name`}
                 placeholder="exercise"
                 value={ex.name}

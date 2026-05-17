@@ -15,7 +15,10 @@ export default async function PlanPage() {
       title: p?.title ?? "",
       notes: p?.notes ?? "",
       modality: p?.modality ?? "strength",
-      exercises: p?.exercises ?? [],
+      exercises: (p?.exercises ?? []).map((e) => ({
+        ...e,
+        id: crypto.randomUUID(),
+      })),
     };
   });
   return (
