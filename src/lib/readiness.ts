@@ -138,6 +138,7 @@ export async function runReadinessAnalysis(opts: {
   try {
     const result = await analyzeReadiness(
       {
+        goal: "",
         plannedSession: {
           title: planned.title,
           notes: planned.notes,
