@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { proposePlanTurnAction } from "@/app/actions/plan";
 import type { ChatMessage, WeeklyPlan } from "@/lib/plan-generator";
 import type { Day } from "./plan-editor";
@@ -14,6 +14,9 @@ export function PlanChatDrawer({
   onClose: () => void;
   onApply: (plan: Day[], proposedGoal: string | null) => void;
 }) {
+  // Conversation is intentionally ephemeral: unmounting on close (return null)
+  // resets all state. The backdrop guard below prevents silently discarding an
+  // unapplied proposal; the X button always closes.
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -22,6 +25,15 @@ export function PlanChatDrawer({
     plan: WeeklyPlan;
     goal: string | null;
   } | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -68,12 +80,13 @@ export function PlanChatDrawer({
     <div
       className="fixed inset-0 z-50 flex justify-end"
       style={{ background: "rgba(0,0,0,0.32)" }}
-      onClick={onClose}
+      onClick={() => { if (!pending) onClose(); }}
     >
       <div
         className="ds-panel h-full w-full max-w-md p-4 flex flex-col gap-3"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
+        aria-modal="true"
         aria-label="build plan with ai"
       >
         <div className="flex items-center justify-between">
