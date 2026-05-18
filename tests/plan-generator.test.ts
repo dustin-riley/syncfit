@@ -89,6 +89,50 @@ describe("plan-generator", () => {
     expect(bad).toHaveBeenCalledTimes(2);
   });
 
+  it("normalizes an out-of-order valid 7-day plan to ascending dayOfWeek", async () => {
+    const shuffled = [3, 0, 6, 1, 4, 2, 5].map((d) => ({
+      dayOfWeek: d,
+      title: `t${d}`,
+      notes: "",
+      modality: "rest" as const,
+      exercises: [],
+    }));
+    const fake = vi.fn().mockResolvedValue({
+      reply: "done",
+      proposedPlan: shuffled,
+      proposedGoal: null,
+    });
+    const r = await proposePlanTurn(ctx, [{ role: "user", content: "go" }], {
+      generate: fake,
+    });
+    expect(r.proposedPlan?.map((d) => d.dayOfWeek)).toEqual([
+      0, 1, 2, 3, 4, 5, 6,
+    ]);
+    // positional index now equals dayOfWeek (what toDays/PlanEditor rely on)
+    expect(r.proposedPlan?.[3].title).toBe("t3");
+  });
+
+  it("rejects a 7-entry plan with a duplicate/missing day (retry then friendly error)", async () => {
+    const dupDay = [0, 0, 2, 3, 4, 5, 6].map((d) => ({
+      dayOfWeek: d,
+      title: "x",
+      notes: "",
+      modality: "rest" as const,
+      exercises: [],
+    }));
+    const fake = vi.fn().mockResolvedValue({
+      reply: "done",
+      proposedPlan: dupDay,
+      proposedGoal: null,
+    });
+    await expect(
+      proposePlanTurn(ctx, [{ role: "user", content: "go" }], {
+        generate: fake,
+      })
+    ).rejects.toThrow(/couldn't build/i);
+    expect(fake).toHaveBeenCalledTimes(2);
+  });
+
   it("buildPlanSystem includes recent endurance activity", () => {
     const s = buildPlanSystem({
       ...ctx,

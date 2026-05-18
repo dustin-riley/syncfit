@@ -18,7 +18,16 @@ export const WeeklyPlanDaySchema = z.object({
     })
   ),
 });
-export const WeeklyPlanSchema = z.array(WeeklyPlanDaySchema).length(7);
+export const WeeklyPlanSchema = z
+  .array(WeeklyPlanDaySchema)
+  .length(7)
+  .refine(
+    (days) => {
+      const seen = new Set(days.map((d) => d.dayOfWeek));
+      return seen.size === 7; // 7 entries + 7 distinct 0..6 ⇒ exactly {0..6}
+    },
+    { message: "plan must cover each weekday 0..6 exactly once" }
+  );
 
 export const PlanTurnSchema = z.object({
   reply: z.string().min(1),
@@ -130,7 +139,17 @@ export async function proposePlanTurn(
     try {
       const raw = await generate({ system, messages });
       const parsed = PlanTurnSchema.safeParse(raw);
-      if (parsed.success) return parsed.data;
+      if (parsed.success) {
+        const t = parsed.data;
+        return t.proposedPlan
+          ? {
+              ...t,
+              proposedPlan: [...t.proposedPlan].sort(
+                (a, b) => a.dayOfWeek - b.dayOfWeek
+              ),
+            }
+          : t;
+      }
     } catch {
       // fall through to retry / friendly error
     }
