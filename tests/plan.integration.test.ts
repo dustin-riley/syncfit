@@ -1,11 +1,13 @@
 import { describe, it, expect, afterAll } from "vitest";
 import { inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { plannedSession, plannedExercise } from "@/db/schema";
+import { plannedSession, plannedExercise, planProfile } from "@/db/schema";
 import {
   getPlanForUser,
   upsertPlanDayForUser,
   upsertPlanWeekForUser,
+  getPlanProfile,
+  upsertPlanProfile,
 } from "@/lib/plan-store";
 
 const U = "itest-plan-" + Date.now();
@@ -16,6 +18,7 @@ const ALL = [U, U2, W];
 afterAll(async () => {
   await db.delete(plannedExercise).where(inArray(plannedExercise.userId, ALL));
   await db.delete(plannedSession).where(inArray(plannedSession.userId, ALL));
+  await db.delete(planProfile).where(inArray(planProfile.userId, ALL));
   const leftover = await db
     .select({ id: plannedSession.id })
     .from(plannedSession)
@@ -188,5 +191,13 @@ describe("plan-store structured (live Neon)", () => {
       .from(plannedExercise)
       .where(inArray(plannedExercise.userId, [W]));
     expect(ex.length).toBe(6); // 6 non-rest days, 1 exercise each
+  });
+
+  it("F: plan_profile goal upserts and round-trips", async () => {
+    expect(await getPlanProfile(U)).toBe("");
+    await upsertPlanProfile(U, "lose fat, keep strength");
+    expect(await getPlanProfile(U)).toBe("lose fat, keep strength");
+    await upsertPlanProfile(U, "lean bulk");
+    expect(await getPlanProfile(U)).toBe("lean bulk");
   });
 });

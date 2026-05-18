@@ -3,6 +3,7 @@ import {
   plannedSession,
   plannedExercise,
   readinessAnalysis,
+  planProfile,
 } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import {
@@ -117,6 +118,29 @@ export async function upsertPlanWeekForUser(
   days: PlanDayInput[]
 ) {
   for (const d of days) await upsertPlanDayForUser(userId, d);
+}
+
+export async function getPlanProfile(userId: string): Promise<string> {
+  const [row] = await db
+    .select({ goal: planProfile.goal })
+    .from(planProfile)
+    .where(eq(planProfile.userId, userId));
+  return row?.goal ?? "";
+}
+
+// Single-statement upsert on `db` (NOT txDb). Consistent with plan-store's
+// deliberately non-transactional, single-user-blast-radius design.
+export async function upsertPlanProfile(
+  userId: string,
+  goal: string
+): Promise<void> {
+  await db
+    .insert(planProfile)
+    .values({ userId, goal })
+    .onConflictDoUpdate({
+      target: planProfile.userId,
+      set: { goal, updatedAt: new Date() },
+    });
 }
 
 export type ProgressionDecision = "accept" | "dismiss";
