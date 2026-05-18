@@ -24,6 +24,11 @@ afterAll(async () => {
     .from(plannedSession)
     .where(inArray(plannedSession.userId, ALL));
   expect(leftover.length).toBe(0);
+  const leftoverProfiles = await db
+    .select()
+    .from(planProfile)
+    .where(inArray(planProfile.userId, ALL));
+  expect(leftoverProfiles.length).toBe(0);
 });
 
 describe("plan-store structured (live Neon)", () => {
@@ -199,5 +204,6 @@ describe("plan-store structured (live Neon)", () => {
     expect(await getPlanProfile(U)).toBe("lose fat, keep strength");
     await upsertPlanProfile(U, "lean bulk");
     expect(await getPlanProfile(U)).toBe("lean bulk");
+    expect(await getPlanProfile(U2)).toBe("");
   });
 });
