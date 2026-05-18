@@ -50,8 +50,10 @@ performed**.
 
 Add one column to `workout_set`:
 
-- `seq` `integer NOT NULL` — 0-based position of the set within its workout, in
-  performed/import order.
+- `seq` `integer NOT NULL DEFAULT 0` — 0-based position of the set within its
+  workout, in performed/import order. The default keeps the column addition
+  safe on a populated table and lets unrelated test fixtures omit it; the two
+  real writers always set an explicit value.
 
 `setNumber` keeps its current meaning (1-based set index within its exercise).
 `seq` is strictly additional and is the new sort key for reads. Chosen over
@@ -79,16 +81,21 @@ the index:
 
 ### Rollout (no backfill)
 
-Because the single user re-imports rather than backfilling:
+The schema change and the data reset are **independent** (the `DEFAULT 0`
+makes `drizzle-kit push` safe on the populated table). Order:
 
-1. `DELETE FROM workout;` (cascades to `workout_set`). This also removes any
+1. Apply the schema via `drizzle-kit push` (safe with rows present; existing
+   rows get `seq = 0`).
+2. Then, to get correct ordering for already-imported data — which is
+   otherwise unrecoverable — the single user does a one-time data reset:
+   `DELETE FROM workout;` (cascades to `workout_set`). This also removes any
    **manually logged strength workouts**, which would be re-entered by hand.
    **`endurance_activity` is untouched** (separate table, no schema change).
-2. Apply the schema via `drizzle-kit push` against the now-empty
-   `workout_set`, so the `NOT NULL` column adds cleanly with no backfill.
 3. Re-upload the Strong CSV → true exercise/set order.
 
-No data migration or app-side NULL handling is introduced.
+No data migration or app-side NULL handling is introduced. Legacy rows that
+are not re-imported simply keep `seq = 0` and render in DB order (acceptable;
+the user is wiping anyway).
 
 ### Read path
 
