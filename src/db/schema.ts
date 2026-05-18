@@ -89,6 +89,14 @@ export const plannedExercise = pgTable("planned_exercise", {
   orderIndex: integer("order_index").notNull(),
 });
 
+export const planProfile = pgTable("plan_profile", {
+  userId: text("user_id").primaryKey(),
+  goal: text("goal").notNull().default(""),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 export const readinessAnalysis = pgTable("readiness_analysis", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: text("user_id").notNull(),
