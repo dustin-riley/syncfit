@@ -6,7 +6,8 @@ import { logStrengthWorkout, logEnduranceActivity } from "@/lib/manual-log";
 
 const SU = "itest-log-strength-" + Date.now();
 const EU = "itest-log-endurance-" + Date.now();
-const ALL = [SU, EU];
+const OR = "itest-log-orphan-" + Date.now();
+const ALL = [SU, EU, OR];
 const when = new Date("2026-05-15T16:00:00Z");
 
 afterAll(async () => {
@@ -48,6 +49,20 @@ describe("logStrengthWorkout (live Neon)", () => {
 
     const b = await logStrengthWorkout(SU, input);
     expect(b).toMatchObject({ ok: true, added: 0, skipped: 1 });
+  });
+  it("rolls back the workout row when the sets insert fails (atomic)", async () => {
+    // reps passes validation (finite integer >= 1) but overflows the int4
+    // column, so the workoutSet insert fails *after* the workout insert.
+    const bad = {
+      performedAt: when,
+      title: "Orphan",
+      sets: [
+        { exerciseName: "Squat", weight: 100, reps: 2147483648, setNumber: 1 },
+      ],
+    };
+    await expect(logStrengthWorkout(OR, bad)).rejects.toThrow();
+    const rows = await db.select().from(workout).where(eq(workout.userId, OR));
+    expect(rows.length).toBe(0); // no orphaned workout; hash slot still free
   });
   it("rejects invalid input with field errors and writes nothing", async () => {
     const r = await logStrengthWorkout(SU, {

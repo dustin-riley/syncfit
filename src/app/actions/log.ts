@@ -7,6 +7,7 @@ import { parseDuration } from "@/lib/duration";
 import {
   logStrengthWorkout,
   logEnduranceActivity,
+  sequenceStrengthSets,
   type LogResult,
 } from "@/lib/manual-log";
 
@@ -28,29 +29,20 @@ export async function logWorkout(formData: FormData): Promise<LogResult> {
 
   if (kind === "strength") {
     const count = Math.min(Math.trunc(num(formData.get("rowCount")) || 0), 100);
-    const perExerciseSeq = new Map<string, number>();
-    const sets: {
-      exerciseName: string;
-      weight: number;
-      reps: number;
-      setNumber: number;
-    }[] = [];
+    const raw = [];
     for (let r = 0; r < count; r++) {
       const name = String(formData.get(`set-${r}-name`) ?? "").trim();
       if (!name) continue; // skip blank trailing rows
-      const seq = (perExerciseSeq.get(name) ?? 0) + 1;
-      perExerciseSeq.set(name, seq);
-      sets.push({
+      raw.push({
         exerciseName: name,
         weight: num(formData.get(`set-${r}-weight`)),
         reps: Math.trunc(num(formData.get(`set-${r}-reps`))),
-        setNumber: seq,
       });
     }
     const res = await logStrengthWorkout(userId, {
       performedAt,
       title: String(formData.get("title") ?? ""),
-      sets,
+      sets: sequenceStrengthSets(raw),
     });
     if (res.ok) revalidatePath("/");
     return res;

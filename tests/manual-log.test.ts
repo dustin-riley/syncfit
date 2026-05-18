@@ -4,6 +4,7 @@ import {
   validateEnduranceInput,
   strengthContentHash,
   enduranceContentHash,
+  sequenceStrengthSets,
   ACTIVITY_TYPES,
   type ManualStrengthInput,
   type ManualEnduranceInput,
@@ -77,6 +78,37 @@ describe("validateEnduranceInput", () => {
   });
   it("exposes the activity-type vocabulary", () => {
     expect(ACTIVITY_TYPES).toEqual(["run", "ride", "swim", "other"]);
+  });
+});
+
+describe("sequenceStrengthSets", () => {
+  it("assigns a 1-based setNumber per exercise, preserving row order", () => {
+    const out = sequenceStrengthSets([
+      { exerciseName: "Squat", weight: 245, reps: 5 },
+      { exerciseName: "Bench", weight: 185, reps: 5 },
+      { exerciseName: "Squat", weight: 245, reps: 5 },
+      { exerciseName: "Squat", weight: 245, reps: 3 },
+      { exerciseName: "Bench", weight: 185, reps: 4 },
+    ]);
+    expect(out.map((s) => [s.exerciseName, s.setNumber])).toEqual([
+      ["Squat", 1],
+      ["Bench", 1],
+      ["Squat", 2],
+      ["Squat", 3],
+      ["Bench", 2],
+    ]);
+  });
+  it("returns an empty array for no rows", () => {
+    expect(sequenceStrengthSets([])).toEqual([]);
+  });
+  it("produces sets that hash identically to hand-numbered ones", () => {
+    const seq = sequenceStrengthSets([
+      { exerciseName: "Squat", weight: 245, reps: 5 },
+      { exerciseName: "Squat", weight: 245, reps: 5 },
+    ]);
+    expect(
+      strengthContentHash({ performedAt: when, title: "Lower", sets: seq })
+    ).toBe(strengthContentHash(goodStrength));
   });
 });
 

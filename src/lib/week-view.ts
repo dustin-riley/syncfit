@@ -1,5 +1,6 @@
-// Pure day-state derivation for the weekly training view. Imports only
-// "@/lib/week" — no React, no DB. Output is fully serializable (no Date).
+// Pure day-state derivation for the weekly training view. Imports only the
+// pure helpers "@/lib/week" and "@/lib/duration" — no React, no DB. Output is
+// fully serializable (no Date).
 import { appDate, weekDays, formatWeekLabel, weekNav } from "@/lib/week";
 import { formatDuration } from "@/lib/duration";
 

@@ -21,6 +21,27 @@ export type ManualEnduranceInput = {
   notes: string;
 };
 
+export type RawStrengthSet = {
+  exerciseName: string;
+  weight: number;
+  reps: number;
+};
+
+// Domain rule: a set's number is its 1-based position *within its exercise*,
+// in row order. Lives here (not the server action) so it is unit-testable and
+// the action stays thin FormData glue. Run before strengthContentHash so dedupe
+// identity stays stable.
+export function sequenceStrengthSets(
+  raw: RawStrengthSet[]
+): ManualStrengthInput["sets"] {
+  const seq = new Map<string, number>();
+  return raw.map((s) => {
+    const n = (seq.get(s.exerciseName) ?? 0) + 1;
+    seq.set(s.exerciseName, n);
+    return { ...s, setNumber: n };
+  });
+}
+
 export type Validation = { fieldErrors: Record<string, string> };
 
 function dateValid(d: Date): boolean {
@@ -101,35 +122,45 @@ export async function logStrengthWorkout(
   if (Object.keys(fieldErrors).length)
     return { ok: false, added: 0, skipped: 0, fieldErrors };
 
-  // Dynamic import keeps unit tests offline (same pattern as ai-engine.ts).
-  const { db } = await import("@/db");
+  // Workout + its sets must be one atomic unit: the unique(userId,
+  // contentHash) slot is consumed by the workout insert, so a partial write
+  // (sets fail after workout commits) would make every retry look like a
+  // duplicate and silently lose the sets forever. txDb is the only driver
+  // that can do an interactive transaction (see import-persist.ts, which
+  // wraps the equivalent Strong-CSV path for the same reason). Dynamic
+  // imports keep unit tests offline (same pattern as ai-engine.ts).
+  const { txDb } = await import("@/db/tx");
   const { workout, workoutSet } = await import("@/db/schema");
 
-  const [row] = await db
-    .insert(workout)
-    .values({
-      userId,
-      performedAt: input.performedAt,
-      title: input.title.trim() || "Workout",
-      source: "manual",
-      contentHash: strengthContentHash(input),
-    })
-    .onConflictDoNothing({ target: [workout.userId, workout.contentHash] })
-    .returning();
-  if (!row) return { ok: true, added: 0, skipped: 1 }; // duplicate
-
-  await db.insert(workoutSet).values(
-    input.sets.map((s) => ({
-      workoutId: row.id,
-      userId,
-      exerciseName: s.exerciseName.trim(),
-      equipment: null,
-      setNumber: s.setNumber,
-      weight: String(s.weight),
-      reps: s.reps,
-    }))
-  );
-  return { ok: true, added: 1, skipped: 0 };
+  const inserted = await txDb.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(workout)
+      .values({
+        userId,
+        performedAt: input.performedAt,
+        title: input.title.trim() || "Workout",
+        source: "manual",
+        contentHash: strengthContentHash(input),
+      })
+      .onConflictDoNothing({ target: [workout.userId, workout.contentHash] })
+      .returning();
+    if (!row) return false; // duplicate: nothing inserted
+    await tx.insert(workoutSet).values(
+      input.sets.map((s) => ({
+        workoutId: row.id,
+        userId,
+        exerciseName: s.exerciseName.trim(),
+        equipment: null,
+        setNumber: s.setNumber,
+        weight: String(s.weight),
+        reps: s.reps,
+      }))
+    );
+    return true;
+  });
+  return inserted
+    ? { ok: true, added: 1, skipped: 0 }
+    : { ok: true, added: 0, skipped: 1 };
 }
 
 export async function logEnduranceActivity(
