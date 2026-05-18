@@ -78,9 +78,8 @@ export function buildPrompt(i: AnalyzeInput): string {
         return `[${appDate(e.performedAt)}] ${e.activityType} ${dist} in ${formatDuration(e.durationSec)}${pace}`;
       })
       .join(" | ") || "none";
-  const goalLine = i.goal.trim()
-    ? `User's stated goal: ${i.goal.trim()}`
-    : null;
+  const goal = i.goal.trim();
+  const goalLine = goal ? `User's stated goal: ${goal}` : null;
   return [
     "You are a strength coach. Auto-regulate today's session using only the data below.",
     goalLine,
