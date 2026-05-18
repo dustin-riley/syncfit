@@ -150,4 +150,69 @@ describe("buildTrainingWeek", () => {
     ]);
     expect(tue.summary).toContain("run 6.2mi · 48:00");
   });
+
+  it("groups a workout's sets by exercise, preserving first-appearance order", () => {
+    const data = buildTrainingWeek({
+      weekStartYmd: WEEK,
+      now: NOW,
+      workouts: [
+        wk("w1", "2026-05-11", "Full", [
+          { exerciseName: "Squat", weight: 225, reps: 5 },
+          { exerciseName: "Bench", weight: 185, reps: 5 },
+          { exerciseName: "Squat", weight: 245, reps: 3 },
+          { exerciseName: "Bench", weight: 185, reps: 4 },
+        ]),
+      ],
+      planDays: [],
+    });
+    const mon = data.days[0];
+    const ex = mon.workouts[0].exercises;
+    expect(ex.map((e) => e.name)).toEqual(["Squat", "Bench"]);
+    expect(ex[0].sets).toEqual([
+      { weight: 225, reps: 5, isTop: false },
+      { weight: 245, reps: 3, isTop: true },
+    ]);
+    expect(ex[1].sets).toEqual([
+      { weight: 185, reps: 5, isTop: true },
+      { weight: 185, reps: 4, isTop: false },
+    ]);
+  });
+
+  it("marks the heaviest set as top, tie broken by more reps; single set is top", () => {
+    const data = buildTrainingWeek({
+      weekStartYmd: WEEK,
+      now: NOW,
+      workouts: [
+        wk("w1", "2026-05-11", "Tie", [
+          { exerciseName: "Curl", weight: 30, reps: 8 },
+          { exerciseName: "Curl", weight: 30, reps: 10 },
+          { exerciseName: "Row", weight: 95, reps: 8 },
+        ]),
+      ],
+      planDays: [],
+    });
+    const ex = data.days[0].workouts[0].exercises;
+    expect(ex[0].sets.map((s) => s.isTop)).toEqual([false, true]); // 30×10 wins tie
+    expect(ex[1].sets).toEqual([{ weight: 95, reps: 8, isTop: true }]); // lone set
+  });
+
+  it("keeps exercise groups per-workout for a multi-workout day", () => {
+    const data = buildTrainingWeek({
+      weekStartYmd: WEEK,
+      now: NOW,
+      workouts: [
+        wk("a", "2026-05-12", "AM", [
+          { exerciseName: "Squat", weight: 225, reps: 5 },
+        ]),
+        wk("b", "2026-05-12", "PM", [
+          { exerciseName: "Curl", weight: 30, reps: 12 },
+        ]),
+      ],
+      planDays: [],
+    });
+    const tue = data.days[1];
+    expect(tue.workouts).toHaveLength(2);
+    expect(tue.workouts[0].exercises.map((e) => e.name)).toEqual(["Squat"]);
+    expect(tue.workouts[1].exercises.map((e) => e.name)).toEqual(["Curl"]);
+  });
 });

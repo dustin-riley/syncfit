@@ -5,6 +5,10 @@ import { appDate, weekDays, formatWeekLabel, weekNav } from "@/lib/week";
 import { formatDuration } from "@/lib/duration";
 
 export type SetView = { exerciseName: string; weight: number; reps: number };
+export type ExerciseGroup = {
+  name: string;
+  sets: { weight: number; reps: number; isTop: boolean }[];
+};
 export type EnduranceInput = {
   performedAt: Date;
   activityType: string;
@@ -29,7 +33,12 @@ export type DayCell = {
   label: string; // "mon 11"
   isToday: boolean;
   state: DayState;
-  workouts: { id: string; title: string; sets: SetView[] }[];
+  workouts: {
+    id: string;
+    title: string;
+    sets: SetView[];
+    exercises: ExerciseGroup[];
+  }[];
   endurance: EnduranceCell[];
   summary: string | null; // done only
   plannedTitle: string | null; // missed/planned only
@@ -44,6 +53,31 @@ export type TrainingWeekData = {
 };
 
 const DOW_LABELS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+
+export function groupByExercise(sets: SetView[]): ExerciseGroup[] {
+  const order: string[] = [];
+  const byName = new Map<string, { weight: number; reps: number }[]>();
+  for (const s of sets) {
+    if (!byName.has(s.exerciseName)) {
+      byName.set(s.exerciseName, []);
+      order.push(s.exerciseName);
+    }
+    byName.get(s.exerciseName)!.push({ weight: s.weight, reps: s.reps });
+  }
+  return order.map((name) => {
+    const raw = byName.get(name)!;
+    let topIdx = 0;
+    raw.forEach((r, i) => {
+      const best = raw[topIdx];
+      if (
+        r.weight > best.weight ||
+        (r.weight === best.weight && r.reps > best.reps)
+      )
+        topIdx = i;
+    });
+    return { name, sets: raw.map((r, i) => ({ ...r, isTop: i === topIdx })) };
+  });
+}
 
 function summarize(sets: SetView[]): string | null {
   if (sets.length === 0) return null;
@@ -132,6 +166,7 @@ export function buildTrainingWeek(args: {
         id: w.id,
         title: w.title,
         sets: w.sets,
+        exercises: groupByExercise(w.sets),
       })),
       endurance: dayEndurance,
       summary,
