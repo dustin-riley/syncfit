@@ -54,6 +54,7 @@ export type TrainingWeekData = {
 
 const DOW_LABELS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 
+// Top-set rule mirrors summarize() — keep in sync if the rule changes.
 export function groupByExercise(sets: SetView[]): ExerciseGroup[] {
   const order: string[] = [];
   const byName = new Map<string, { weight: number; reps: number }[]>();
