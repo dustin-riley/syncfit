@@ -1,6 +1,6 @@
 # AI Plan Generation & Plan Goal — Design
 
-Status: approved (brainstorm 2026-05-17)
+Status: implemented 2026-05-18 (plan: docs/superpowers/plans/2026-05-17-ai-plan-generation.md).
 Supersedes: nothing. Extends the SyncFit MVP (`2026-05-16-syncfit-mvp-design.md`).
 
 ## 1. Goal & Scope
@@ -205,3 +205,22 @@ generic `frontend-design` skill — the design surface is locked).
 Streaming chat, persisted/branchable conversations, structured goal enums,
 partial-week AI edits, multi-plan support, and any change to the
 Strong-import / trailing-load / progression-decision subsystems.
+
+## 11. Implementation notes (faithful deviations)
+
+Recorded so the decision record matches the code:
+
+- **Recent endurance is included in the plan-builder system prompt.** §4 says
+  the recent-training summary uses "the same source the readiness flow uses";
+  `buildPlanSystem` therefore renders recent endurance activity as well as
+  strength (mirroring `ai-engine.ts`), so an endurance-heavy user is not shown
+  as untrained.
+- **Chat drawer accessibility/UX hardening.** Beyond the spec sketch, the
+  drawer sets `aria-modal="true"`, closes on `Escape`, and a backdrop click is
+  ignored while an unapplied proposal is pending (the X button always closes).
+  Conversation remains ephemeral by design.
+- **`plan_profile` has no `createdAt`** (only `updated_at`); a singleton
+  upsert row does not need first-set provenance for the MVP.
+- The `proposedGoal` length is a soft model instruction (<=140 chars), not a
+  hard schema constraint, so an overlong restatement never fails an otherwise
+  valid 7-day proposal; `plan_profile.goal` is unbounded `text`.

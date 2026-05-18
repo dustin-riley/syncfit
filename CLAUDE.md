@@ -40,6 +40,18 @@ The authoritative scope/architecture decisions and deferred work live in `docs/s
 
 **Strong CSV import.** `src/lib/strong-parser.ts` is pure: groups rows by `Date` into workouts, splits `(Equipment)` from exercise name, skips cardio rows (no reps + distance/seconds) with warnings, and computes a sha256 `contentHash` per workout. Dedup is enforced by the `unique(userId, contentHash)` constraint + `onConflictDoNothing`; a real DB failure surfaces as a warning, never a false "skipped duplicate".
 
+**AI plan builder.** `src/lib/plan-generator.ts` mirrors `ai-engine.ts`
+(dynamic `ai` import, injected `generate`, one retry, friendly
+`/couldn't build/i` error). `proposePlanTurnAction` (in `src/app/actions/plan.ts`)
+loads current plan + recent training + goal in one `Promise.all` and returns a
+per-turn `{reply, proposedPlan, proposedGoal}` (request/response, not streamed).
+The plan page is a client shell (`src/app/(app)/plan/plan-workspace.tsx`) owning
+`days`+`goal`; the chat (`plan-chat-drawer.tsx`) is ephemeral and only
+_proposes_ — nothing persists until the existing `savePlanWeek`, which now also
+upserts `plan_profile.goal` (single-statement on `db`, not `txDb`). The durable
+free-text goal is threaded into the readiness prompt (`buildPrompt`/
+`runReadinessAnalysis`) and is omitted from the prompt when empty (safe rollout).
+
 ## Non-obvious gotchas
 
 - **Plan editor must stay controlled.** `src/app/plan/plan-editor.tsx` is a controlled client component on purpose: React 19 calls native `HTMLFormElement.reset()` after any `<form action={serverAction}>` submit, so uncontrolled (`defaultValue`) fields visually revert to their defaults after Save. Controlled inputs (value+onChange from `useState`) are the fix — this now includes the dynamic exercise rows (keyed by a stable `crypto.randomUUID()` id, not the array index). Don't convert plan/auth form fields back to uncontrolled `defaultValue`, and don't rename the field names the bulk `savePlanWeek` action reads: `title-/notes-/modality-{0..6}`, the per-day `rowCount-{dow}`, and exercise rows `ex-{dow}-{row}-{name|sets|reps|weight}` (the row `name` index must stay positional even though the React key is the uuid).
