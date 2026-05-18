@@ -146,12 +146,13 @@ export async function logStrengthWorkout(
       .returning();
     if (!row) return false; // duplicate: nothing inserted
     await tx.insert(workoutSet).values(
-      input.sets.map((s) => ({
+      input.sets.map((s, i) => ({
         workoutId: row.id,
         userId,
         exerciseName: s.exerciseName.trim(),
         equipment: null,
         setNumber: s.setNumber,
+        seq: i,
         weight: String(s.weight),
         reps: s.reps,
       }))

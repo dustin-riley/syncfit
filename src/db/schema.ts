@@ -35,6 +35,11 @@ export const workoutSet = pgTable("workout_set", {
   exerciseName: text("exercise_name").notNull(),
   equipment: text("equipment"),
   setNumber: integer("set_number").notNull(),
+  // 0-based position of the set within its workout, in performed/import
+  // order. setNumber stays per-exercise; seq is the new global sort key for
+  // the training-week read. DEFAULT 0 keeps this addition safe on a
+  // populated table; the two real writers always set an explicit value.
+  seq: integer("seq").notNull().default(0),
   weight: numeric("weight").notNull(),
   reps: integer("reps").notNull(),
 });

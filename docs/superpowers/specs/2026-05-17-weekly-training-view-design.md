@@ -2,6 +2,7 @@
 
 Date: 2026-05-17
 Status: implemented (2026-05-17)
+UI superseded by 2026-05-17-training-week-redesign-design.md (2026-05-17).
 
 ## Problem
 
