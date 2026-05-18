@@ -35,6 +35,7 @@ export async function importStrongCsvForUser(
           })
           .returning();
         if (!row) return false; // duplicate: nothing inserted
+        let seq = 0;
         const sets = w.exercises.flatMap((e) =>
           e.sets.map((s) => ({
             workoutId: row.id,
@@ -42,6 +43,7 @@ export async function importStrongCsvForUser(
             exerciseName: e.name,
             equipment: e.equipment,
             setNumber: s.setNumber,
+            seq: seq++,
             weight: String(s.weight),
             reps: s.reps,
           }))
