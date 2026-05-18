@@ -5,10 +5,19 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import {
   upsertPlanWeekForUser,
+  upsertPlanProfile,
+  getPlanForUser,
+  getPlanProfile,
   applyProgressionDecision,
   type PlanDayInput,
   type PlanExerciseInput,
 } from "@/lib/plan-store";
+import { loadRecentTraining } from "@/lib/readiness";
+import {
+  proposePlanTurn,
+  type ChatMessage,
+  type PlanTurn,
+} from "@/lib/plan-generator";
 
 // Form numbers arrive as strings; coerce defensively so a blank/garbled field
 // can never send NaN into the numeric plan columns (plan-store assumes clean
@@ -57,6 +66,10 @@ export async function savePlanWeek(formData: FormData) {
     });
   }
   await upsertPlanWeekForUser(session.user.id, days);
+  await upsertPlanProfile(
+    session.user.id,
+    String(formData.get("goal") ?? "").trim()
+  );
   revalidatePath("/plan");
   revalidatePath("/");
 }
@@ -77,4 +90,33 @@ export async function applyProgression(input: {
     revalidatePath("/plan");
   }
   return r;
+}
+
+export async function proposePlanTurnAction(
+  messages: ChatMessage[]
+): Promise<{ ok: true; turn: PlanTurn } | { ok: false; error: string }> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) return { ok: false, error: "Not authenticated." };
+  try {
+    const [currentPlan, goal] = await Promise.all([
+      getPlanForUser(session.user.id),
+      getPlanProfile(session.user.id),
+    ]);
+    const recentTraining = await loadRecentTraining(
+      session.user.id,
+      new Date()
+    );
+    const turn = await proposePlanTurn(
+      { goal, currentPlan, recentTraining },
+      messages
+    );
+    return { ok: true, turn };
+  } catch (e: unknown) {
+    const msg =
+      e instanceof Error && typeof e.message === "string" ? e.message : "";
+    return {
+      ok: false,
+      error: /couldn't build/i.test(msg) ? msg : "Couldn't build a plan.",
+    };
+  }
 }
