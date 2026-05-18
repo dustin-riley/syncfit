@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { savePlanWeek } from "@/app/actions/plan";
 import { Plus, X } from "lucide-react";
 
@@ -13,16 +13,16 @@ const DAYS = [
   "Saturday",
 ];
 
-type Ex = {
+export type Ex = {
   id: string;
   name: string;
   targetSets: number;
   targetReps: number;
   targetWeight: number;
 };
-type Day = { title: string; notes: string; modality: string; exercises: Ex[] };
+export type Day = { title: string; notes: string; modality: string; exercises: Ex[] };
 
-const emptyEx = (): Ex => ({
+export const emptyEx = (): Ex => ({
   id: crypto.randomUUID(),
   name: "",
   targetSets: 3,
@@ -30,8 +30,13 @@ const emptyEx = (): Ex => ({
   targetWeight: 0,
 });
 
-export function PlanEditor({ initial }: { initial: Day[] }) {
-  const [days, setDays] = useState<Day[]>(initial);
+export function PlanEditor({
+  days,
+  setDays,
+}: {
+  days: Day[];
+  setDays: Dispatch<SetStateAction<Day[]>>;
+}) {
 
   const setDay = (i: number, patch: Partial<Day>) =>
     setDays((d) => d.map((x, idx) => (idx === i ? { ...x, ...patch } : x)));
