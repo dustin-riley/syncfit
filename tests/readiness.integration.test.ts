@@ -7,8 +7,10 @@ import {
   workout,
   workoutSet,
   readinessAnalysis,
+  planProfile,
 } from "@/db/schema";
-import { runReadinessAnalysis } from "@/lib/readiness";
+import { runReadinessAnalysis, todayInfo } from "@/lib/readiness";
+import { upsertPlanProfile } from "@/lib/plan-store";
 import { MODEL_ID } from "@/lib/ai-engine";
 
 // NOW: 2026-05-13T16:00:00Z => America/New_York Wed 2026-05-13 12:00 EDT => dow 3, date "2026-05-13"
@@ -17,6 +19,8 @@ const NOW = new Date("2026-05-13T16:00:00Z");
 const U = "itest-readiness-" + Date.now();
 const U3 = "itest-readiness-fail-" + Date.now();
 const U4 = "itest-readiness-prog-" + Date.now();
+const GOAL_USER = "itest-rgoal-" + Date.now();
+const GOAL_NOW = new Date("2026-05-18T15:00:00Z"); // a Monday in APP_TZ
 const ALL_USERS = [U, U3, U4];
 
 const goodGenerate = async () => ({
@@ -53,6 +57,10 @@ afterAll(async () => {
   await db
     .delete(plannedSession)
     .where(inArray(plannedSession.userId, ALL_USERS));
+  await db.delete(planProfile).where(inArray(planProfile.userId, [GOAL_USER]));
+  await db
+    .delete(plannedSession)
+    .where(inArray(plannedSession.userId, [GOAL_USER]));
 
   const ra = await db
     .select({ id: readinessAnalysis.id })
@@ -233,5 +241,32 @@ describe("runReadinessAnalysis (live Neon, LLM injected)", () => {
       .from(readinessAnalysis)
       .where(eq(readinessAnalysis.userId, U3));
     expect(rows.length).toBe(0);
+  });
+
+  it("threads the user's plan goal into the AI prompt", async () => {
+    const { dow } = todayInfo(GOAL_NOW);
+    await db
+      .delete(plannedSession)
+      .where(inArray(plannedSession.userId, [GOAL_USER]));
+    await db.insert(plannedSession).values({
+      userId: GOAL_USER,
+      dayOfWeek: dow,
+      title: "Lower",
+      notes: "",
+      modality: "strength",
+    });
+    await upsertPlanProfile(GOAL_USER, "cutting for summer");
+
+    let seenPrompt = "";
+    const res = await runReadinessAnalysis({
+      userId: GOAL_USER,
+      now: GOAL_NOW,
+      generate: async (p: string) => {
+        seenPrompt = p;
+        return { verdict: "proceed_as_planned", headline: "ok", rationale: "ok" };
+      },
+    });
+    expect(res.result).toBeDefined();
+    expect(seenPrompt).toContain("User's stated goal: cutting for summer");
   });
 });
