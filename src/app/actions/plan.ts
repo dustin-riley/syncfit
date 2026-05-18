@@ -96,16 +96,16 @@ export async function proposePlanTurnAction(
   messages: ChatMessage[]
 ): Promise<{ ok: true; turn: PlanTurn } | { ok: false; error: string }> {
   const session = await auth.api.getSession({ headers: await headers() });
+  // RPC-style action called from a client component: return an error
+  // object rather than redirect() (a thrown redirect would surface as an
+  // unhandled client exception). savePlanWeek is a form POST, so it redirects.
   if (!session) return { ok: false, error: "Not authenticated." };
   try {
-    const [currentPlan, goal] = await Promise.all([
+    const [currentPlan, goal, recentTraining] = await Promise.all([
       getPlanForUser(session.user.id),
       getPlanProfile(session.user.id),
+      loadRecentTraining(session.user.id, new Date()),
     ]);
-    const recentTraining = await loadRecentTraining(
-      session.user.id,
-      new Date()
-    );
     const turn = await proposePlanTurn(
       { goal, currentPlan, recentTraining },
       messages
