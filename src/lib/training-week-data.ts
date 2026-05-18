@@ -48,7 +48,7 @@ export async function getTrainingWeek(
         .where(
           and(eq(workoutSet.userId, userId), inArray(workoutSet.workoutId, ids))
         )
-        .orderBy(asc(workoutSet.setNumber))
+        .orderBy(asc(workoutSet.seq))
     : [];
 
   const workoutInputs: WorkoutInput[] = workouts.map((w) => ({
