@@ -88,4 +88,26 @@ describe("plan-generator", () => {
     ).rejects.toThrow(/couldn't build/i);
     expect(bad).toHaveBeenCalledTimes(2);
   });
+
+  it("buildPlanSystem includes recent endurance activity", () => {
+    const s = buildPlanSystem({
+      ...ctx,
+      recentTraining: {
+        ...ctx.recentTraining,
+        enduranceActivities: [
+          {
+            performedAt: new Date("2026-05-14T11:00:00Z"),
+            activityType: "run",
+            distanceMi: 6.2,
+            durationSec: 2880,
+            pacePerMiSec: 2880 / 6.2,
+            mph: 6.2 / (2880 / 3600),
+          },
+        ],
+      },
+    });
+    expect(s).toContain("Recent endurance");
+    expect(s).toContain("run");
+    expect(s).toContain("6.2");
+  });
 });

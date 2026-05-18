@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { appDate } from "@/lib/week";
+import { formatDuration } from "@/lib/duration";
 import type { RecentTraining } from "@/lib/recent-training";
 import { MODEL_ID } from "@/lib/ai-engine";
 
@@ -70,12 +71,24 @@ export function buildPlanSystem(c: PlanContext): string {
           s.sets.map((x) => `${x.exerciseName} ${x.weight}×${x.reps}`).join(", ")
       )
       .join(" | ") || "none";
+  const endurance =
+    c.recentTraining.enduranceActivities
+      .map((e) => {
+        const dist = e.distanceMi === null ? "?" : `${e.distanceMi}mi`;
+        const pace =
+          e.pacePerMiSec === null
+            ? ""
+            : ` (${formatDuration(Math.round(e.pacePerMiSec))}/mi)`;
+        return `[${appDate(e.performedAt)}] ${e.activityType} ${dist} in ${formatDuration(e.durationSec)}${pace}`;
+      })
+      .join(" | ") || "none";
   return [
     "You are a strength & conditioning coach helping the user build a recurring weekly training plan.",
     "Ask focused clarifying questions (days available, equipment, experience, deadlines, injuries) until you can commit a sensible plan.",
     `User's stated goal: ${c.goal.trim() || "not stated yet"}`,
     `Current saved weekly plan: ${plan}`,
     `Recent strength (last ${c.recentTraining.windowDays}d): ${strength}`,
+    `Recent endurance (last ${c.recentTraining.windowDays}d): ${endurance}`,
     "Until you are confident, set proposedPlan and proposedGoal to null and put your question in reply.",
     "When confident, return reply (a short summary) AND proposedPlan: EXACTLY 7 entries, one per dayOfWeek 0..6 (0=Sunday). Rest days use modality 'rest' and an empty exercises array. Endurance days use modality 'endurance'. Ground weights in the user's recent actuals.",
     "Also return proposedGoal: a concise (<= 140 char) restatement of the durable goal for future daily check-ins.",
