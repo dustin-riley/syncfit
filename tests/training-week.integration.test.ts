@@ -21,14 +21,11 @@ beforeAll(async () => {
       contentHash: "h-" + U + "-1",
     })
     .returning();
-  await db.insert(workoutSet).values({
-    workoutId: w1.id,
-    userId: U,
-    exerciseName: "Bench",
-    setNumber: 1,
-    weight: "185",
-    reps: 5,
-  });
+  await db.insert(workoutSet).values([
+    { workoutId: w1.id, userId: U, exerciseName: "Squat", setNumber: 1, seq: 0, weight: "225", reps: 5 },
+    { workoutId: w1.id, userId: U, exerciseName: "Bench", setNumber: 1, seq: 1, weight: "185", reps: 5 },
+    { workoutId: w1.id, userId: U, exerciseName: "Squat", setNumber: 2, seq: 2, weight: "245", reps: 3 },
+  ]);
   await db.insert(workout).values({
     userId: U,
     performedAt: new Date("2026-05-04T16:00:00Z"), // previous week
@@ -61,7 +58,13 @@ describe("getTrainingWeek", () => {
 
     const mon = data.days[0]; // 2026-05-11
     expect(mon.state).toBe("done");
-    expect(mon.summary).toBe("Bench 185×5");
+    expect(mon.summary).toBe("Squat 245×3 · Bench 185×5");
+    const ex = mon.workouts[0].exercises;
+    expect(ex.map((e) => e.name)).toEqual(["Squat", "Bench"]); // seq order, grouped
+    expect(ex[0].sets).toEqual([
+      { weight: 225, reps: 5, isTop: false },
+      { weight: 245, reps: 3, isTop: true },
+    ]);
 
     const tue = data.days[1]; // 2026-05-12 — planned, before today (Wed)
     expect(tue.state).toBe("missed");
