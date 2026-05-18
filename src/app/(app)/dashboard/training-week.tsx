@@ -13,11 +13,18 @@ import type { TrainingWeekData, DayState } from "@/lib/week-view";
 import { formatDuration } from "@/lib/duration";
 import { loadTrainingWeek } from "@/app/actions/training-week";
 
-const STATE_META: Record<DayState, { label: string; Icon: typeof Check }> = {
-  done: { label: "done", Icon: Check },
-  missed: { label: "missed", Icon: X },
-  planned: { label: "planned", Icon: CalendarClock },
-  rest: { label: "rest", Icon: Minus },
+const STATE_META: Record<
+  DayState,
+  { label: string; Icon: typeof Check; color: string }
+> = {
+  done: { label: "done", Icon: Check, color: "var(--ds-accent-teal)" },
+  missed: { label: "missed", Icon: X, color: "var(--ds-accent-ochre)" },
+  planned: {
+    label: "planned",
+    Icon: CalendarClock,
+    color: "var(--ds-text-muted)",
+  },
+  rest: { label: "rest", Icon: Minus, color: "var(--ds-text-muted)" },
 };
 
 export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
@@ -87,7 +94,7 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                 className="ds-mono-note"
                 style={{
                   display: "flex",
-                  alignItems: "baseline",
+                  alignItems: "center",
                   gap: "var(--ds-space-2)",
                 }}
               >
@@ -100,6 +107,8 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                     alignItems: "center",
                     gap: "var(--ds-space-1)",
                     minWidth: "8ch",
+                    color: meta.color,
+                    fontWeight: 600,
                   }}
                 >
                   <Icon size={14} aria-hidden="true" />
@@ -127,7 +136,8 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                       <div
                         className="ds-mono-note"
                         style={{
-                          color: "var(--ds-text-muted)",
+                          color: "var(--ds-text)",
+                          fontWeight: 600,
                           marginBottom: "var(--ds-space-1)",
                         }}
                       >
@@ -142,8 +152,8 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                             <tr key={ex.name}>
                               <td
                                 style={{
-                                  width: "22ch",
-                                  paddingRight: "var(--ds-space-3)",
+                                  whiteSpace: "nowrap",
+                                  paddingRight: "var(--ds-space-6)",
                                   paddingTop: "var(--ds-space-1)",
                                   paddingBottom: "var(--ds-space-1)",
                                   verticalAlign: "baseline",
@@ -155,9 +165,10 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                                 <td
                                   key={i}
                                   style={{
-                                    width: "9ch",
+                                    width: "11ch",
                                     textAlign: "right",
                                     fontVariantNumeric: "tabular-nums",
+                                    paddingLeft: "var(--ds-space-4)",
                                     paddingTop: "var(--ds-space-1)",
                                     paddingBottom: "var(--ds-space-1)",
                                     color: s.isTop
