@@ -76,7 +76,9 @@ export function PlanChatDrawer({
   return (
     <div
       className="fixed inset-0 z-50 flex justify-end"
-      style={{ background: "rgba(0,0,0,0.32)" }}
+      style={{
+        background: "color-mix(in srgb, var(--ds-text) 32%, transparent)",
+      }}
       onClick={() => {
         if (!pending) onClose();
       }}

@@ -224,3 +224,9 @@ Recorded so the decision record matches the code:
 - The `proposedGoal` length is a soft model instruction (<=140 chars), not a
   hard schema constraint, so an overlong restatement never fails an otherwise
   valid 7-day proposal; `plan_profile.goal` is unbounded `text`.
+- **Plan-surface inputs reuse the raw-Tailwind idiom.** The new
+  `plan-workspace.tsx` / `plan-chat-drawer.tsx` inputs and message bubbles use
+  `border rounded p-2` / `text-sm opacity-70` to stay visually consistent with
+  the pre-existing (untouched) `plan-editor.tsx`, rather than introducing
+  `.ds-*` primitives in only the new files. Tracked as known design-system
+  debt for a future plan-surface pass — not a regression introduced here.
