@@ -45,7 +45,7 @@ export function PlanWorkspace({
       <PlanChatDrawer
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        onApply={(plan: Day[], proposedGoal?: string) => {
+        onApply={(plan: Day[], proposedGoal: string | null) => {
           setDays(plan);
           if (proposedGoal) setGoal(proposedGoal);
           setDrawerOpen(false);
