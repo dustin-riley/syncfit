@@ -19,7 +19,12 @@ export type Ex = {
   targetReps: number;
   targetWeight: number;
 };
-export type Day = { title: string; notes: string; modality: string; exercises: Ex[] };
+export type Day = {
+  title: string;
+  notes: string;
+  modality: string;
+  exercises: Ex[];
+};
 
 export const emptyEx = (): Ex => ({
   id: crypto.randomUUID(),
@@ -36,7 +41,6 @@ export function PlanEditor({
   days: Day[];
   setDays: Dispatch<SetStateAction<Day[]>>;
 }) {
-
   const setDay = (i: number, patch: Partial<Day>) =>
     setDays((d) => d.map((x, idx) => (idx === i ? { ...x, ...patch } : x)));
   const setEx = (di: number, ei: number, patch: Partial<Ex>) =>

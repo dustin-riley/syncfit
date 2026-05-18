@@ -206,4 +206,24 @@ describe("plan-store structured (live Neon)", () => {
     expect(await getPlanProfile(U)).toBe("lean bulk");
     expect(await getPlanProfile(U2)).toBe("");
   });
+
+  it("G: saving a plan persists the goal alongside the week", async () => {
+    await upsertPlanWeekForUser(W, [
+      {
+        dayOfWeek: 1,
+        title: "Lower",
+        notes: "",
+        modality: "strength",
+        exercises: [
+          { name: "Squat", targetSets: 5, targetReps: 5, targetWeight: 245 },
+        ],
+      },
+    ]);
+    await upsertPlanProfile(W, "recomp");
+    expect(await getPlanProfile(W)).toBe("recomp");
+    const days = await getPlanForUser(W);
+    expect(days.find((d) => d.dayOfWeek === 1)?.exercises[0].name).toBe(
+      "Squat"
+    );
+  });
 });

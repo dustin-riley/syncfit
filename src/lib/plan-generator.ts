@@ -68,7 +68,9 @@ export function buildPlanSystem(c: PlanContext): string {
       .map(
         (s) =>
           `[${appDate(s.performedAt)}] ${s.title}: ` +
-          s.sets.map((x) => `${x.exerciseName} ${x.weight}×${x.reps}`).join(", ")
+          s.sets
+            .map((x) => `${x.exerciseName} ${x.weight}×${x.reps}`)
+            .join(", ")
       )
       .join(" | ") || "none";
   const endurance =

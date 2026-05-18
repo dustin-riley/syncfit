@@ -51,10 +51,7 @@ export function PlanChatDrawer({
       setError(res.error);
       return;
     }
-    setMessages([
-      ...next,
-      { role: "assistant", content: res.turn.reply },
-    ]);
+    setMessages([...next, { role: "assistant", content: res.turn.reply }]);
     if (res.turn.proposedPlan) {
       setPending({
         plan: res.turn.proposedPlan,
@@ -80,7 +77,9 @@ export function PlanChatDrawer({
     <div
       className="fixed inset-0 z-50 flex justify-end"
       style={{ background: "rgba(0,0,0,0.32)" }}
-      onClick={() => { if (!pending) onClose(); }}
+      onClick={() => {
+        if (!pending) onClose();
+      }}
     >
       <div
         className="ds-panel h-full w-full max-w-md p-4 flex flex-col gap-3"

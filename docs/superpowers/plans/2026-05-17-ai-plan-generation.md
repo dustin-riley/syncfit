@@ -34,6 +34,7 @@ Spec: `docs/superpowers/specs/2026-05-17-ai-plan-generation-design.md`
 ### Task 1: `plan_profile` schema
 
 **Files:**
+
 - Modify: `src/db/schema.ts`
 
 - [ ] **Step 1: Add the table**
@@ -74,6 +75,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task 2: plan-store goal accessors
 
 **Files:**
+
 - Modify: `src/lib/plan-store.ts`
 - Test: `tests/plan.integration.test.ts`
 
@@ -156,6 +158,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task 3: Thread the goal into the readiness prompt
 
 **Files:**
+
 - Modify: `src/lib/ai-engine.ts:40-93`
 - Test: `tests/ai-engine.test.ts`
 
@@ -200,9 +203,7 @@ export type AnalyzeInput = {
 In `buildPrompt`, immediately before the final `return [` array, add:
 
 ```ts
-const goalLine = i.goal.trim()
-  ? `User's stated goal: ${i.goal.trim()}`
-  : null;
+const goalLine = i.goal.trim() ? `User's stated goal: ${i.goal.trim()}` : null;
 ```
 
 Then inside the returned array, insert `goalLine` right after the
@@ -223,7 +224,9 @@ return [
   "Return TWO separate lists:",
   "- todayAdjustments[]: ephemeral, today-only tweaks given current fatigue (do NOT change the program). Empty unless warranted.",
   "- progressionSuggestions[]: durable target changes going forward, ONLY on clear evidence (clean reps at/above target across recent sessions, or a clear stall). currentWeight = the planned target. Empty unless clearly warranted. Do NOT include a status field.",
-].filter(Boolean).join("\n");
+]
+  .filter(Boolean)
+  .join("\n");
 ```
 
 - [ ] **Step 4: Fix the existing fixture**
@@ -249,6 +252,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task 4: readiness.ts loads + passes the goal
 
 **Files:**
+
 - Modify: `src/lib/readiness.ts:97-172`
 - Test: `tests/readiness.integration.test.ts`
 
@@ -376,6 +380,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task 5: `plan-generator` library
 
 **Files:**
+
 - Create: `src/lib/plan-generator.ts`
 - Test: `tests/plan-generator.test.ts`
 
@@ -556,7 +561,9 @@ export function buildPlanSystem(c: PlanContext): string {
       .map(
         (s) =>
           `[${appDate(s.performedAt)}] ${s.title}: ` +
-          s.sets.map((x) => `${x.exerciseName} ${x.weight}×${x.reps}`).join(", ")
+          s.sets
+            .map((x) => `${x.exerciseName} ${x.weight}×${x.reps}`)
+            .join(", ")
       )
       .join(" | ") || "none";
   return [
@@ -634,6 +641,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task 6: Server actions — `proposePlanTurnAction` + `savePlanWeek` goal
 
 **Files:**
+
 - Modify: `src/app/actions/plan.ts`
 - Modify: `src/lib/plan-store.ts` (extend `upsertPlanWeekForUser` caller path — see step)
 
@@ -725,6 +733,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task 7: Lift PlanEditor state to a parent (controlled-by-parent)
 
 **Files:**
+
 - Modify: `src/app/(app)/plan/plan-editor.tsx`
 
 The editor must stay a controlled component (React-19 form-reset rationale,
@@ -762,9 +771,15 @@ exported or move them to the workspace (see Task 8 — export them):
 Add `export` to the `Day` and `Ex` type aliases and `emptyEx`:
 
 ```ts
-export type Ex = { /* unchanged */ };
-export type Day = { /* unchanged */ };
-export const emptyEx = (): Ex => ({ /* unchanged */ });
+export type Ex = {
+  /* unchanged */
+};
+export type Day = {
+  /* unchanged */
+};
+export const emptyEx = (): Ex => ({
+  /* unchanged */
+});
 ```
 
 - [ ] **Step 2: Type check (expected to fail at the call site)**
@@ -786,6 +801,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task 8: `plan-workspace.tsx` shell (goal field + editor)
 
 **Files:**
+
 - Create: `src/app/(app)/plan/plan-workspace.tsx`
 
 - [ ] **Step 1: Create the shell (drawer wired in Task 9)**
@@ -891,6 +907,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task 9: `plan-chat-drawer.tsx`
 
 **Files:**
+
 - Create: `src/app/(app)/plan/plan-chat-drawer.tsx`
 
 - [ ] **Step 1: Create the drawer**
@@ -939,10 +956,7 @@ export function PlanChatDrawer({
       setError(res.error);
       return;
     }
-    setMessages([
-      ...next,
-      { role: "assistant", content: res.turn.reply },
-    ]);
+    setMessages([...next, { role: "assistant", content: res.turn.reply }]);
     if (res.turn.proposedPlan) {
       setPending({
         plan: res.turn.proposedPlan,
@@ -1073,6 +1087,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task 10: Wire the page
 
 **Files:**
+
 - Modify: `src/app/(app)/plan/page.tsx`
 
 - [ ] **Step 1: Load goal + render the workspace**
@@ -1135,6 +1150,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task 11: Integration coverage for the Save path + full green bar
 
 **Files:**
+
 - Modify: `tests/plan.integration.test.ts`
 
 - [ ] **Step 1: Add a Save-path goal test**
@@ -1158,9 +1174,7 @@ it("G: saving a plan persists the goal alongside the week", async () => {
   await upsertPlanProfile(W, "recomp");
   expect(await getPlanProfile(W)).toBe("recomp");
   const days = await getPlanForUser(W);
-  expect(days.find((d) => d.dayOfWeek === 1)?.exercises[0].name).toBe(
-    "Squat"
-  );
+  expect(days.find((d) => d.dayOfWeek === 1)?.exercises[0].name).toBe("Squat");
 });
 ```
 
@@ -1200,6 +1214,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ### Task 12: Update the decision record
 
 **Files:**
+
 - Modify: `docs/superpowers/specs/2026-05-17-ai-plan-generation-design.md`
 - Modify: `CLAUDE.md`
 
@@ -1248,4 +1263,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
   `title-/notes-/modality-{0..6}`, `rowCount-{dow}`,
   `ex-{dow}-{row}-{name|sets|reps|weight}` form fields.
 - **No `txDb`:** `upsertPlanProfile` is a single statement on `db` by design.
+
+```
+
 ```

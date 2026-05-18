@@ -29,15 +29,15 @@ should get different calls on the same trailing load).
 
 ## 2. Decisions (from brainstorm)
 
-| Question | Decision |
-|---|---|
-| Goal representation | Free text only |
+| Question                  | Decision                                                        |
+| ------------------------- | --------------------------------------------------------------- |
+| Goal representation       | Free text only                                                  |
 | Goal vs generation prompt | Conversational chat; AI can ask questions before setting a plan |
-| Plan handoff | Propose → review in existing editor → Save (non-destructive) |
-| Chat persistence | Ephemeral, client-only (no chat table) |
-| AI context | Current saved weekly plan + recent training history |
-| Goal capture | Always-visible editable field; AI pre-fills it on proposal |
-| Page layout | C — chat in a drawer (goal + editor are the default surface) |
+| Plan handoff              | Propose → review in existing editor → Save (non-destructive)    |
+| Chat persistence          | Ephemeral, client-only (no chat table)                          |
+| AI context                | Current saved weekly plan + recent training history             |
+| Goal capture              | Always-visible editable field; AI pre-fills it on proposal      |
+| Page layout               | C — chat in a drawer (goal + editor are the default surface)    |
 
 ## 3. Data Model
 
@@ -74,19 +74,24 @@ conventions exactly:
 
 ```ts
 PlanTurnSchema = {
-  reply: string,                    // assistant's message to show
-  proposedPlan: WeeklyPlan | null,  // non-null only when AI commits a plan
-  proposedGoal: string | null,      // concise goal to pre-fill the goal field
-}
+  reply: string, // assistant's message to show
+  proposedPlan: WeeklyPlan | null, // non-null only when AI commits a plan
+  proposedGoal: string | null, // concise goal to pre-fill the goal field
+};
 
-WeeklyPlan = Array<{                 // exactly 7 entries, dayOfWeek 0..6
-  dayOfWeek: number,
-  title: string,
-  notes: string,
-  modality: "strength" | "endurance" | "rest",
-  exercises: Array<{ name: string; targetSets: number;
-                     targetReps: number; targetWeight: number }>,
-}>
+WeeklyPlan = Array<{
+  // exactly 7 entries, dayOfWeek 0..6
+  dayOfWeek: number;
+  title: string;
+  notes: string;
+  modality: "strength" | "endurance" | "rest";
+  exercises: Array<{
+    name: string;
+    targetSets: number;
+    targetReps: number;
+    targetWeight: number;
+  }>;
+}>;
 ```
 
 `WeeklyPlan` is shaped to map 1:1 onto the editor's existing
@@ -105,7 +110,7 @@ retried once, then surfaces the friendly error (no partial plan shown).
 - The user's current saved 7-day plan (so the AI can iterate on it, not always
   start from scratch).
 - A recent-training summary built from `loadRecentTraining` /
-  `computeRecentTraining` — the *same* source the readiness flow uses; the load
+  `computeRecentTraining` — the _same_ source the readiness flow uses; the load
   aggregation is not re-duplicated.
 
 ## 5. Server Action

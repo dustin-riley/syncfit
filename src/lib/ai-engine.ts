@@ -94,7 +94,9 @@ export function buildPrompt(i: AnalyzeInput): string {
     "Return TWO separate lists:",
     "- todayAdjustments[]: ephemeral, today-only tweaks given current fatigue (do NOT change the program). Empty unless warranted.",
     "- progressionSuggestions[]: durable target changes going forward, ONLY on clear evidence (clean reps at/above target across recent sessions, or a clear stall). currentWeight = the planned target. Empty unless clearly warranted. Do NOT include a status field.",
-  ].filter(Boolean).join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 type GenerateFn = (prompt: string) => Promise<unknown>;

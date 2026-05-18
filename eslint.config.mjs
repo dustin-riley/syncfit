@@ -10,6 +10,7 @@ export default [
   {
     ignores: [
       ".next/**",
+      ".claude/worktrees/**",
       "node_modules/**",
       "drizzle/**",
       "build/**",

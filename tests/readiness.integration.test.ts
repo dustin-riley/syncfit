@@ -263,7 +263,11 @@ describe("runReadinessAnalysis (live Neon, LLM injected)", () => {
       now: GOAL_NOW,
       generate: async (p: string) => {
         seenPrompt = p;
-        return { verdict: "proceed_as_planned", headline: "ok", rationale: "ok" };
+        return {
+          verdict: "proceed_as_planned",
+          headline: "ok",
+          rationale: "ok",
+        };
       },
     });
     expect(res.result).toBeDefined();
