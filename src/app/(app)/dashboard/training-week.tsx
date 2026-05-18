@@ -4,7 +4,6 @@ import Link from "next/link";
 import {
   ChevronLeft,
   ChevronRight,
-  ChevronDown,
   Check,
   X,
   CalendarClock,
@@ -23,19 +22,17 @@ const STATE_META: Record<DayState, { label: string; Icon: typeof Check }> = {
 
 export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
   const [data, setData] = useState(initial);
-  const [open, setOpen] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const go = (weekStartYmd: string) => {
-    setOpen(null);
     startTransition(async () => {
       setData(await loadTrainingWeek(weekStartYmd));
     });
   };
 
-  // Spec confines the import prompt to the new-user "no workouts and no
-  // plan" case. The plan recurs every week, so any plan yields planned/
-  // missed rows — an all-rest week is exactly that case.
+  // Spec confines the prompt to the new-user "no workouts and no plan" case.
+  // The plan recurs weekly, so any plan yields planned/missed rows — an
+  // all-rest week is exactly that case.
   const isEmptyWeek = data.days.every((d) => d.state === "rest");
 
   return (
@@ -45,7 +42,7 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
           display: "flex",
           alignItems: "center",
           gap: "var(--ds-space-2)",
-          marginBottom: "var(--ds-space-2)",
+          marginBottom: "var(--ds-space-3)",
         }}
       >
         <button
@@ -56,13 +53,7 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
         >
           <ChevronLeft size={16} aria-hidden="true" />
         </button>
-        <span
-          className="ds-mono-note"
-          style={{
-            minWidth:
-              "9ch" /* keeps the nav arrows from shifting as the label width changes */,
-          }}
-        >
+        <span className="ds-mono-note" style={{ minWidth: "9ch" }}>
           {data.label}
         </span>
         <button
@@ -79,8 +70,6 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
         {data.days.map((d) => {
           const meta = STATE_META[d.state];
           const Icon = meta.Icon;
-          const isOpen = open === d.ymd;
-          const canExpand = d.state === "done";
           return (
             <li
               key={d.ymd}
@@ -90,36 +79,22 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                   ? "var(--ds-border-width) solid var(--ds-primary)"
                   : "var(--ds-border-width) solid transparent",
                 paddingLeft: "var(--ds-space-2)",
+                paddingTop: "var(--ds-space-2)",
+                paddingBottom: "var(--ds-space-2)",
               }}
             >
-              <button
-                onClick={
-                  canExpand ? () => setOpen(isOpen ? null : d.ymd) : undefined
-                }
-                aria-expanded={canExpand ? isOpen : undefined}
-                disabled={!canExpand}
+              <div
+                className="ds-mono-note"
                 style={{
                   display: "flex",
-                  alignItems: "center",
+                  alignItems: "baseline",
                   gap: "var(--ds-space-2)",
-                  width: "100%",
-                  padding: "var(--ds-space-2) 0",
-                  background: "none",
-                  border: "none",
-                  font: "inherit",
-                  color: "var(--ds-text)",
-                  textAlign: "left",
-                  cursor: canExpand ? "pointer" : "default",
                 }}
               >
-                <span
-                  className="ds-mono-note"
-                  style={{ minWidth: "6ch", fontWeight: 600 }}
-                >
+                <span style={{ minWidth: "6ch", fontWeight: 600 }}>
                   {d.label}
                 </span>
                 <span
-                  className="ds-mono-note"
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -131,52 +106,86 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                   {meta.label}
                   {d.isToday ? " · today" : ""}
                 </span>
-                <span className="ds-mono-note" style={{ flex: 1 }}>
-                  {d.state === "done"
-                    ? [d.workouts.map((w) => w.title).join(" · "), d.summary]
-                        .filter(Boolean)
-                        .join(" — ")
-                    : d.state === "rest"
-                      ? "no plan"
-                      : d.plannedTitle}
-                </span>
-                {canExpand && (
-                  <ChevronDown
-                    size={16}
-                    aria-hidden="true"
-                    style={{
-                      transform: isOpen ? "rotate(180deg)" : "none",
-                      transition: "transform 150ms",
-                    }}
-                  />
+                {d.state === "rest" && <span>no plan</span>}
+                {(d.state === "missed" || d.state === "planned") && (
+                  <span>{d.plannedTitle}</span>
                 )}
-              </button>
-              {isOpen && canExpand && (
-                <ul
-                  className="ds-mono-note"
+              </div>
+
+              {d.state === "done" && (
+                <div
                   style={{
-                    listStyle: "none",
-                    margin: "0 0 var(--ds-space-2) var(--ds-space-5)",
-                    padding: 0,
+                    marginTop: "var(--ds-space-2)",
+                    marginLeft: "var(--ds-space-5)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "var(--ds-space-3)",
                   }}
                 >
-                  {d.workouts.flatMap((w) =>
-                    w.sets.map((s, i) => (
-                      <li key={`${w.id}-${i}`}>
-                        {s.exerciseName}: {s.weight} × {s.reps}
-                      </li>
-                    ))
-                  )}
+                  {d.workouts.map((w) => (
+                    <div key={w.id}>
+                      <div
+                        className="ds-mono-note"
+                        style={{
+                          color: "var(--ds-text-muted)",
+                          marginBottom: "var(--ds-space-1)",
+                        }}
+                      >
+                        {w.title}
+                      </div>
+                      <table
+                        className="ds-mono-note"
+                        style={{ borderCollapse: "collapse" }}
+                      >
+                        <tbody>
+                          {w.exercises.map((ex) => (
+                            <tr key={ex.name}>
+                              <td
+                                style={{
+                                  width: "22ch",
+                                  paddingRight: "var(--ds-space-3)",
+                                  paddingTop: "var(--ds-space-1)",
+                                  paddingBottom: "var(--ds-space-1)",
+                                  verticalAlign: "baseline",
+                                }}
+                              >
+                                {ex.name}
+                              </td>
+                              {ex.sets.map((s, i) => (
+                                <td
+                                  key={i}
+                                  style={{
+                                    width: "9ch",
+                                    textAlign: "right",
+                                    fontVariantNumeric: "tabular-nums",
+                                    paddingTop: "var(--ds-space-1)",
+                                    paddingBottom: "var(--ds-space-1)",
+                                    color: s.isTop
+                                      ? "var(--ds-primary)"
+                                      : "var(--ds-text-muted)",
+                                    fontWeight: s.isTop ? 600 : 400,
+                                  }}
+                                >
+                                  {s.weight}×{s.reps}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ))}
+
                   {d.endurance.map((e, i) => (
-                    <li key={`end-${i}`}>
+                    <div className="ds-mono-note" key={`end-${i}`}>
                       {e.activityType}
                       {e.distanceMi === null
                         ? ""
                         : ` ${e.distanceMi.toFixed(1)}mi`}{" "}
                       · {formatDuration(e.durationSec)}
-                    </li>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
             </li>
           );
@@ -184,10 +193,10 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
       </ul>
 
       {isEmptyWeek && (
-        <p className="ds-mono-note" style={{ marginTop: "var(--ds-space-2)" }}>
+        <p className="ds-mono-note" style={{ marginTop: "var(--ds-space-3)" }}>
           no workouts this week.{" "}
-          <Link href="/import" style={{ color: "var(--ds-link)" }}>
-            import your Strong CSV
+          <Link href="/log" style={{ color: "var(--ds-link)" }}>
+            log a workout
           </Link>
           .
         </p>
