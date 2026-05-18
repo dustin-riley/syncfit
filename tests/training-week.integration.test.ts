@@ -22,9 +22,33 @@ beforeAll(async () => {
     })
     .returning();
   await db.insert(workoutSet).values([
-    { workoutId: w1.id, userId: U, exerciseName: "Squat", setNumber: 1, seq: 0, weight: "225", reps: 5 },
-    { workoutId: w1.id, userId: U, exerciseName: "Bench", setNumber: 1, seq: 1, weight: "185", reps: 5 },
-    { workoutId: w1.id, userId: U, exerciseName: "Squat", setNumber: 2, seq: 2, weight: "245", reps: 3 },
+    {
+      workoutId: w1.id,
+      userId: U,
+      exerciseName: "Squat",
+      setNumber: 1,
+      seq: 0,
+      weight: "225",
+      reps: 5,
+    },
+    {
+      workoutId: w1.id,
+      userId: U,
+      exerciseName: "Bench",
+      setNumber: 1,
+      seq: 1,
+      weight: "185",
+      reps: 5,
+    },
+    {
+      workoutId: w1.id,
+      userId: U,
+      exerciseName: "Squat",
+      setNumber: 2,
+      seq: 2,
+      weight: "245",
+      reps: 3,
+    },
   ]);
   await db.insert(workout).values({
     userId: U,

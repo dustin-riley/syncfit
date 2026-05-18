@@ -1,7 +1,7 @@
 # Training week redesign — design
 
 Date: 2026-05-17
-Status: designed
+Status: implemented (2026-05-17)
 
 Supersedes the UI of `2026-05-17-weekly-training-view-design.md` (the
 week-state derivation, navigation, and day-state matrix from that spec are
@@ -122,7 +122,7 @@ the user is wiping anyway).
   `canExpand`. Every day renders full content inline in a vertical stack.
 - **Navigation/today unchanged.** Keep the prev/next + range label and the
   `loadTrainingWeek` transition; keep the today indicator (left primary border
-  + "· today").
+  - "· today").
 - **Per-day rendering by state:**
   - `rest` → one quiet line: `fri 15 · rest · no plan`.
   - `missed` / `planned` → one line with status-tinted pill and the planned

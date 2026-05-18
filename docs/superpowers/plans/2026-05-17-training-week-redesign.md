@@ -1,5 +1,7 @@
 # Training Week Redesign Implementation Plan
 
+Status: implemented (2026-05-17)
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the dense training-week accordion with a no-accordion vertical day stack whose completed days show a scannable tabular set grid, grouped by exercise in performed order via a new `workout_set.seq` column.
@@ -13,6 +15,7 @@
 ### Task 1: Add `seq` column to `workout_set`
 
 **Files:**
+
 - Modify: `src/db/schema.ts:29-40`
 
 - [ ] **Step 1: Add the column to the Drizzle schema**
@@ -73,6 +76,7 @@ git commit -m "feat(schema): add workout_set.seq (within-workout set order)"
 ### Task 2: Group sets by exercise in the pure week-view lib (TDD)
 
 **Files:**
+
 - Modify: `src/lib/week-view.ts`
 - Test: `tests/week-view.test.ts`
 
@@ -195,7 +199,10 @@ export function groupByExercise(sets: SetView[]): ExerciseGroup[] {
     let topIdx = 0;
     raw.forEach((r, i) => {
       const best = raw[topIdx];
-      if (r.weight > best.weight || (r.weight === best.weight && r.reps > best.reps))
+      if (
+        r.weight > best.weight ||
+        (r.weight === best.weight && r.reps > best.reps)
+      )
         topIdx = i;
     });
     return { name, sets: raw.map((r, i) => ({ ...r, isTop: i === topIdx })) };
@@ -241,6 +248,7 @@ git commit -m "feat(week-view): group workout sets by exercise with top-set mark
 ### Task 3: Order the training-week read by `seq`
 
 **Files:**
+
 - Modify: `src/lib/training-week-data.ts:51`
 
 - [ ] **Step 1: Change the sets `orderBy`**
@@ -277,6 +285,7 @@ git commit -m "fix(training-week): read sets in workout seq order, not per-exerc
 ### Task 4: Stamp `seq` at both write paths
 
 **Files:**
+
 - Modify: `src/lib/import-persist.ts:38-49`
 - Modify: `src/lib/manual-log.ts:148-158`
 
@@ -286,38 +295,38 @@ In `src/lib/import-persist.ts`, the set-rows builder inside the transaction
 currently is:
 
 ```ts
-        const sets = w.exercises.flatMap((e) =>
-          e.sets.map((s) => ({
-            workoutId: row.id,
-            userId,
-            exerciseName: e.name,
-            equipment: e.equipment,
-            setNumber: s.setNumber,
-            weight: String(s.weight),
-            reps: s.reps,
-          }))
-        );
-        if (sets.length) await tx.insert(workoutSet).values(sets);
+const sets = w.exercises.flatMap((e) =>
+  e.sets.map((s) => ({
+    workoutId: row.id,
+    userId,
+    exerciseName: e.name,
+    equipment: e.equipment,
+    setNumber: s.setNumber,
+    weight: String(s.weight),
+    reps: s.reps,
+  }))
+);
+if (sets.length) await tx.insert(workoutSet).values(sets);
 ```
 
 Replace with a running 0-based counter across the whole workout (exercise
 order × in-exercise set order — exactly the parser's first-seen order):
 
 ```ts
-        let seq = 0;
-        const sets = w.exercises.flatMap((e) =>
-          e.sets.map((s) => ({
-            workoutId: row.id,
-            userId,
-            exerciseName: e.name,
-            equipment: e.equipment,
-            setNumber: s.setNumber,
-            seq: seq++,
-            weight: String(s.weight),
-            reps: s.reps,
-          }))
-        );
-        if (sets.length) await tx.insert(workoutSet).values(sets);
+let seq = 0;
+const sets = w.exercises.flatMap((e) =>
+  e.sets.map((s) => ({
+    workoutId: row.id,
+    userId,
+    exerciseName: e.name,
+    equipment: e.equipment,
+    setNumber: s.setNumber,
+    seq: seq++,
+    weight: String(s.weight),
+    reps: s.reps,
+  }))
+);
+if (sets.length) await tx.insert(workoutSet).values(sets);
 ```
 
 - [ ] **Step 2: Stamp `seq` in the manual-log writer**
@@ -325,35 +334,35 @@ order × in-exercise set order — exactly the parser's first-seen order):
 In `src/lib/manual-log.ts`, the insert inside `logStrengthWorkout` currently is:
 
 ```ts
-    await tx.insert(workoutSet).values(
-      input.sets.map((s) => ({
-        workoutId: row.id,
-        userId,
-        exerciseName: s.exerciseName.trim(),
-        equipment: null,
-        setNumber: s.setNumber,
-        weight: String(s.weight),
-        reps: s.reps,
-      }))
-    );
+await tx.insert(workoutSet).values(
+  input.sets.map((s) => ({
+    workoutId: row.id,
+    userId,
+    exerciseName: s.exerciseName.trim(),
+    equipment: null,
+    setNumber: s.setNumber,
+    weight: String(s.weight),
+    reps: s.reps,
+  }))
+);
 ```
 
 `input.sets` is already the full ordered list (post `sequenceStrengthSets`), so
 the array index is the workout-wide `seq`. Replace with:
 
 ```ts
-    await tx.insert(workoutSet).values(
-      input.sets.map((s, i) => ({
-        workoutId: row.id,
-        userId,
-        exerciseName: s.exerciseName.trim(),
-        equipment: null,
-        setNumber: s.setNumber,
-        seq: i,
-        weight: String(s.weight),
-        reps: s.reps,
-      }))
-    );
+await tx.insert(workoutSet).values(
+  input.sets.map((s, i) => ({
+    workoutId: row.id,
+    userId,
+    exerciseName: s.exerciseName.trim(),
+    equipment: null,
+    setNumber: s.setNumber,
+    seq: i,
+    weight: String(s.weight),
+    reps: s.reps,
+  }))
+);
 ```
 
 (`ManualStrengthInput` and `sequenceStrengthSets` are intentionally unchanged —
@@ -377,6 +386,7 @@ git commit -m "feat(log): stamp workout_set.seq on Strong import and manual logg
 ### Task 5: Rewrite the training-week UI (vertical stack, tabular sets)
 
 **Files:**
+
 - Modify (rewrite render): `src/app/(app)/dashboard/training-week.tsx`
 
 No unit test (client component); verified via `tsc`, `lint`, `build`, and the design-system rules. Use the `dustinriley-design` skill while editing this file.
@@ -389,7 +399,14 @@ Replace the entire contents of `src/app/(app)/dashboard/training-week.tsx` with 
 "use client";
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Check, X, CalendarClock, Minus } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  X,
+  CalendarClock,
+  Minus,
+} from "lucide-react";
 import type { TrainingWeekData, DayState } from "@/lib/week-view";
 import { formatDuration } from "@/lib/duration";
 import { loadTrainingWeek } from "@/app/actions/training-week";
@@ -609,6 +626,7 @@ git commit -m "feat(training-week): vertical day stack with tabular set grid, no
 ### Task 6: Update the integration test for seq-ordered grouping
 
 **Files:**
+
 - Modify: `tests/training-week.integration.test.ts`
 
 - [ ] **Step 1: Add a multi-exercise, multi-set workout with explicit `seq`**
@@ -617,14 +635,14 @@ In `tests/training-week.integration.test.ts`, the `beforeAll` currently inserts
 a single set:
 
 ```ts
-  await db.insert(workoutSet).values({
-    workoutId: w1.id,
-    userId: U,
-    exerciseName: "Bench",
-    setNumber: 1,
-    weight: "185",
-    reps: 5,
-  });
+await db.insert(workoutSet).values({
+  workoutId: w1.id,
+  userId: U,
+  exerciseName: "Bench",
+  setNumber: 1,
+  weight: "185",
+  reps: 5,
+});
 ```
 
 Replace that single insert with an interleaved-by-setNumber but seq-ordered
@@ -632,11 +650,35 @@ fixture (Squat started first, then Bench, then a second Squat set — the exact
 shape that the old `setNumber` ordering scrambled):
 
 ```ts
-  await db.insert(workoutSet).values([
-    { workoutId: w1.id, userId: U, exerciseName: "Squat", setNumber: 1, seq: 0, weight: "225", reps: 5 },
-    { workoutId: w1.id, userId: U, exerciseName: "Bench", setNumber: 1, seq: 1, weight: "185", reps: 5 },
-    { workoutId: w1.id, userId: U, exerciseName: "Squat", setNumber: 2, seq: 2, weight: "245", reps: 3 },
-  ]);
+await db.insert(workoutSet).values([
+  {
+    workoutId: w1.id,
+    userId: U,
+    exerciseName: "Squat",
+    setNumber: 1,
+    seq: 0,
+    weight: "225",
+    reps: 5,
+  },
+  {
+    workoutId: w1.id,
+    userId: U,
+    exerciseName: "Bench",
+    setNumber: 1,
+    seq: 1,
+    weight: "185",
+    reps: 5,
+  },
+  {
+    workoutId: w1.id,
+    userId: U,
+    exerciseName: "Squat",
+    setNumber: 2,
+    seq: 2,
+    weight: "245",
+    reps: 3,
+  },
+]);
 ```
 
 - [ ] **Step 2: Update assertions in the first `it`**
@@ -647,15 +689,15 @@ first-seen order) yields Squat then Bench. Replace the summary assertion and
 add a grouped-order assertion:
 
 ```ts
-    const mon = data.days[0]; // 2026-05-11
-    expect(mon.state).toBe("done");
-    expect(mon.summary).toBe("Squat 245×3 · Bench 185×5");
-    const ex = mon.workouts[0].exercises;
-    expect(ex.map((e) => e.name)).toEqual(["Squat", "Bench"]); // seq order, grouped
-    expect(ex[0].sets).toEqual([
-      { weight: 225, reps: 5, isTop: false },
-      { weight: 245, reps: 3, isTop: true },
-    ]);
+const mon = data.days[0]; // 2026-05-11
+expect(mon.state).toBe("done");
+expect(mon.summary).toBe("Squat 245×3 · Bench 185×5");
+const ex = mon.workouts[0].exercises;
+expect(ex.map((e) => e.name)).toEqual(["Squat", "Bench"]); // seq order, grouped
+expect(ex[0].sets).toEqual([
+  { weight: 225, reps: 5, isTop: false },
+  { weight: 245, reps: 3, isTop: true },
+]);
 ```
 
 (The `titles` assertion later in that test — `expect(titles).toEqual(["Push A"])`
@@ -678,6 +720,7 @@ git commit -m "test(training-week): assert seq-ordered exercise grouping"
 ### Task 7: Apply schema, data reset runbook, docs, full verification
 
 **Files:**
+
 - Modify: `docs/superpowers/specs/2026-05-17-training-week-redesign-design.md` (status line)
 - Modify: `docs/superpowers/plans/2026-05-17-training-week-redesign.md` (this file — status note)
 
@@ -693,9 +736,11 @@ unrecoverable. It also deletes any manually logged strength workouts (re-enter
 by hand). `endurance_activity` is untouched.
 
 Run (only after explicit user confirmation):
+
 ```bash
 node --env-file=.env.local -e "import('./src/db/index.ts').then(async(m)=>{const{sql}=await import('drizzle-orm');await m.db.execute(sql\`DELETE FROM workout\`);console.log('workout + workout_set cleared');process.exit(0)})"
 ```
+
 Then sign in and re-upload the Strong CSV at `/import`. Verify the training
 week now shows exercises grouped in performed order.
 
@@ -724,6 +769,7 @@ git commit -m "docs(training-week): mark redesign implemented; annotate supersed
 ## Self-Review
 
 **1. Spec coverage:**
+
 - Data model `seq` column → Task 1. ✓
 - Write path stamps order (import-persist, manual-log; parser unchanged) → Task 4. ✓
 - Read path orders by `seq` → Task 3. ✓
