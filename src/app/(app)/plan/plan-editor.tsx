@@ -1,6 +1,5 @@
 "use client";
 import type { Dispatch, SetStateAction } from "react";
-import { savePlanWeek } from "@/app/actions/plan";
 import { Plus, X } from "lucide-react";
 
 const DAYS = [
@@ -69,7 +68,7 @@ export function PlanEditor({
     );
 
   return (
-    <form action={savePlanWeek}>
+    <>
       {DAYS.map((name, dow) => (
         <section key={dow} className="ds-panel p-4 my-3">
           <h2 className="h4">{name.toLowerCase()}</h2>
@@ -183,6 +182,6 @@ export function PlanEditor({
       <button className="ds-btn ds-btn-primary" type="submit">
         Save plan
       </button>
-    </form>
+    </>
   );
 }
