@@ -16,23 +16,29 @@ const input: AnalyzeInput = {
       { name: "Squat", targetSets: 5, targetReps: 5, targetWeight: 245 },
     ],
   },
-  trailingLoad: {
-    windowHours: 72,
-    sessions: 1,
-    setCount: 12,
-    totalVolume: 8200,
-    perExercise: [
+  recentTraining: {
+    windowDays: 7,
+    strengthSessions: [
       {
-        exerciseName: "Squat",
-        volume: 4625,
-        setCount: 5,
-        topSetWeight: 245,
-        topSetReps: 5,
-        topSetAt: new Date("2026-05-13T12:35:00Z"),
+        workoutId: "w1",
+        performedAt: new Date("2026-05-13T12:35:00Z"),
+        title: "Lower A",
+        sets: [
+          { exerciseName: "Squat", weight: 245, reps: 5 },
+          { exerciseName: "Squat", weight: 245, reps: 5 },
+        ],
       },
     ],
-    lastSessionAt: new Date("2026-05-13T12:35:00Z"),
-    restDays: 1,
+    enduranceActivities: [
+      {
+        performedAt: new Date("2026-05-14T11:00:00Z"),
+        activityType: "run",
+        distanceMi: 6.2,
+        durationSec: 2880,
+        pacePerMiSec: 2880 / 6.2,
+        mph: 6.2 / (2880 / 3600),
+      },
+    ],
   },
 };
 
@@ -49,7 +55,9 @@ describe("ai-engine", () => {
     expect(a).toContain("Heavy Lower");
     expect(a).toContain("Squat");
     expect(a).toContain("245");
-    expect(a).toContain("8200");
+    expect(a).toContain("Squat 245×5");
+    expect(a).toContain("run");
+    expect(a).toContain("6.2");
     expect(a).toContain("knee a bit cranky");
     expect(a).toContain("todayAdjustments");
     expect(a).toContain("progressionSuggestions");

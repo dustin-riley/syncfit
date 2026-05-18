@@ -5,7 +5,8 @@ import Link from "next/link";
 import { db } from "@/db";
 import { readinessAnalysis } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { todayInfo, loadTrailingLoad } from "@/lib/readiness";
+import { todayInfo, loadRecentTraining } from "@/lib/readiness";
+import { lastSessionSetsByExercise } from "@/lib/recent-training";
 import { getPlanForUser } from "@/lib/plan-store";
 import { TodaySession } from "./dashboard/today-session";
 import { ProgressionInbox } from "./dashboard/progression-inbox";
@@ -23,7 +24,8 @@ export default async function Home() {
   const plan = await getPlanForUser(userId);
   const today = plan.find((p) => p.dayOfWeek === dow);
 
-  const load = await loadTrailingLoad(userId, now);
+  const recentTraining = await loadRecentTraining(userId, now);
+  const lastSets = lastSessionSetsByExercise(recentTraining, now);
   const initialWeek = await getTrainingWeek(userId, weekStartFor(now), now);
 
   // One query: limit(6) is a superset of the single latest row, so derive
@@ -54,13 +56,10 @@ export default async function Home() {
           modality={today.modality}
           notes={today.notes}
           exercises={today.exercises}
-          actuals={load.perExercise.map((e) => ({
+          actuals={lastSets.map((e) => ({
             exerciseName: e.exerciseName,
-            topSetWeight: e.topSetWeight,
-            topSetReps: e.topSetReps,
-            agoDays: Math.floor(
-              (now.getTime() - e.topSetAt.getTime()) / 86_400_000
-            ),
+            agoDays: e.agoDays,
+            sets: e.sets.map((s) => ({ weight: s.weight, reps: s.reps })),
           }))}
           initialResult={priorToday}
         />

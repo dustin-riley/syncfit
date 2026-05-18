@@ -159,9 +159,13 @@ describe("runReadinessAnalysis (live Neon, LLM injected)", () => {
     expect(row.headline).toBe("Ease off");
     expect(row.analysisDate).toBe("2026-05-13");
     expect(row.model).toBe(MODEL_ID);
-    const load = row.loadSnapshot as Record<string, unknown>;
-    expect(load.setCount).toBe(2);
-    expect(load.totalVolume).toBe(185 * 5 + 135 * 8);
+    const load = row.loadSnapshot as {
+      windowDays: number;
+      strengthSessions: { sets: unknown[] }[];
+    };
+    expect(load.windowDays).toBe(7);
+    expect(load.strengthSessions.length).toBe(1);
+    expect(load.strengthSessions[0].sets.length).toBe(2);
     expect(row.todayAdjustments).toEqual([
       { exercise: "Squat", change: "stop 1 rep short" },
     ]);

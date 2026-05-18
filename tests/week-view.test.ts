@@ -127,4 +127,27 @@ describe("buildTrainingWeek", () => {
     });
     expect(data.days.every((d) => d.state === "rest")).toBe(true);
   });
+
+  it("counts an endurance-only day as done and summarizes it", () => {
+    const data = buildTrainingWeek({
+      weekStartYmd: WEEK,
+      now: NOW,
+      workouts: [],
+      planDays: [],
+      enduranceActivities: [
+        {
+          performedAt: new Date("2026-05-12T16:00:00Z"), // Tue 2026-05-12
+          activityType: "run",
+          distanceMi: 6.2,
+          durationSec: 2880,
+        },
+      ],
+    });
+    const tue = data.days.find((d) => d.ymd === "2026-05-12")!;
+    expect(tue.state).toBe("done");
+    expect(tue.endurance).toEqual([
+      { activityType: "run", distanceMi: 6.2, durationSec: 2880 },
+    ]);
+    expect(tue.summary).toContain("run 6.2mi · 48:00");
+  });
 });

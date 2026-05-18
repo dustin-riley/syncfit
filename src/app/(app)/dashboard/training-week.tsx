@@ -11,6 +11,7 @@ import {
   Minus,
 } from "lucide-react";
 import type { TrainingWeekData, DayState } from "@/lib/week-view";
+import { formatDuration } from "@/lib/duration";
 import { loadTrainingWeek } from "@/app/actions/training-week";
 
 const STATE_META: Record<DayState, { label: string; Icon: typeof Check }> = {
@@ -132,7 +133,9 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                 </span>
                 <span className="ds-mono-note" style={{ flex: 1 }}>
                   {d.state === "done"
-                    ? `${d.workouts.map((w) => w.title).join(" · ")} — ${d.summary}`
+                    ? [d.workouts.map((w) => w.title).join(" · "), d.summary]
+                        .filter(Boolean)
+                        .join(" — ")
                     : d.state === "rest"
                       ? "no plan"
                       : d.plannedTitle}
@@ -164,6 +167,15 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                       </li>
                     ))
                   )}
+                  {d.endurance.map((e, i) => (
+                    <li key={`end-${i}`}>
+                      {e.activityType}
+                      {e.distanceMi === null
+                        ? ""
+                        : ` ${e.distanceMi.toFixed(1)}mi`}{" "}
+                      · {formatDuration(e.durationSec)}
+                    </li>
+                  ))}
                 </ul>
               )}
             </li>
