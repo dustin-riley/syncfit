@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { proposePlanTurnAction } from "@/app/actions/plan";
 import type { ChatMessage, WeeklyPlan } from "@/lib/plan-generator";
 import type { Day } from "./plan-editor";
@@ -25,6 +25,36 @@ export function PlanChatDrawer({
     plan: WeeklyPlan;
     goal: string | null;
   } | null>(null);
+
+  // Refs for focus management: panelRef targets the dialog panel so we can
+  // query its focusable descendants; restoreFocusRef holds whatever element had
+  // focus before the drawer opened so we can return focus on close.
+  const panelRef = useRef<HTMLDivElement>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+
+  // Focus management: move focus into the drawer on open; restore on close.
+  // The component unmounts when closed (return null below), so the cleanup
+  // function is guaranteed to run on every close — the ref keeps the previous
+  // element across the unmount/remount cycle because refs are stable.
+  useEffect(() => {
+    if (!open) return;
+    restoreFocusRef.current = document.activeElement as HTMLElement | null;
+    // Use rAF so the panel is fully painted before we query its children.
+    const frame = requestAnimationFrame(() => {
+      const focusable = panelRef.current?.querySelector<HTMLElement>(
+        'button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable) {
+        focusable.focus();
+      } else {
+        panelRef.current?.focus();
+      }
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      restoreFocusRef.current?.focus?.();
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -73,19 +103,55 @@ export function PlanChatDrawer({
       })),
     }));
 
+  // Returns all keyboard-focusable elements inside the panel at call-time.
+  function getPanelFocusable(): HTMLElement[] {
+    if (!panelRef.current) return [];
+    return Array.from(
+      panelRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+    );
+  }
+
+  function handlePanelKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (e.key !== "Tab") return;
+    const focusable = getPanelFocusable();
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      }
+    } else {
+      if (document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex justify-end"
       style={{
         background: "color-mix(in srgb, var(--ds-text) 32%, transparent)",
       }}
+      // Deliberate asymmetry: a backdrop click is treated as accidental, so it
+      // is ignored while an unapplied proposal is pending; the X button is an
+      // explicit dismissal and always closes (chat is ephemeral by design —
+      // spec §6/§11).
       onClick={() => {
         if (!pending) onClose();
       }}
     >
       <div
+        ref={panelRef}
+        tabIndex={-1}
         className="ds-panel h-full w-full max-w-md p-4 flex flex-col gap-3"
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={handlePanelKeyDown}
         role="dialog"
         aria-modal="true"
         aria-label="build plan with ai"

@@ -21,11 +21,9 @@ export function PlanWorkspace({
         <input
           className="border rounded p-2 flex-1"
           aria-label="training goal"
-          name="goal-display"
           placeholder="training goal (e.g. lose fat, keep my squat)"
           value={goal}
           onChange={(e) => setGoal(e.target.value)}
-          form="plan-form"
         />
         <button
           type="button"
