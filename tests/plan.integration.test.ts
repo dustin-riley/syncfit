@@ -13,7 +13,8 @@ import {
 const U = "itest-plan-" + Date.now();
 const U2 = "itest-plan-other-" + Date.now();
 const W = "itest-planweek-" + Date.now();
-const ALL = [U, U2, W];
+const ORD = "itest-planord-" + Date.now();
+const ALL = [U, U2, W, ORD];
 
 afterAll(async () => {
   await db.delete(plannedExercise).where(inArray(plannedExercise.userId, ALL));
@@ -205,6 +206,33 @@ describe("plan-store structured (live Neon)", () => {
     await upsertPlanProfile(U, "lean bulk");
     expect(await getPlanProfile(U)).toBe("lean bulk");
     expect(await getPlanProfile(U2)).toBe("");
+  });
+
+  it("H: getPlanForUser returns days ordered by dayOfWeek", async () => {
+    // insert intentionally out of weekday order
+    await upsertPlanDayForUser(ORD, {
+      dayOfWeek: 5,
+      title: "Fri",
+      notes: "",
+      modality: "strength",
+      exercises: [],
+    });
+    await upsertPlanDayForUser(ORD, {
+      dayOfWeek: 1,
+      title: "Mon",
+      notes: "",
+      modality: "strength",
+      exercises: [],
+    });
+    await upsertPlanDayForUser(ORD, {
+      dayOfWeek: 3,
+      title: "Wed",
+      notes: "",
+      modality: "strength",
+      exercises: [],
+    });
+    const days = await getPlanForUser(ORD);
+    expect(days.map((d) => d.dayOfWeek)).toEqual([1, 3, 5]);
   });
 
   it("G: saving a plan persists the goal alongside the week", async () => {

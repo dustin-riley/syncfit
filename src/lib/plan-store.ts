@@ -5,7 +5,7 @@ import {
   readinessAnalysis,
   planProfile,
 } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, asc } from "drizzle-orm";
 import {
   findExerciseMatch,
   exerciseMatches,
@@ -37,7 +37,8 @@ export async function getPlanForUser(userId: string): Promise<PlanDay[]> {
   const sessions = await db
     .select()
     .from(plannedSession)
-    .where(eq(plannedSession.userId, userId));
+    .where(eq(plannedSession.userId, userId))
+    .orderBy(asc(plannedSession.dayOfWeek));
   const exercises = await db
     .select()
     .from(plannedExercise)
