@@ -14,9 +14,11 @@ export function PlanChatDrawer({
   onClose: () => void;
   onApply: (plan: Day[], proposedGoal: string | null) => void;
 }) {
-  // Conversation is intentionally ephemeral: unmounting on close (return null)
-  // resets all state. The backdrop guard below prevents silently discarding an
-  // unapplied proposal; the X button always closes.
+  // The drawer stays mounted; the parent only toggles `open` and `if (!open)
+  // return null` below just hides it — it does NOT reset state, so messages /
+  // draft / pending persist across close+reopen. The backdrop guard below
+  // prevents silently discarding an unapplied proposal; the X button always
+  // closes.
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
@@ -32,10 +34,10 @@ export function PlanChatDrawer({
   const panelRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
 
-  // Focus management: move focus into the drawer on open; restore on close.
-  // The component unmounts when closed (return null below), so the cleanup
-  // function is guaranteed to run on every close — the ref keeps the previous
-  // element across the unmount/remount cycle because refs are stable.
+  // Focus management: move focus into the drawer on open; restore the
+  // previously focused element on close. The cleanup runs on every close
+  // because `open` is an effect dependency (the component is not unmounted —
+  // the parent only toggles `open`); the ref persists across renders.
   useEffect(() => {
     if (!open) return;
     restoreFocusRef.current = document.activeElement as HTMLElement | null;
