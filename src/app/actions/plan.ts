@@ -65,11 +65,13 @@ export async function savePlanWeek(formData: FormData) {
       exercises: readExercises(formData, dow),
     });
   }
-  await upsertPlanWeekForUser(session.user.id, days);
-  await upsertPlanProfile(
-    session.user.id,
-    String(formData.get("goal") ?? "").trim()
-  );
+  await Promise.all([
+    upsertPlanWeekForUser(session.user.id, days),
+    upsertPlanProfile(
+      session.user.id,
+      String(formData.get("goal") ?? "").trim()
+    ),
+  ]);
   revalidatePath("/plan");
   revalidatePath("/");
 }

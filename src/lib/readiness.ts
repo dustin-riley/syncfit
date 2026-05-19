@@ -135,8 +135,10 @@ export async function runReadinessAnalysis(opts: {
       targetWeight: Number(e.targetWeight),
     }));
 
-  const recentTraining = await loadRecentTraining(opts.userId, now);
-  const goal = await getPlanProfile(opts.userId);
+  const [recentTraining, goal] = await Promise.all([
+    loadRecentTraining(opts.userId, now),
+    getPlanProfile(opts.userId),
+  ]);
   try {
     const result = await analyzeReadiness(
       {

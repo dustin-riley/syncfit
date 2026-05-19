@@ -21,7 +21,7 @@ const U3 = "itest-readiness-fail-" + Date.now();
 const U4 = "itest-readiness-prog-" + Date.now();
 const GOAL_USER = "itest-rgoal-" + Date.now();
 const GOAL_NOW = new Date("2026-05-18T15:00:00Z"); // 2026-05-18T15:00Z => America/New_York Mon 2026-05-18 11:00 EDT => dow 1
-const ALL_USERS = [U, U3, U4];
+const ALL_USERS = [U, U3, U4, GOAL_USER];
 
 const goodGenerate = async () => ({
   verdict: "reduce_intensity",
@@ -58,12 +58,6 @@ afterAll(async () => {
     .delete(plannedSession)
     .where(inArray(plannedSession.userId, ALL_USERS));
   await db.delete(planProfile).where(inArray(planProfile.userId, [GOAL_USER]));
-  await db
-    .delete(plannedSession)
-    .where(inArray(plannedSession.userId, [GOAL_USER]));
-  await db
-    .delete(readinessAnalysis)
-    .where(inArray(readinessAnalysis.userId, [GOAL_USER]));
 
   const ra = await db
     .select({ id: readinessAnalysis.id })
