@@ -8,6 +8,7 @@ import {
 } from "@/lib/ai-engine";
 
 const input: AnalyzeInput = {
+  goal: "",
   plannedSession: {
     title: "Heavy Lower",
     notes: "deload-ish, knee a bit cranky",
@@ -116,5 +117,15 @@ describe("ai-engine", () => {
       analyzeReadiness(input, { generate: throwing })
     ).rejects.toThrow(/couldn't analyze/i);
     expect(throwing).toHaveBeenCalledTimes(2);
+  });
+
+  it("buildPrompt includes the goal line when goal is set", () => {
+    const p = buildPrompt({ ...input, goal: "lean bulk, add size" });
+    expect(p).toContain("User's stated goal: lean bulk, add size");
+  });
+
+  it("buildPrompt omits the goal line when goal is empty", () => {
+    const p = buildPrompt({ ...input, goal: "" });
+    expect(p).not.toContain("User's stated goal:");
   });
 });

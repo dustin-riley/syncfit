@@ -1,6 +1,5 @@
 "use client";
-import { useState } from "react";
-import { savePlanWeek } from "@/app/actions/plan";
+import type { Dispatch, SetStateAction } from "react";
 import { Plus, X } from "lucide-react";
 
 const DAYS = [
@@ -13,16 +12,21 @@ const DAYS = [
   "Saturday",
 ];
 
-type Ex = {
+export type Ex = {
   id: string;
   name: string;
   targetSets: number;
   targetReps: number;
   targetWeight: number;
 };
-type Day = { title: string; notes: string; modality: string; exercises: Ex[] };
+export type Day = {
+  title: string;
+  notes: string;
+  modality: string;
+  exercises: Ex[];
+};
 
-const emptyEx = (): Ex => ({
+export const emptyEx = (): Ex => ({
   id: crypto.randomUUID(),
   name: "",
   targetSets: 3,
@@ -30,9 +34,13 @@ const emptyEx = (): Ex => ({
   targetWeight: 0,
 });
 
-export function PlanEditor({ initial }: { initial: Day[] }) {
-  const [days, setDays] = useState<Day[]>(initial);
-
+export function PlanEditor({
+  days,
+  setDays,
+}: {
+  days: Day[];
+  setDays: Dispatch<SetStateAction<Day[]>>;
+}) {
   const setDay = (i: number, patch: Partial<Day>) =>
     setDays((d) => d.map((x, idx) => (idx === i ? { ...x, ...patch } : x)));
   const setEx = (di: number, ei: number, patch: Partial<Ex>) =>
@@ -64,7 +72,7 @@ export function PlanEditor({ initial }: { initial: Day[] }) {
     );
 
   return (
-    <form action={savePlanWeek}>
+    <>
       {DAYS.map((name, dow) => (
         <section key={dow} className="ds-panel p-4 my-3">
           <h2 className="h4">{name.toLowerCase()}</h2>
@@ -178,6 +186,6 @@ export function PlanEditor({ initial }: { initial: Day[] }) {
       <button className="ds-btn ds-btn-primary" type="submit">
         Save plan
       </button>
-    </form>
+    </>
   );
 }

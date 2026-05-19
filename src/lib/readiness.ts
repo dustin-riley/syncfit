@@ -15,6 +15,7 @@ import {
   type EnduranceRow,
 } from "@/lib/recent-training";
 import { analyzeReadiness, MODEL_ID, type Readiness } from "@/lib/ai-engine";
+import { getPlanProfile } from "@/lib/plan-store";
 import { APP_TZ } from "@/lib/units";
 
 type GenerateFn = (prompt: string) => Promise<unknown>;
@@ -134,10 +135,14 @@ export async function runReadinessAnalysis(opts: {
       targetWeight: Number(e.targetWeight),
     }));
 
-  const recentTraining = await loadRecentTraining(opts.userId, now);
+  const [recentTraining, goal] = await Promise.all([
+    loadRecentTraining(opts.userId, now),
+    getPlanProfile(opts.userId),
+  ]);
   try {
     const result = await analyzeReadiness(
       {
+        goal,
         plannedSession: {
           title: planned.title,
           notes: planned.notes,
@@ -151,7 +156,7 @@ export async function runReadinessAnalysis(opts: {
     await db.insert(readinessAnalysis).values({
       userId: opts.userId,
       analysisDate: date,
-      planSnapshot: { session: planned, exercises },
+      planSnapshot: { session: planned, exercises, goal },
       loadSnapshot: recentTraining as unknown as Record<string, unknown>,
       verdict: result.verdict,
       headline: result.headline,

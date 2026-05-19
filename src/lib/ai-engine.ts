@@ -38,6 +38,7 @@ export type PlannedExerciseInput = {
 };
 
 export type AnalyzeInput = {
+  goal: string;
   plannedSession: {
     title: string;
     notes: string;
@@ -77,8 +78,11 @@ export function buildPrompt(i: AnalyzeInput): string {
         return `[${appDate(e.performedAt)}] ${e.activityType} ${dist} in ${formatDuration(e.durationSec)}${pace}`;
       })
       .join(" | ") || "none";
+  const goal = i.goal.trim();
+  const goalLine = goal ? `User's stated goal: ${goal}` : null;
   return [
     "You are a strength coach. Auto-regulate today's session using only the data below.",
+    goalLine,
     `Planned (${ps.modality}) "${ps.title}": ${planned}`,
     `Day notes: ${ps.notes || "none"}`,
     `Recent strength (last ${rt.windowDays}d): ${strength}`,
@@ -86,10 +90,13 @@ export function buildPrompt(i: AnalyzeInput): string {
     "Match planned exercise names to recent-actual names by similarity (e.g. 'Bench' ~ 'Bench Press'); ignore planned exercises with no actual match.",
     "Endurance fatigue (runs/rides/swims) is real systemic load — weigh it when judging readiness for lower-body or heavy sessions.",
     "No RPE is available — judge fatigue from recent sets, frequency, endurance volume and rest only.",
+    "Interpret readiness and progression through the user's stated goal when present (e.g. a fat-loss cut tolerates less added volume than a bulk).",
     "Return TWO separate lists:",
     "- todayAdjustments[]: ephemeral, today-only tweaks given current fatigue (do NOT change the program). Empty unless warranted.",
     "- progressionSuggestions[]: durable target changes going forward, ONLY on clear evidence (clean reps at/above target across recent sessions, or a clear stall). currentWeight = the planned target. Empty unless clearly warranted. Do NOT include a status field.",
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 type GenerateFn = (prompt: string) => Promise<unknown>;

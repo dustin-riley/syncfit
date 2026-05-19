@@ -1,26 +1,35 @@
 import { describe, it, expect, afterAll } from "vitest";
 import { inArray } from "drizzle-orm";
 import { db } from "@/db";
-import { plannedSession, plannedExercise } from "@/db/schema";
+import { plannedSession, plannedExercise, planProfile } from "@/db/schema";
 import {
   getPlanForUser,
   upsertPlanDayForUser,
   upsertPlanWeekForUser,
+  getPlanProfile,
+  upsertPlanProfile,
 } from "@/lib/plan-store";
 
 const U = "itest-plan-" + Date.now();
 const U2 = "itest-plan-other-" + Date.now();
 const W = "itest-planweek-" + Date.now();
-const ALL = [U, U2, W];
+const ORD = "itest-planord-" + Date.now();
+const ALL = [U, U2, W, ORD];
 
 afterAll(async () => {
   await db.delete(plannedExercise).where(inArray(plannedExercise.userId, ALL));
   await db.delete(plannedSession).where(inArray(plannedSession.userId, ALL));
+  await db.delete(planProfile).where(inArray(planProfile.userId, ALL));
   const leftover = await db
     .select({ id: plannedSession.id })
     .from(plannedSession)
     .where(inArray(plannedSession.userId, ALL));
   expect(leftover.length).toBe(0);
+  const leftoverProfiles = await db
+    .select()
+    .from(planProfile)
+    .where(inArray(planProfile.userId, ALL));
+  expect(leftoverProfiles.length).toBe(0);
 });
 
 describe("plan-store structured (live Neon)", () => {
@@ -188,5 +197,61 @@ describe("plan-store structured (live Neon)", () => {
       .from(plannedExercise)
       .where(inArray(plannedExercise.userId, [W]));
     expect(ex.length).toBe(6); // 6 non-rest days, 1 exercise each
+  });
+
+  it("F: plan_profile goal upserts and round-trips", async () => {
+    expect(await getPlanProfile(U)).toBe("");
+    await upsertPlanProfile(U, "lose fat, keep strength");
+    expect(await getPlanProfile(U)).toBe("lose fat, keep strength");
+    await upsertPlanProfile(U, "lean bulk");
+    expect(await getPlanProfile(U)).toBe("lean bulk");
+    expect(await getPlanProfile(U2)).toBe("");
+  });
+
+  it("H: getPlanForUser returns days ordered by dayOfWeek", async () => {
+    // insert intentionally out of weekday order
+    await upsertPlanDayForUser(ORD, {
+      dayOfWeek: 5,
+      title: "Fri",
+      notes: "",
+      modality: "strength",
+      exercises: [],
+    });
+    await upsertPlanDayForUser(ORD, {
+      dayOfWeek: 1,
+      title: "Mon",
+      notes: "",
+      modality: "strength",
+      exercises: [],
+    });
+    await upsertPlanDayForUser(ORD, {
+      dayOfWeek: 3,
+      title: "Wed",
+      notes: "",
+      modality: "strength",
+      exercises: [],
+    });
+    const days = await getPlanForUser(ORD);
+    expect(days.map((d) => d.dayOfWeek)).toEqual([1, 3, 5]);
+  });
+
+  it("G: saving a plan persists the goal alongside the week", async () => {
+    await upsertPlanWeekForUser(W, [
+      {
+        dayOfWeek: 1,
+        title: "Lower",
+        notes: "",
+        modality: "strength",
+        exercises: [
+          { name: "Squat", targetSets: 5, targetReps: 5, targetWeight: 245 },
+        ],
+      },
+    ]);
+    await upsertPlanProfile(W, "recomp");
+    expect(await getPlanProfile(W)).toBe("recomp");
+    const days = await getPlanForUser(W);
+    expect(days.find((d) => d.dayOfWeek === 1)?.exercises[0].name).toBe(
+      "Squat"
+    );
   });
 });

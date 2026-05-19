@@ -5,10 +5,19 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import {
   upsertPlanWeekForUser,
+  upsertPlanProfile,
+  getPlanForUser,
+  getPlanProfile,
   applyProgressionDecision,
   type PlanDayInput,
   type PlanExerciseInput,
 } from "@/lib/plan-store";
+import { loadRecentTraining } from "@/lib/readiness";
+import {
+  proposePlanTurn,
+  type ChatMessage,
+  type PlanTurn,
+} from "@/lib/plan-generator";
 
 // Form numbers arrive as strings; coerce defensively so a blank/garbled field
 // can never send NaN into the numeric plan columns (plan-store assumes clean
@@ -56,7 +65,13 @@ export async function savePlanWeek(formData: FormData) {
       exercises: readExercises(formData, dow),
     });
   }
-  await upsertPlanWeekForUser(session.user.id, days);
+  await Promise.all([
+    upsertPlanWeekForUser(session.user.id, days),
+    upsertPlanProfile(
+      session.user.id,
+      String(formData.get("goal") ?? "").trim()
+    ),
+  ]);
   revalidatePath("/plan");
   revalidatePath("/");
 }
@@ -77,4 +92,33 @@ export async function applyProgression(input: {
     revalidatePath("/plan");
   }
   return r;
+}
+
+export async function proposePlanTurnAction(
+  messages: ChatMessage[]
+): Promise<{ ok: true; turn: PlanTurn } | { ok: false; error: string }> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  // RPC-style action called from a client component: return an error
+  // object rather than redirect() (a thrown redirect would surface as an
+  // unhandled client exception). savePlanWeek is a form POST, so it redirects.
+  if (!session) return { ok: false, error: "Not authenticated." };
+  try {
+    const [currentPlan, goal, recentTraining] = await Promise.all([
+      getPlanForUser(session.user.id),
+      getPlanProfile(session.user.id),
+      loadRecentTraining(session.user.id, new Date()),
+    ]);
+    const turn = await proposePlanTurn(
+      { goal, currentPlan, recentTraining },
+      messages
+    );
+    return { ok: true, turn };
+  } catch (e: unknown) {
+    const msg =
+      e instanceof Error && typeof e.message === "string" ? e.message : "";
+    return {
+      ok: false,
+      error: /couldn't build/i.test(msg) ? msg : "Couldn't build a plan.",
+    };
+  }
 }

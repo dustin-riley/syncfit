@@ -1,15 +1,19 @@
 import { auth } from "@/auth/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { getPlanForUser } from "@/lib/plan-store";
-import { PlanEditor } from "./plan-editor";
+import { getPlanForUser, getPlanProfile } from "@/lib/plan-store";
+import { PlanWorkspace } from "./plan-workspace";
+import type { Day } from "./plan-editor";
 
 export default async function PlanPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/login");
-  const plan = await getPlanForUser(session.user.id);
+  const [plan, goal] = await Promise.all([
+    getPlanForUser(session.user.id),
+    getPlanProfile(session.user.id),
+  ]);
   const byDay = new Map(plan.map((p) => [p.dayOfWeek, p]));
-  const initial = Array.from({ length: 7 }, (_, dow) => {
+  const initialDays: Day[] = Array.from({ length: 7 }, (_, dow) => {
     const p = byDay.get(dow);
     return {
       title: p?.title ?? "",
@@ -24,7 +28,7 @@ export default async function PlanPage() {
   return (
     <main className="ds-container p-8">
       <h1 className="h2">weekly plan</h1>
-      <PlanEditor initial={initial} />
+      <PlanWorkspace initialDays={initialDays} initialGoal={goal} />
     </main>
   );
 }
