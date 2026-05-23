@@ -317,10 +317,12 @@ Module layout under `ios/SyncFit/`:
 SyncFitApp.swift                  // @main, environment wiring
 Models/
   HealthMetricUpload.swift        // Codable payload, matches API contract
-  DeviceToken.swift               // wraps Keychain read/write
+  PairResponse.swift              // pairing endpoint response shape
 Health/
-  HealthKitClient.swift           // thin wrapper over HKHealthStore (protocol-backed)
+  HealthKitReading.swift          // protocol-backed wrapper interface
+  HealthKitClient.swift           // HKHealthStore-backed impl
   MetricPicker.swift              // pure: HK samples → {value, source, freshness}
+Coordinator/
   SyncCoordinator.swift           // orchestrates picker + uploader; owns lastSyncedAt
 Net/
   APIClient.swift                 // URLSession + bearer header; one method per endpoint
