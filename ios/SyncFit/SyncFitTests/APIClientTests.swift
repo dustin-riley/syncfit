@@ -79,7 +79,22 @@ final class StubURLProtocol: URLProtocol {
         guard let h = Self.handler else {
             client?.urlProtocol(self, didFailWithError: URLError(.unknown)); return
         }
-        let (resp, data) = h(request)
+        // URLSession moves httpBody → httpBodyStream before executing the
+        // request; drain the stream so handlers can read httpBody normally.
+        var req = request
+        if req.httpBody == nil, let stream = req.httpBodyStream {
+            stream.open()
+            var body = Data()
+            let buf = UnsafeMutablePointer<UInt8>.allocate(capacity: 4096)
+            defer { buf.deallocate() }
+            while stream.hasBytesAvailable {
+                let n = stream.read(buf, maxLength: 4096)
+                if n > 0 { body.append(buf, count: n) } else { break }
+            }
+            stream.close()
+            req.httpBody = body
+        }
+        let (resp, data) = h(req)
         client?.urlProtocol(self, didReceive: resp, cacheStoragePolicy: .notAllowed)
         client?.urlProtocol(self, didLoad: data)
         client?.urlProtocolDidFinishLoading(self)
