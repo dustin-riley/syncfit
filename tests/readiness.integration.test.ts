@@ -24,7 +24,9 @@ const GOAL_USER = "itest-rgoal-" + Date.now();
 const GOAL_NOW = new Date("2026-05-18T15:00:00Z"); // 2026-05-18T15:00Z => America/New_York Mon 2026-05-18 11:00 EDT => dow 1
 const HEALTH_USER = "itest-rhealth-" + Date.now();
 const HEALTH_NOW = new Date("2026-05-19T16:00:00Z"); // Tue dow 2
-const ALL_USERS = [U, U3, U4, GOAL_USER, HEALTH_USER];
+const NO_HEALTH_USER = "itest-rnohealth-" + Date.now();
+const NO_HEALTH_NOW = new Date("2026-05-19T16:00:00Z");
+const ALL_USERS = [U, U3, U4, GOAL_USER, HEALTH_USER, NO_HEALTH_USER];
 
 const goodGenerate = async () => ({
   verdict: "reduce_intensity",
@@ -345,5 +347,34 @@ describe("runReadinessAnalysis (live Neon, LLM injected)", () => {
     expect(snap.healthSignals).not.toBeNull();
     expect(snap.healthSignals!.today.hrv).toBe(42.5);
     expect(snap.healthSignals!.baselineN).toBe(2);
+  });
+
+  it("F: readiness degrades gracefully — no health rows → block omitted from prompt", async () => {
+    const { dow } = todayInfo(NO_HEALTH_NOW);
+    await db.insert(plannedSession).values({
+      userId: NO_HEALTH_USER,
+      dayOfWeek: dow,
+      title: "Lower",
+      notes: "",
+      modality: "strength",
+    });
+    // intentionally NO healthMetric rows for this user
+
+    let seenPrompt = "";
+    const out = await runReadinessAnalysis({
+      userId: NO_HEALTH_USER,
+      now: NO_HEALTH_NOW,
+      generate: async (p: string) => {
+        seenPrompt = p;
+        return {
+          verdict: "proceed_as_planned",
+          headline: "ok",
+          rationale: "ok",
+        };
+      },
+    });
+    expect(out.error).toBeUndefined();
+    expect(out.result).toBeDefined();
+    expect(seenPrompt).not.toContain("## Health signals");
   });
 });

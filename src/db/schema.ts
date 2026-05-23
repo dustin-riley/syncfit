@@ -135,6 +135,13 @@ export const readinessAnalysis = pgTable("readiness_analysis", {
 });
 
 // ===== iOS companion =====
+//
+// `user_id` columns on the three tables below are NOT declared as foreign
+// keys to Better Auth's `user` table. The pre-existing tables in this
+// schema (workout, workout_set, planned_session, etc.) follow the same
+// pattern — Better Auth's user lifecycle is managed by the library; we
+// scope by `user_id` at every query site instead of at the DB layer.
+// Match the existing project convention; do not retrofit FKs here.
 
 export const healthMetric = pgTable(
   "health_metric",

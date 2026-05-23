@@ -104,9 +104,7 @@ healthMetric = pgTable(
   "health_metric",
   {
     id: serial("id").primaryKey(),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id),
+    userId: text("user_id").notNull(),
     metricDate: date("metric_date").notNull(), // user's date in APP_TZ
     type: text("type").notNull(), // 'hrv' | 'rhr' | 'sleep_duration_seconds'
     value: numeric("value").notNull(), // ms | bpm | seconds
@@ -130,9 +128,7 @@ healthMetric = pgTable(
 // Keychain; server stores sha256(token).
 deviceToken = pgTable("device_token", {
   id: serial("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id),
+  userId: text("user_id").notNull(),
   tokenHash: text("token_hash").notNull().unique(),
   deviceName: text("device_name").notNull(), // "Dustin's iPhone"
   platform: text("platform").notNull().default("ios"),
@@ -146,9 +142,7 @@ deviceToken = pgTable("device_token", {
 // Short-lived (10-min TTL) pairing codes. Deleted on successful redemption.
 devicePairing = pgTable("device_pairing", {
   id: serial("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id),
+  userId: text("user_id").notNull(),
   code: text("code").notNull().unique(), // 6-digit, displayed on web
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
