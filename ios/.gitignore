@@ -1,0 +1,19 @@
+# XcodeGen-generated project — regenerated from project.yml
+*.xcodeproj/
+*.xcworkspace/
+
+# Xcode build outputs
+DerivedData/
+build/
+*.xcuserdatad
+xcuserdata/
+
+# Swift Package Manager
+.build/
+Package.resolved
+
+# macOS noise
+.DS_Store
+
+# XcodeGen-generated entitlements — regenerated from project.yml properties
+*.entitlements
