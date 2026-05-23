@@ -28,7 +28,7 @@ struct PairingView: View {
                     pairing = true; defer { pairing = false }
                     error = nil
                     do {
-                        let device = await UIDevice.current.name
+                        let device = UIDevice.current.name
                         try await session.pair(code: code, deviceName: device)
                     } catch APIClientError.badRequest {
                         self.error = "That code didn't work. Generate a new one in the web app."
