@@ -111,8 +111,11 @@ healthMetric = pgTable("health_metric", {
   recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(),  // original HK sample ts
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
-  uniq: unique().on(t.userId, t.metricDate, t.type),  // upsert key; multi-device → last-write-wins
-  byUserDate: index().on(t.userId, t.metricDate),
+  // upsert key; multi-device → last-write-wins. The leading
+  // `(user_id, metric_date)` of this unique index also serves the
+  // aggregator's (userId, metricDate range) lookups — no separate
+  // index needed.
+  uniqUserDateType: unique().on(t.userId, t.metricDate, t.type),
 }));
 
 // One row per paired device. Plaintext token only ever lives on iOS

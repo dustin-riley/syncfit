@@ -158,7 +158,10 @@ export const healthMetric = pgTable(
       .notNull(),
   },
   (t) => ({
-    // upsert key; multi-device → last-write-wins
+    // upsert key; multi-device → last-write-wins. The leading
+    // (user_id, metric_date) of this unique index also serves
+    // loadHealthSignals' (userId, metric_date range) reads — no
+    // separate byUserDate index needed.
     uniqUserDateType: unique().on(t.userId, t.metricDate, t.type),
   })
 );
