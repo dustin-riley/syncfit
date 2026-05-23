@@ -89,10 +89,7 @@ describe("computeHealthSignals", () => {
   });
 
   it("missing today value still returns baseline from history", () => {
-    const rows: HealthRow[] = [
-      row(d(-1), "rhr", 56),
-      row(d(-2), "rhr", 58),
-    ];
+    const rows: HealthRow[] = [row(d(-1), "rhr", 56), row(d(-2), "rhr", 58)];
     const r = computeHealthSignals(rows, NOW);
     expect(r.today.rhr).toBeNull();
     expect(r.baseline7d.rhr).toBe(57);

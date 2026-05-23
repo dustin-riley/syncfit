@@ -73,7 +73,7 @@ testable.
 1. **Device pairing** — backend module + `/settings/devices` web page.
    Web mints short-lived pairing codes; iOS redeems for a long-lived
    device token. Custom mini-flow that lives next to Better Auth: Better
-   Auth still owns the *user* session, this owns the *device* token.
+   Auth still owns the _user_ session, this owns the _device_ token.
 2. **Health ingestion API** — `POST /api/health/sync` (bearer-token auth
    via the device token). Idempotent batched upsert into `health_metric`
    keyed by `(userId, metricDate, type)`. The route validates the payload
@@ -100,33 +100,45 @@ All three new tables are single-statement writers — they stay on `db`
 ```ts
 // One value per (user, day, metric). Scalar only — sleep stages would be
 // a separate table when/if added in v3.
-healthMetric = pgTable("health_metric", {
-  id: serial("id").primaryKey(),
-  userId: text("user_id").notNull().references(() => user.id),
-  metricDate: date("metric_date").notNull(),         // user's date in APP_TZ
-  type: text("type").notNull(),                       // 'hrv' | 'rhr' | 'sleep_duration_seconds'
-  value: numeric("value").notNull(),                  // ms | bpm | seconds
-  source: text("source").notNull(),                   // which fallback step fired
-  freshness: text("freshness").notNull(),             // 'fresh' | 'stale_24h' | 'stale_48h'
-  recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(),  // original HK sample ts
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (t) => ({
-  // upsert key; multi-device → last-write-wins. The leading
-  // `(user_id, metric_date)` of this unique index also serves the
-  // aggregator's (userId, metricDate range) lookups — no separate
-  // index needed.
-  uniqUserDateType: unique().on(t.userId, t.metricDate, t.type),
-}));
+healthMetric = pgTable(
+  "health_metric",
+  {
+    id: serial("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id),
+    metricDate: date("metric_date").notNull(), // user's date in APP_TZ
+    type: text("type").notNull(), // 'hrv' | 'rhr' | 'sleep_duration_seconds'
+    value: numeric("value").notNull(), // ms | bpm | seconds
+    source: text("source").notNull(), // which fallback step fired
+    freshness: text("freshness").notNull(), // 'fresh' | 'stale_24h' | 'stale_48h'
+    recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(), // original HK sample ts
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    // upsert key; multi-device → last-write-wins. The leading
+    // `(user_id, metric_date)` of this unique index also serves the
+    // aggregator's (userId, metricDate range) lookups — no separate
+    // index needed.
+    uniqUserDateType: unique().on(t.userId, t.metricDate, t.type),
+  })
+);
 
 // One row per paired device. Plaintext token only ever lives on iOS
 // Keychain; server stores sha256(token).
 deviceToken = pgTable("device_token", {
   id: serial("id").primaryKey(),
-  userId: text("user_id").notNull().references(() => user.id),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id),
   tokenHash: text("token_hash").notNull().unique(),
-  deviceName: text("device_name").notNull(),          // "Dustin's iPhone"
+  deviceName: text("device_name").notNull(), // "Dustin's iPhone"
   platform: text("platform").notNull().default("ios"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
   lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
   revokedAt: timestamp("revoked_at", { withTimezone: true }),
 });
@@ -134,10 +146,14 @@ deviceToken = pgTable("device_token", {
 // Short-lived (10-min TTL) pairing codes. Deleted on successful redemption.
 devicePairing = pgTable("device_pairing", {
   id: serial("id").primaryKey(),
-  userId: text("user_id").notNull().references(() => user.id),
-  code: text("code").notNull().unique(),              // 6-digit, displayed on web
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id),
+  code: text("code").notNull().unique(), // 6-digit, displayed on web
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 ```
 
@@ -158,7 +174,7 @@ devicePairing = pgTable("device_pairing", {
   2. iOS `POST /api/devices/pair` with `{ code, deviceName }` → server
      validates code + TTL, deletes the pairing row, mints a 256-bit random
      token, stores `sha256(token)` in `device_token`, returns the
-     plaintext token *once*. iOS writes it to Keychain.
+     plaintext token _once_. iOS writes it to Keychain.
 - **Revocation** — `/settings/devices` lists paired devices with
   last-used timestamp and a "Revoke" button → sets `revokedAt`. Revoked
   tokens 401 immediately on the next sync.
@@ -174,6 +190,7 @@ The picker is a pure module on the iOS side and never makes network or
 HealthKit calls itself — it operates on pre-fetched samples.
 
 **HRV** (`HKQuantityTypeIdentifier.heartRateVariabilitySDNN`)
+
 1. Latest sample within the previous night's sleep window. The window is
    defined as `[22:00 prior day, end-of-last-asleep-segment]` in `APP_TZ`
    when last night's sleep was tracked; otherwise it falls back to a
@@ -186,6 +203,7 @@ HealthKit calls itself — it operates on pre-fetched samples.
 4. Otherwise: omitted from the upload payload (treated as missing).
 
 **Resting HR** (`HKQuantityTypeIdentifierRestingHeartRate`)
+
 1. Today's Apple-computed daily RHR.
    → `source: "primary"`, `freshness: "fresh"`.
 2. Yesterday's daily RHR.
@@ -193,6 +211,7 @@ HealthKit calls itself — it operates on pre-fetched samples.
 3. Otherwise: omitted.
 
 **Sleep duration** (sum of `HKCategoryValueSleepAnalysis.asleep*` segments)
+
 1. Last night's total asleep time.
    → `source: "primary"`, `freshness: "fresh"`.
 2. Otherwise: omitted (no stale fallback; old sleep is not "last night").
@@ -221,22 +240,39 @@ an iOS app update.
 1. User opens iOS app (or taps "Sync now"). App computes today's metrics
    on device via the fallback ladder; metrics whose ladder bottoms out are
    omitted from the payload.
-2. iOS also computes *yesterday's* values and includes them — Apple's
+2. iOS also computes _yesterday's_ values and includes them — Apple's
    daily RHR for "today" is often finalized late, so resyncing yesterday
    catches the late-finalized value via the upsert.
 3. iOS posts `POST /api/health/sync` with `Authorization: Bearer <token>`:
    ```json
-   { "uploads": [
-       { "metricDate": "2026-05-23", "type": "hrv", "value": 42.5,
-         "source": "primary", "freshness": "fresh",
-         "recordedAt": "2026-05-23T06:14:00-04:00" },
-       { "metricDate": "2026-05-23", "type": "rhr", "value": 58,
-         "source": "primary", "freshness": "fresh",
-         "recordedAt": "2026-05-23T03:00:00-04:00" },
-       { "metricDate": "2026-05-22", "type": "rhr", "value": 56,
-         "source": "primary", "freshness": "fresh",
-         "recordedAt": "2026-05-22T03:00:00-04:00" }
-   ]}
+   {
+     "uploads": [
+       {
+         "metricDate": "2026-05-23",
+         "type": "hrv",
+         "value": 42.5,
+         "source": "primary",
+         "freshness": "fresh",
+         "recordedAt": "2026-05-23T06:14:00-04:00"
+       },
+       {
+         "metricDate": "2026-05-23",
+         "type": "rhr",
+         "value": 58,
+         "source": "primary",
+         "freshness": "fresh",
+         "recordedAt": "2026-05-23T03:00:00-04:00"
+       },
+       {
+         "metricDate": "2026-05-22",
+         "type": "rhr",
+         "value": 56,
+         "source": "primary",
+         "freshness": "fresh",
+         "recordedAt": "2026-05-22T03:00:00-04:00"
+       }
+     ]
+   }
    ```
 4. Server validates token → upserts on `(userId, metricDate, type)` →
    returns `{ accepted, updated }`. iOS updates `lastSyncedAt`.
@@ -363,7 +399,7 @@ partial state, never leak driver messages.
 
 - Pure module, one `db` read. If the query throws, **the readiness flow
   degrades gracefully** — the error is caught in `runReadinessAnalysis`,
-  logged, and the function continues *without* the health context block.
+  logged, and the function continues _without_ the health context block.
   Health-signal failure must never break the existing AI flow. This is
   the inverse of "AI failure → no persistence": health is additive
   context, so missing it is acceptable; missing the AI verdict is not.
@@ -431,7 +467,7 @@ Neon; AI mocked everywhere.
   assert the prompt contains `## Health signals`; assert
   `readiness_analysis.loadSnapshot` includes the health payload.
 - **Readiness degrades gracefully** — itest user with no `health_metric`
-  rows → prompt does *not* contain the health block; analysis succeeds.
+  rows → prompt does _not_ contain the health block; analysis succeeds.
 
 All integration tests self-clean via the existing `itest-*` user
 pattern.

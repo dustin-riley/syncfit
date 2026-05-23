@@ -82,10 +82,13 @@ export function DevicesClient({
         setDevices(await listDevices());
       }
     }, 2000);
-    const stop = setTimeout(() => {
-      clearInterval(t);
-      setPolling(false);
-    }, 11 * 60 * 1000); // a touch past code TTL
+    const stop = setTimeout(
+      () => {
+        clearInterval(t);
+        setPolling(false);
+      },
+      11 * 60 * 1000
+    ); // a touch past code TTL
     return () => {
       clearInterval(t);
       clearTimeout(stop);
@@ -185,8 +188,7 @@ export function DevicesClient({
                   justifyContent: "space-between",
                   gap: "var(--ds-space-3)",
                   padding: "var(--ds-space-2) 0",
-                  borderBottom:
-                    "var(--ds-border-width) solid var(--ds-border)",
+                  borderBottom: "var(--ds-border-width) solid var(--ds-border)",
                 }}
               >
                 <span>

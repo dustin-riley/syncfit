@@ -122,7 +122,9 @@ export function buildPrompt(i: AnalyzeInput): string {
       .join(" | ") || "none";
   const goal = i.goal.trim();
   const goalLine = goal ? `User's stated goal: ${goal}` : null;
-  const healthBlock = i.healthSignals ? buildHealthBlock(i.healthSignals) : null;
+  const healthBlock = i.healthSignals
+    ? buildHealthBlock(i.healthSignals)
+    : null;
   return [
     "You are a strength coach. Auto-regulate today's session using only the data below.",
     goalLine,

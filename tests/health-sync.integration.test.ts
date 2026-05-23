@@ -10,10 +10,7 @@ const U = "itest-sync-" + Date.now();
 let TOKEN = "";
 let REVOKED_TOKEN = "";
 
-function syncRequest(
-  body: unknown,
-  auth?: string
-): Request {
+function syncRequest(body: unknown, auth?: string): Request {
   const headers: Record<string, string> = {
     "content-type": "application/json",
   };

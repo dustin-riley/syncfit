@@ -71,9 +71,7 @@ export async function pollPairingRedeemed(
   const rows = await db
     .select({ id: deviceToken.id, createdAt: deviceToken.createdAt })
     .from(deviceToken)
-    .where(
-      and(eq(deviceToken.userId, userId), isNull(deviceToken.revokedAt))
-    );
+    .where(and(eq(deviceToken.userId, userId), isNull(deviceToken.revokedAt)));
   return {
     redeemed: rows.some((r) => r.createdAt.getTime() >= since.getTime()),
   };

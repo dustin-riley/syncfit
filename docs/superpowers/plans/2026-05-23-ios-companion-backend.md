@@ -15,7 +15,8 @@
 ## File Structure
 
 **Create:**
-- `src/lib/health-signals.ts` — pure aggregator: `loadHealthSignals(userId, now)` returns today + 7-day baseline + freshness per metric.
+
+- `src/lib/health-signals.ts` — pure compute + types (no DB imports — `src/db/index.ts` throws at module load when `DATABASE_URL` is unset, so any unit-tested file must stay DB-free). The DB-loading function lives in `readiness.ts`, mirroring the established `recent-training.ts` (pure) ↔ `readiness.ts` (`loadRecentTraining`) split.
 - `src/lib/device-auth.ts` — `resolveDeviceUser(req)` bearer-token validator + `hashToken(plaintext)` helper.
 - `src/lib/health-pairing.ts` — `generatePairingCode()`, `mintDeviceToken()`, plus the small pure validation helpers around expiry.
 - `src/app/actions/devices.ts` — `createPairingCode`, `revokeDevice` server actions for the web settings page.
@@ -29,6 +30,7 @@
 - `tests/health-sync.integration.test.ts` — ingestion endpoint integration.
 
 **Modify:**
+
 - `src/db/schema.ts` — three new tables.
 - `src/lib/ai-engine.ts` — `AnalyzeInput` + `buildPrompt` gain optional `healthSignals`.
 - `src/lib/readiness.ts` — load health signals in the existing `Promise.all`, include in prompt input + `loadSnapshot`.
@@ -38,6 +40,7 @@
 - `tests/readiness.integration.test.ts` — one new case (E) verifying health context is in prompt + `loadSnapshot`.
 
 **Generated (do not hand-edit):**
+
 - `drizzle/NNNN_*.sql` — migration emitted by `drizzle-kit generate`.
 
 ---
@@ -45,12 +48,13 @@
 ## Task 1: Add three tables to the Drizzle schema, generate & push migration
 
 **Files:**
+
 - Modify: `src/db/schema.ts`
 - Generated: `drizzle/NNNN_*.sql` (next migration)
 
 - [ ] **Step 1: Append the three new tables to `src/db/schema.ts`.**
 
-  Append at the bottom of the file, right *before* the existing `export * from "./auth-schema";` line:
+  Append at the bottom of the file, right _before_ the existing `export * from "./auth-schema";` line:
 
   ```ts
   // ===== iOS companion =====
@@ -163,6 +167,7 @@
 ## Task 2: Pure `health-signals` aggregator + unit tests (TDD)
 
 **Files:**
+
 - Create: `tests/health-signals.test.ts`
 - Create: `src/lib/health-signals.ts`
 
@@ -250,10 +255,7 @@
     });
 
     it("missing today value still returns baseline from history", () => {
-      const rows: HealthRow[] = [
-        row(d(-1), "rhr", 56),
-        row(d(-2), "rhr", 58),
-      ];
+      const rows: HealthRow[] = [row(d(-1), "rhr", 56), row(d(-2), "rhr", 58)];
       const r = computeHealthSignals(rows, NOW);
       expect(r.today.rhr).toBeNull();
       expect(r.baseline7d.rhr).toBe(57);
@@ -287,14 +289,13 @@
 
   Expected: failure with `Cannot find module '@/lib/health-signals'`.
 
-- [ ] **Step 3: Implement `src/lib/health-signals.ts` (pure compute + DB read function).**
+- [ ] **Step 3: Implement `src/lib/health-signals.ts` (pure compute only — no DB).**
+
+  This file must stay DB-import-free. `src/db/index.ts:5-7` throws at module load when `DATABASE_URL` is unset, so any import of `@/db` here would break the offline unit test. The DB-loading function lives in `readiness.ts` (Task 4), mirroring the project's `recent-training.ts` (pure) ↔ `readiness.ts` (`loadRecentTraining`) split.
 
   Create `src/lib/health-signals.ts`:
 
   ```ts
-  import { and, eq, gte, inArray } from "drizzle-orm";
-  import { db } from "@/db";
-  import { healthMetric } from "@/db/schema";
   import { APP_TZ } from "@/lib/units";
 
   export type Freshness = "fresh" | "stale_24h" | "stale_48h";
@@ -327,13 +328,20 @@
     baselineN: number;
   };
 
-  // Maps the schema string keys to the output keys. Keep here, not in the
-  // table — the schema column is the wire format with iOS.
-  const KEY_HRV = "hrv";
-  const KEY_RHR = "rhr";
-  const KEY_SLEEP = "sleep_duration_seconds";
+  // Wire-format keys (also the `health_metric.type` column values).
+  // Exported so the DB loader in readiness.ts can target the same set.
+  export const HEALTH_METRIC_KEYS = {
+    HRV: "hrv",
+    RHR: "rhr",
+    SLEEP: "sleep_duration_seconds",
+  } as const;
+  const KEY_HRV = HEALTH_METRIC_KEYS.HRV;
+  const KEY_RHR = HEALTH_METRIC_KEYS.RHR;
+  const KEY_SLEEP = HEALTH_METRIC_KEYS.SLEEP;
 
-  function todayDateInAppTz(now: Date): string {
+  // Exported so readiness.ts's loader can reuse the same APP_TZ-aware
+  // date formatting.
+  export function todayDateInAppTz(now: Date): string {
     const parts = new Intl.DateTimeFormat("en-CA", {
       timeZone: APP_TZ,
       year: "numeric",
@@ -374,7 +382,9 @@
       return r ? r.freshness : null;
     };
     const baseline = (type: string) =>
-      avg(baselineRows.filter((r) => r.type === type).map((r) => Number(r.value)));
+      avg(
+        baselineRows.filter((r) => r.type === type).map((r) => Number(r.value))
+      );
 
     const baselineN = Math.max(
       baselineRows.filter((r) => r.type === KEY_HRV).length,
@@ -401,45 +411,9 @@
       baselineN,
     };
   }
-
-  // DB-touching wrapper. Pulls the 8-day window (today + previous 7).
-  export async function loadHealthSignals(
-    userId: string,
-    now: Date
-  ): Promise<HealthSignals> {
-    const today = todayDateInAppTz(now);
-    const cutoff = todayDateInAppTz(new Date(now.getTime() - 7 * 86_400_000));
-    const rows = await db
-      .select({
-        metricDate: healthMetric.metricDate,
-        type: healthMetric.type,
-        value: healthMetric.value,
-        source: healthMetric.source,
-        freshness: healthMetric.freshness,
-        recordedAt: healthMetric.recordedAt,
-      })
-      .from(healthMetric)
-      .where(
-        and(
-          eq(healthMetric.userId, userId),
-          gte(healthMetric.metricDate, cutoff),
-          inArray(healthMetric.type, [KEY_HRV, KEY_RHR, KEY_SLEEP])
-        )
-      );
-    const typed: HealthRow[] = rows.map((r) => ({
-      metricDate: r.metricDate,
-      type: r.type,
-      value: Number(r.value),
-      source: r.source,
-      freshness: r.freshness as Freshness,
-      recordedAt: r.recordedAt,
-    }));
-    // `today` is included in the query window but excluded from baseline
-    // inside computeHealthSignals.
-    void today;
-    return computeHealthSignals(typed, now);
-  }
   ```
+
+  Note: this file has NO DB import. The DB-loading function `loadHealthSignals(userId, now)` is defined in `src/lib/readiness.ts` in Task 4, alongside the existing `loadRecentTraining`. That split matches the project's `recent-training.ts` (pure) ↔ `readiness.ts` (DB+orchestration) convention.
 
 - [ ] **Step 4: Run the unit tests and confirm they pass.**
 
@@ -463,6 +437,7 @@
 ## Task 3: Extend `buildPrompt` with the health block (TDD)
 
 **Files:**
+
 - Modify: `tests/ai-engine.test.ts`
 - Modify: `src/lib/ai-engine.ts`
 
@@ -471,58 +446,58 @@
   Append inside the `describe("ai-engine", () => { ... })` block, right after the existing `goal`-omits test:
 
   ```ts
-    it("buildPrompt includes the health-signals block when at least one metric is non-missing", () => {
-      const p = buildPrompt({
-        ...input,
-        healthSignals: {
-          today: { hrv: 42.5, rhr: 58, sleepDuration: 22320 },
-          baseline7d: { hrv: 46.1, rhr: 55, sleepDuration: 25320 },
-          freshness: { hrv: "fresh", rhr: "fresh", sleepDuration: "fresh" },
-          baselineN: 7,
-        },
-      });
-      expect(p).toContain("## Health signals");
-      expect(p).toContain("HRV today: 42.5 ms (fresh)");
-      expect(p).toContain("7-day avg 46.1 ms");
-      expect(p).toContain("RHR today: 58 bpm (fresh)");
-      expect(p).toContain("Sleep last night:");
+  it("buildPrompt includes the health-signals block when at least one metric is non-missing", () => {
+    const p = buildPrompt({
+      ...input,
+      healthSignals: {
+        today: { hrv: 42.5, rhr: 58, sleepDuration: 22320 },
+        baseline7d: { hrv: 46.1, rhr: 55, sleepDuration: 25320 },
+        freshness: { hrv: "fresh", rhr: "fresh", sleepDuration: "fresh" },
+        baselineN: 7,
+      },
     });
+    expect(p).toContain("## Health signals");
+    expect(p).toContain("HRV today: 42.5 ms (fresh)");
+    expect(p).toContain("7-day avg 46.1 ms");
+    expect(p).toContain("RHR today: 58 bpm (fresh)");
+    expect(p).toContain("Sleep last night:");
+  });
 
-    it("buildPrompt renders partial health block, omitting missing metrics individually", () => {
-      const p = buildPrompt({
-        ...input,
-        healthSignals: {
-          today: { hrv: null, rhr: 58, sleepDuration: 22320 },
-          baseline7d: { hrv: null, rhr: 55, sleepDuration: 25320 },
-          freshness: { hrv: null, rhr: "fresh", sleepDuration: "stale_24h" },
-          baselineN: 4,
-        },
-      });
-      expect(p).toContain("## Health signals");
-      expect(p).not.toContain("HRV today");
-      expect(p).toContain("RHR today: 58 bpm (fresh)");
-      expect(p).toContain("Sleep last night:");
-      expect(p).toContain("(stale_24h)");
-      expect(p).toContain("based on 4 days");
+  it("buildPrompt renders partial health block, omitting missing metrics individually", () => {
+    const p = buildPrompt({
+      ...input,
+      healthSignals: {
+        today: { hrv: null, rhr: 58, sleepDuration: 22320 },
+        baseline7d: { hrv: null, rhr: 55, sleepDuration: 25320 },
+        freshness: { hrv: null, rhr: "fresh", sleepDuration: "stale_24h" },
+        baselineN: 4,
+      },
     });
+    expect(p).toContain("## Health signals");
+    expect(p).not.toContain("HRV today");
+    expect(p).toContain("RHR today: 58 bpm (fresh)");
+    expect(p).toContain("Sleep last night:");
+    expect(p).toContain("(stale_24h)");
+    expect(p).toContain("based on 4 days");
+  });
 
-    it("buildPrompt omits the whole health block when all metrics are missing", () => {
-      const p = buildPrompt({
-        ...input,
-        healthSignals: {
-          today: { hrv: null, rhr: null, sleepDuration: null },
-          baseline7d: { hrv: null, rhr: null, sleepDuration: null },
-          freshness: { hrv: null, rhr: null, sleepDuration: null },
-          baselineN: 0,
-        },
-      });
-      expect(p).not.toContain("## Health signals");
+  it("buildPrompt omits the whole health block when all metrics are missing", () => {
+    const p = buildPrompt({
+      ...input,
+      healthSignals: {
+        today: { hrv: null, rhr: null, sleepDuration: null },
+        baseline7d: { hrv: null, rhr: null, sleepDuration: null },
+        freshness: { hrv: null, rhr: null, sleepDuration: null },
+        baselineN: 0,
+      },
     });
+    expect(p).not.toContain("## Health signals");
+  });
 
-    it("buildPrompt omits the health block when healthSignals is undefined", () => {
-      const p = buildPrompt(input);
-      expect(p).not.toContain("## Health signals");
-    });
+  it("buildPrompt omits the health block when healthSignals is undefined", () => {
+    const p = buildPrompt(input);
+    expect(p).not.toContain("## Health signals");
+  });
   ```
 
 - [ ] **Step 2: Run the tests and confirm they fail.**
@@ -606,28 +581,30 @@
   Then in `buildPrompt`, insert the block right after the `goalLine` definition and add it to the joined list. Replace the existing `return [...]` block with:
 
   ```ts
-    const goal = i.goal.trim();
-    const goalLine = goal ? `User's stated goal: ${goal}` : null;
-    const healthBlock = i.healthSignals ? buildHealthBlock(i.healthSignals) : null;
-    return [
-      "You are a strength coach. Auto-regulate today's session using only the data below.",
-      goalLine,
-      `Planned (${ps.modality}) "${ps.title}": ${planned}`,
-      `Day notes: ${ps.notes || "none"}`,
-      `Recent strength (last ${rt.windowDays}d): ${strength}`,
-      `Recent endurance (last ${rt.windowDays}d): ${endurance}`,
-      healthBlock,
-      "Match planned exercise names to recent-actual names by similarity (e.g. 'Bench' ~ 'Bench Press'); ignore planned exercises with no actual match.",
-      "Endurance fatigue (runs/rides/swims) is real systemic load — weigh it when judging readiness for lower-body or heavy sessions.",
-      "No RPE is available — judge fatigue from recent sets, frequency, endurance volume and rest only.",
-      "When health signals are present, treat HRV / RHR / sleep deltas vs the 7-day baseline as soft inputs (a low-HRV day + short sleep argues for reduce_intensity; an above-baseline HRV day supports proceeding). Weight by freshness — 'stale_*' values are weaker evidence than 'fresh'.",
-      "Interpret readiness and progression through the user's stated goal when present (e.g. a fat-loss cut tolerates less added volume than a bulk).",
-      "Return TWO separate lists:",
-      "- todayAdjustments[]: ephemeral, today-only tweaks given current fatigue (do NOT change the program). Empty unless warranted.",
-      "- progressionSuggestions[]: durable target changes going forward, ONLY on clear evidence (clean reps at/above target across recent sessions, or a clear stall). currentWeight = the planned target. Empty unless clearly warranted. Do NOT include a status field.",
-    ]
-      .filter(Boolean)
-      .join("\n");
+  const goal = i.goal.trim();
+  const goalLine = goal ? `User's stated goal: ${goal}` : null;
+  const healthBlock = i.healthSignals
+    ? buildHealthBlock(i.healthSignals)
+    : null;
+  return [
+    "You are a strength coach. Auto-regulate today's session using only the data below.",
+    goalLine,
+    `Planned (${ps.modality}) "${ps.title}": ${planned}`,
+    `Day notes: ${ps.notes || "none"}`,
+    `Recent strength (last ${rt.windowDays}d): ${strength}`,
+    `Recent endurance (last ${rt.windowDays}d): ${endurance}`,
+    healthBlock,
+    "Match planned exercise names to recent-actual names by similarity (e.g. 'Bench' ~ 'Bench Press'); ignore planned exercises with no actual match.",
+    "Endurance fatigue (runs/rides/swims) is real systemic load — weigh it when judging readiness for lower-body or heavy sessions.",
+    "No RPE is available — judge fatigue from recent sets, frequency, endurance volume and rest only.",
+    "When health signals are present, treat HRV / RHR / sleep deltas vs the 7-day baseline as soft inputs (a low-HRV day + short sleep argues for reduce_intensity; an above-baseline HRV day supports proceeding). Weight by freshness — 'stale_*' values are weaker evidence than 'fresh'.",
+    "Interpret readiness and progression through the user's stated goal when present (e.g. a fat-loss cut tolerates less added volume than a bulk).",
+    "Return TWO separate lists:",
+    "- todayAdjustments[]: ephemeral, today-only tweaks given current fatigue (do NOT change the program). Empty unless warranted.",
+    "- progressionSuggestions[]: durable target changes going forward, ONLY on clear evidence (clean reps at/above target across recent sessions, or a clear stall). currentWeight = the planned target. Empty unless clearly warranted. Do NOT include a status field.",
+  ]
+    .filter(Boolean)
+    .join("\n");
   ```
 
 - [ ] **Step 4: Run the full ai-engine test file and confirm everything passes.**
@@ -652,82 +629,127 @@
 ## Task 4: Wire `loadHealthSignals` into `runReadinessAnalysis`
 
 **Files:**
+
 - Modify: `src/lib/readiness.ts`
 - Modify: `tests/readiness.integration.test.ts`
 
-- [ ] **Step 1: Add the new aggregator into the existing `Promise.all`.**
+- [ ] **Step 1: Define `loadHealthSignals` in `readiness.ts` and add it to the existing `Promise.all`.**
 
-  In `src/lib/readiness.ts`, add the import next to the other lib imports:
+  `loadHealthSignals` lives in `readiness.ts` (next to `loadRecentTraining`), not in `health-signals.ts`. That keeps `health-signals.ts` DB-free and unit-testable offline. Same shape as the existing `recent-training.ts` (pure) ↔ `readiness.ts` (loader) split.
+
+  In `src/lib/readiness.ts`, extend the imports next to the other lib imports:
 
   ```ts
-  import { loadHealthSignals } from "@/lib/health-signals";
+  import { inArray } from "drizzle-orm";
+  import { healthMetric } from "@/db/schema";
+  import {
+    computeHealthSignals,
+    todayDateInAppTz,
+    HEALTH_METRIC_KEYS,
+    type HealthSignals,
+    type HealthRow,
+    type Freshness,
+  } from "@/lib/health-signals";
   ```
 
-  Change the `Promise.all` from two awaits to three:
+  (Some of these — `inArray`, `healthMetric` — may already be imported; merge into the existing import statements rather than duplicating.)
+
+  Add the loader function near `loadRecentTraining` (anywhere above `runReadinessAnalysis`):
 
   ```ts
-    const [recentTraining, goal, healthSignals] = await Promise.all([
-      loadRecentTraining(opts.userId, now),
-      getPlanProfile(opts.userId),
-      loadHealthSignals(opts.userId, now),
-    ]);
+  export async function loadHealthSignals(
+    userId: string,
+    now: Date
+  ): Promise<HealthSignals> {
+    const cutoff = todayDateInAppTz(new Date(now.getTime() - 7 * 86_400_000));
+    const rows = await db
+      .select({
+        metricDate: healthMetric.metricDate,
+        type: healthMetric.type,
+        value: healthMetric.value,
+        source: healthMetric.source,
+        freshness: healthMetric.freshness,
+        recordedAt: healthMetric.recordedAt,
+      })
+      .from(healthMetric)
+      .where(
+        and(
+          eq(healthMetric.userId, userId),
+          gte(healthMetric.metricDate, cutoff),
+          inArray(healthMetric.type, [
+            HEALTH_METRIC_KEYS.HRV,
+            HEALTH_METRIC_KEYS.RHR,
+            HEALTH_METRIC_KEYS.SLEEP,
+          ])
+        )
+      );
+    const typed: HealthRow[] = rows.map((r) => ({
+      metricDate: r.metricDate,
+      type: r.type,
+      value: Number(r.value),
+      source: r.source,
+      freshness: r.freshness as Freshness,
+      recordedAt: r.recordedAt,
+    }));
+    return computeHealthSignals(typed, now);
+  }
   ```
 
-  Wrap the `loadHealthSignals` call so a DB failure inside it degrades gracefully — the readiness flow must succeed without health context if the new table errors. Replace the three-way `Promise.all` above with:
+  Then extend the `Promise.all` in `runReadinessAnalysis` from two awaits to three, wrapping the new loader in a `.catch` so a DB failure in it degrades gracefully (health context is additive — its absence must not break the AI flow):
 
   ```ts
-    const [recentTraining, goal, healthSignals] = await Promise.all([
-      loadRecentTraining(opts.userId, now),
-      getPlanProfile(opts.userId),
-      loadHealthSignals(opts.userId, now).catch((e) => {
-        console.error("loadHealthSignals failed; continuing without it", e);
-        return undefined;
-      }),
-    ]);
+  const [recentTraining, goal, healthSignals] = await Promise.all([
+    loadRecentTraining(opts.userId, now),
+    getPlanProfile(opts.userId),
+    loadHealthSignals(opts.userId, now).catch((e) => {
+      console.error("loadHealthSignals failed; continuing without it", e);
+      return undefined;
+    }),
+  ]);
   ```
 
   Then thread it into `analyzeReadiness` and the persisted `loadSnapshot`. Replace the `analyzeReadiness` call + `db.insert` block with:
 
   ```ts
-    try {
-      const result = await analyzeReadiness(
-        {
-          goal,
-          plannedSession: {
-            title: planned.title,
-            notes: planned.notes,
-            modality: planned.modality,
-            exercises,
-          },
-          recentTraining,
-          healthSignals: healthSignals ?? undefined,
+  try {
+    const result = await analyzeReadiness(
+      {
+        goal,
+        plannedSession: {
+          title: planned.title,
+          notes: planned.notes,
+          modality: planned.modality,
+          exercises,
         },
-        { generate: opts.generate }
-      );
-      await db.insert(readinessAnalysis).values({
-        userId: opts.userId,
-        analysisDate: date,
-        planSnapshot: { session: planned, exercises, goal },
-        loadSnapshot: {
-          ...(recentTraining as unknown as Record<string, unknown>),
-          healthSignals: healthSignals ?? null,
-        },
-        verdict: result.verdict,
-        headline: result.headline,
-        rationale: result.rationale,
-        todayAdjustments: result.todayAdjustments,
-        progressionSuggestions: result.progressionSuggestions.map((s) => ({
-          ...s,
-          status: "pending" as const,
-        })),
-        model: MODEL_ID,
-      });
-      return { result };
-    } catch (e: unknown) {
-      const msg =
-        e instanceof Error && typeof e.message === "string" ? e.message : "";
-      return { error: /couldn't analyze/i.test(msg) ? msg : "Analysis failed." };
-    }
+        recentTraining,
+        healthSignals: healthSignals ?? undefined,
+      },
+      { generate: opts.generate }
+    );
+    await db.insert(readinessAnalysis).values({
+      userId: opts.userId,
+      analysisDate: date,
+      planSnapshot: { session: planned, exercises, goal },
+      loadSnapshot: {
+        ...(recentTraining as unknown as Record<string, unknown>),
+        healthSignals: healthSignals ?? null,
+      },
+      verdict: result.verdict,
+      headline: result.headline,
+      rationale: result.rationale,
+      todayAdjustments: result.todayAdjustments,
+      progressionSuggestions: result.progressionSuggestions.map((s) => ({
+        ...s,
+        status: "pending" as const,
+      })),
+      model: MODEL_ID,
+    });
+    return { result };
+  } catch (e: unknown) {
+    const msg =
+      e instanceof Error && typeof e.message === "string" ? e.message : "";
+    return { error: /couldn't analyze/i.test(msg) ? msg : "Analysis failed." };
+  }
   ```
 
 - [ ] **Step 2: Add a new integration test case for the health-context happy path.**
@@ -749,82 +771,82 @@
   Inside the `afterAll`, add a `healthMetric` delete before the existing deletes:
 
   ```ts
-    await db
-      .delete(healthMetric)
-      .where(inArray(healthMetric.userId, [HEALTH_USER]));
+  await db
+    .delete(healthMetric)
+    .where(inArray(healthMetric.userId, [HEALTH_USER]));
   ```
 
   Then append this case inside the `describe(...)`:
 
   ```ts
-    it("E: includes health signals in prompt + loadSnapshot when rows exist", async () => {
-      const { dow, date } = todayInfo(HEALTH_NOW);
-      await db.insert(plannedSession).values({
-        userId: HEALTH_USER,
-        dayOfWeek: dow,
-        title: "Lower",
-        notes: "",
-        modality: "strength",
-      });
-      // today + 3 days of baseline history
-      await db.insert(healthMetric).values([
-        {
-          userId: HEALTH_USER,
-          metricDate: date,
-          type: "hrv",
-          value: "42.5",
-          source: "primary",
-          freshness: "fresh",
-          recordedAt: HEALTH_NOW,
-        },
-        {
-          userId: HEALTH_USER,
-          metricDate: "2026-05-18",
-          type: "hrv",
-          value: "46.0",
-          source: "primary",
-          freshness: "fresh",
-          recordedAt: new Date("2026-05-18T07:00:00Z"),
-        },
-        {
-          userId: HEALTH_USER,
-          metricDate: "2026-05-17",
-          type: "hrv",
-          value: "48.0",
-          source: "primary",
-          freshness: "fresh",
-          recordedAt: new Date("2026-05-17T07:00:00Z"),
-        },
-      ]);
-      let seenPrompt = "";
-      const out = await runReadinessAnalysis({
-        userId: HEALTH_USER,
-        now: HEALTH_NOW,
-        generate: async (p: string) => {
-          seenPrompt = p;
-          return {
-            verdict: "proceed_as_planned",
-            headline: "ok",
-            rationale: "ok",
-          };
-        },
-      });
-      expect(out.error).toBeUndefined();
-      expect(seenPrompt).toContain("## Health signals");
-      expect(seenPrompt).toContain("HRV today: 42.5 ms (fresh)");
-      // baseline avg of 46 + 48 = 47.0 over 2 days → disclaimed
-      expect(seenPrompt).toContain("based on 2 days");
-
-      const [row] = await db
-        .select()
-        .from(readinessAnalysis)
-        .where(eq(readinessAnalysis.userId, HEALTH_USER));
-      const snap = row.loadSnapshot as {
-        healthSignals: { today: { hrv: number } } | null;
-      };
-      expect(snap.healthSignals).not.toBeNull();
-      expect(snap.healthSignals!.today.hrv).toBe(42.5);
+  it("E: includes health signals in prompt + loadSnapshot when rows exist", async () => {
+    const { dow, date } = todayInfo(HEALTH_NOW);
+    await db.insert(plannedSession).values({
+      userId: HEALTH_USER,
+      dayOfWeek: dow,
+      title: "Lower",
+      notes: "",
+      modality: "strength",
     });
+    // today + 3 days of baseline history
+    await db.insert(healthMetric).values([
+      {
+        userId: HEALTH_USER,
+        metricDate: date,
+        type: "hrv",
+        value: "42.5",
+        source: "primary",
+        freshness: "fresh",
+        recordedAt: HEALTH_NOW,
+      },
+      {
+        userId: HEALTH_USER,
+        metricDate: "2026-05-18",
+        type: "hrv",
+        value: "46.0",
+        source: "primary",
+        freshness: "fresh",
+        recordedAt: new Date("2026-05-18T07:00:00Z"),
+      },
+      {
+        userId: HEALTH_USER,
+        metricDate: "2026-05-17",
+        type: "hrv",
+        value: "48.0",
+        source: "primary",
+        freshness: "fresh",
+        recordedAt: new Date("2026-05-17T07:00:00Z"),
+      },
+    ]);
+    let seenPrompt = "";
+    const out = await runReadinessAnalysis({
+      userId: HEALTH_USER,
+      now: HEALTH_NOW,
+      generate: async (p: string) => {
+        seenPrompt = p;
+        return {
+          verdict: "proceed_as_planned",
+          headline: "ok",
+          rationale: "ok",
+        };
+      },
+    });
+    expect(out.error).toBeUndefined();
+    expect(seenPrompt).toContain("## Health signals");
+    expect(seenPrompt).toContain("HRV today: 42.5 ms (fresh)");
+    // baseline avg of 46 + 48 = 47.0 over 2 days → disclaimed
+    expect(seenPrompt).toContain("based on 2 days");
+
+    const [row] = await db
+      .select()
+      .from(readinessAnalysis)
+      .where(eq(readinessAnalysis.userId, HEALTH_USER));
+    const snap = row.loadSnapshot as {
+      healthSignals: { today: { hrv: number } } | null;
+    };
+    expect(snap.healthSignals).not.toBeNull();
+    expect(snap.healthSignals!.today.hrv).toBe(42.5);
+  });
   ```
 
 - [ ] **Step 3: Run the integration tests.**
@@ -859,6 +881,7 @@
 ## Task 5: Pure pairing/token helpers + unit tests (TDD)
 
 **Files:**
+
 - Create: `tests/health-pairing.test.ts`
 - Create: `src/lib/health-pairing.ts`
 
@@ -980,6 +1003,7 @@
 ## Task 6: `device-auth` helper (bearer-token validator)
 
 **Files:**
+
 - Create: `src/lib/device-auth.ts`
 
 - [ ] **Step 1: Implement `src/lib/device-auth.ts`.**
@@ -1009,7 +1033,9 @@
     const rows = await db
       .select({ id: deviceToken.id, userId: deviceToken.userId })
       .from(deviceToken)
-      .where(and(eq(deviceToken.tokenHash, tokenHash), isNull(deviceToken.revokedAt)));
+      .where(
+        and(eq(deviceToken.tokenHash, tokenHash), isNull(deviceToken.revokedAt))
+      );
 
     if (rows.length === 0) return null;
     const row = rows[0];
@@ -1048,6 +1074,7 @@
 ## Task 7: Pairing server actions + `/settings/devices` page
 
 **Files:**
+
 - Create: `src/app/actions/devices.ts`
 - Create: `src/app/(app)/settings/devices/page.tsx`
 - Create: `src/app/(app)/settings/devices/devices-client.tsx`
@@ -1125,10 +1152,7 @@
       .select({ id: deviceToken.id })
       .from(deviceToken)
       .where(
-        and(
-          eq(deviceToken.userId, userId),
-          isNull(deviceToken.revokedAt)
-        )
+        and(eq(deviceToken.userId, userId), isNull(deviceToken.revokedAt))
       );
     // Naive check: any device with createdAt >= since. Drizzle filter would
     // be more efficient but rows are small (≤ a handful).
@@ -1174,8 +1198,8 @@
       <div className="ds-stack" style={{ padding: "2rem 1.5rem" }}>
         <h1 className="ds-h1">Devices</h1>
         <p className="ds-body">
-          Pair the SyncFit iOS companion to share Apple Health context with
-          the readiness analysis.
+          Pair the SyncFit iOS companion to share Apple Health context with the
+          readiness analysis.
         </p>
         <DevicesClient initialDevices={devices} />
       </div>
@@ -1203,9 +1227,10 @@
     initialDevices: DeviceRow[];
   }) {
     const [devices, setDevices] = useState(initialDevices);
-    const [code, setCode] = useState<{ code: string; expiresAt: string } | null>(
-      null
-    );
+    const [code, setCode] = useState<{
+      code: string;
+      expiresAt: string;
+    } | null>(null);
     const [polling, setPolling] = useState(false);
 
     async function onGenerate() {
@@ -1231,10 +1256,13 @@
           setDevices(await listDevices());
         }
       }, 2000);
-      const stop = setTimeout(() => {
-        clearInterval(t);
-        setPolling(false);
-      }, 11 * 60 * 1000); // a touch past code TTL
+      const stop = setTimeout(
+        () => {
+          clearInterval(t);
+          setPolling(false);
+        },
+        11 * 60 * 1000
+      ); // a touch past code TTL
       return () => {
         clearInterval(t);
         clearTimeout(stop);
@@ -1250,7 +1278,10 @@
               <p className="ds-body">Enter this code in the SyncFit iOS app:</p>
               <p
                 className="ds-display"
-                style={{ fontFamily: "var(--ds-font-mono)", letterSpacing: "0.2em" }}
+                style={{
+                  fontFamily: "var(--ds-font-mono)",
+                  letterSpacing: "0.2em",
+                }}
               >
                 {code.code}
               </p>
@@ -1336,6 +1367,7 @@
 ## Task 8: `POST /api/devices/pair` route + integration test
 
 **Files:**
+
 - Create: `src/app/api/devices/pair/route.ts`
 - Create: `tests/device-pair.integration.test.ts`
 
@@ -1540,6 +1572,7 @@
 ## Task 9: `POST /api/health/sync` route + integration test
 
 **Files:**
+
 - Create: `src/app/api/health/sync/route.ts`
 - Create: `tests/health-sync.integration.test.ts`
 
@@ -1562,10 +1595,7 @@
   let TOKEN = "";
   let REVOKED_TOKEN = "";
 
-  function syncRequest(
-    body: unknown,
-    auth?: string
-  ): Request {
+  function syncRequest(body: unknown, auth?: string): Request {
     const headers: Record<string, string> = {
       "content-type": "application/json",
     };
@@ -1877,7 +1907,6 @@
   Expected: clean. Any "missing module" errors here indicate a broken import path in the new files.
 
 - [ ] **Step 6: Smoke-test the readiness flow end-to-end via the dashboard.**
-
   - Open the running dev server in a browser, sign in.
   - Go to `/settings/devices`, generate a pairing code.
   - From a terminal, mint a real token by hitting the pair endpoint with the code:

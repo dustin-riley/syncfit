@@ -20,7 +20,9 @@ export async function resolveDeviceUser(
   const rows = await db
     .select({ id: deviceToken.id, userId: deviceToken.userId })
     .from(deviceToken)
-    .where(and(eq(deviceToken.tokenHash, tokenHash), isNull(deviceToken.revokedAt)));
+    .where(
+      and(eq(deviceToken.tokenHash, tokenHash), isNull(deviceToken.revokedAt))
+    );
 
   if (rows.length === 0) return null;
   const row = rows[0];

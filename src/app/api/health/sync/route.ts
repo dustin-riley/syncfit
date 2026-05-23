@@ -72,11 +72,7 @@ export async function POST(req: NextRequest) {
     .insert(healthMetric)
     .values(values)
     .onConflictDoUpdate({
-      target: [
-        healthMetric.userId,
-        healthMetric.metricDate,
-        healthMetric.type,
-      ],
+      target: [healthMetric.userId, healthMetric.metricDate, healthMetric.type],
       set: {
         value: sql`excluded.value`,
         source: sql`excluded.source`,

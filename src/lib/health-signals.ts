@@ -83,7 +83,9 @@ export function computeHealthSignals(
     return r ? r.freshness : null;
   };
   const baseline = (type: string) =>
-    avg(baselineRows.filter((r) => r.type === type).map((r) => Number(r.value)));
+    avg(
+      baselineRows.filter((r) => r.type === type).map((r) => Number(r.value))
+    );
 
   const baselineN = Math.max(
     baselineRows.filter((r) => r.type === KEY_HRV).length,
