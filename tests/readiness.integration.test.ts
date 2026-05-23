@@ -8,6 +8,7 @@ import {
   workoutSet,
   readinessAnalysis,
   planProfile,
+  healthMetric,
 } from "@/db/schema";
 import { runReadinessAnalysis, todayInfo } from "@/lib/readiness";
 import { upsertPlanProfile } from "@/lib/plan-store";
@@ -21,7 +22,9 @@ const U3 = "itest-readiness-fail-" + Date.now();
 const U4 = "itest-readiness-prog-" + Date.now();
 const GOAL_USER = "itest-rgoal-" + Date.now();
 const GOAL_NOW = new Date("2026-05-18T15:00:00Z"); // 2026-05-18T15:00Z => America/New_York Mon 2026-05-18 11:00 EDT => dow 1
-const ALL_USERS = [U, U3, U4, GOAL_USER];
+const HEALTH_USER = "itest-rhealth-" + Date.now();
+const HEALTH_NOW = new Date("2026-05-19T16:00:00Z"); // Tue dow 2
+const ALL_USERS = [U, U3, U4, GOAL_USER, HEALTH_USER];
 
 const goodGenerate = async () => ({
   verdict: "reduce_intensity",
@@ -47,6 +50,9 @@ const progressingGenerate = async () => ({
 });
 
 afterAll(async () => {
+  await db
+    .delete(healthMetric)
+    .where(inArray(healthMetric.userId, [HEALTH_USER]));
   await db
     .delete(readinessAnalysis)
     .where(inArray(readinessAnalysis.userId, ALL_USERS));
@@ -266,5 +272,78 @@ describe("runReadinessAnalysis (live Neon, LLM injected)", () => {
     });
     expect(res.result).toBeDefined();
     expect(seenPrompt).toContain("User's stated goal: cutting for summer");
+  });
+
+  it("E: includes health signals in prompt + loadSnapshot when rows exist", async () => {
+    const { dow, date } = todayInfo(HEALTH_NOW);
+    await db.insert(plannedSession).values({
+      userId: HEALTH_USER,
+      dayOfWeek: dow,
+      title: "Lower",
+      notes: "",
+      modality: "strength",
+    });
+    // today + 2 days of baseline history
+    await db.insert(healthMetric).values([
+      {
+        userId: HEALTH_USER,
+        metricDate: date,
+        type: "hrv",
+        value: "42.5",
+        source: "primary",
+        freshness: "fresh",
+        recordedAt: HEALTH_NOW,
+      },
+      {
+        userId: HEALTH_USER,
+        metricDate: "2026-05-18",
+        type: "hrv",
+        value: "46.0",
+        source: "primary",
+        freshness: "fresh",
+        recordedAt: new Date("2026-05-18T07:00:00Z"),
+      },
+      {
+        userId: HEALTH_USER,
+        metricDate: "2026-05-17",
+        type: "hrv",
+        value: "48.0",
+        source: "primary",
+        freshness: "fresh",
+        recordedAt: new Date("2026-05-17T07:00:00Z"),
+      },
+    ]);
+    let seenPrompt = "";
+    const out = await runReadinessAnalysis({
+      userId: HEALTH_USER,
+      now: HEALTH_NOW,
+      generate: async (p: string) => {
+        seenPrompt = p;
+        return {
+          verdict: "proceed_as_planned",
+          headline: "ok",
+          rationale: "ok",
+        };
+      },
+    });
+    expect(out.error).toBeUndefined();
+    expect(seenPrompt).toContain("## Health signals");
+    expect(seenPrompt).toContain("HRV today: 42.5 ms (fresh)");
+    // baseline avg of 46 + 48 = 47.0 over 2 days → disclaimed
+    expect(seenPrompt).toContain("based on 2 days");
+
+    const [row] = await db
+      .select()
+      .from(readinessAnalysis)
+      .where(eq(readinessAnalysis.userId, HEALTH_USER));
+    const snap = row.loadSnapshot as {
+      healthSignals: {
+        today: { hrv: number };
+        baselineN: number;
+      } | null;
+    };
+    expect(snap.healthSignals).not.toBeNull();
+    expect(snap.healthSignals!.today.hrv).toBe(42.5);
+    expect(snap.healthSignals!.baselineN).toBe(2);
   });
 });
