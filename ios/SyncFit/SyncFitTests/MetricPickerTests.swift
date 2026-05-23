@@ -126,4 +126,18 @@ final class MetricPickerTests: XCTestCase {
         XCTAssertEqual(yesterday.rhr?.value, 56)
         XCTAssertEqual(yesterday.rhr?.freshness, .fresh)  // for yesterday's date, this IS the primary
     }
+
+    // MARK: Clock-skew guard (spec §9)
+
+    func testRejectsFutureClockSkewedHrvSample() {
+        let samples: [HealthSample] = [
+            // 10 minutes in the future from `now` — should be rejected
+            sample(.hrv, 999.0, end: "2026-05-23T16:10:00Z"),
+            // Valid sample in the sleep window
+            sample(.hrv, 42.5, end: "2026-05-23T07:30:00Z"),
+        ]
+        let picked = MetricPicker.pickToday(samples: samples, now: now, appTz: Config.appTimeZone)
+        // The future-skewed sample must not be chosen; the legit sleep-window sample wins.
+        XCTAssertEqual(picked.hrv?.value, 42.5)
+    }
 }

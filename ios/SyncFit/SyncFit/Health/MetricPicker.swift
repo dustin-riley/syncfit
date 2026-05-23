@@ -1,4 +1,5 @@
 import Foundation
+import os.log
 
 // Pure: takes pre-fetched HealthKit samples and a reference `now`,
 // returns the chosen value per metric per the spec §6 fallback ladder.
@@ -16,6 +17,15 @@ enum MetricPicker {
         var hrv: Picked?
         var rhr: Picked?
         var sleep: Picked?
+    }
+
+    // Future-clock-drift tolerance: accept samples whose `end` is within
+    // 5 minutes of `now`; reject anything further in the future as
+    // a clock-skew error. Per spec §9.
+    private static let futureSkewTolerance: TimeInterval = 5 * 60
+
+    private static func notFutureSkewed(_ sample: HealthSample, now: Date) -> Bool {
+        sample.end <= now.addingTimeInterval(futureSkewTolerance)
     }
 
     // YYYY-MM-DD in APP_TZ.
@@ -36,17 +46,23 @@ enum MetricPicker {
         let today09 = cal.date(byAdding: .hour, value: 9, to: today00)!
 
         let asleepInDay = samples
-            .filter { $0.kind == .asleep && $0.end > priorDay22 && $0.end <= today09.addingTimeInterval(3 * 3600) }
+            .filter { $0.kind == .asleep && $0.end > priorDay22 && $0.end <= today09.addingTimeInterval(3 * 3600) && notFutureSkewed($0, now: now) }
         let windowEnd = asleepInDay.map(\.end).max() ?? today09
         return (priorDay22, windowEnd)
     }
 
     static func pickToday(samples: [HealthSample], now: Date, appTz tz: TimeZone) -> PickedDay {
+        let skewed = samples.filter { $0.end > now.addingTimeInterval(futureSkewTolerance) }
+        if !skewed.isEmpty {
+            let logger = Logger(subsystem: "com.dustinriley.syncfit", category: "MetricPicker")
+            logger.warning("Rejected \(skewed.count, privacy: .public) sample(s) for future clock-skew (>5m past now)")
+        }
+
         var out = PickedDay()
         let (winStart, winEnd) = sleepWindow(now: now, samples: samples, tz: tz)
 
         // --- HRV ---
-        let hrvSamples = samples.filter { $0.kind == .hrv && $0.end <= now }
+        let hrvSamples = samples.filter { $0.kind == .hrv && notFutureSkewed($0, now: now) }
         if let s = hrvSamples.filter({ $0.end > winStart && $0.end <= winEnd }).max(by: { $0.end < $1.end }) {
             out.hrv = .init(value: s.value, source: "primary", freshness: .fresh, recordedAt: s.end)
         } else {
@@ -67,7 +83,7 @@ enum MetricPicker {
         }
 
         // --- RHR ---
-        let rhrSamples = samples.filter { $0.kind == .rhr && $0.end <= now }
+        let rhrSamples = samples.filter { $0.kind == .rhr && notFutureSkewed($0, now: now) }
         if let s = rhrSamples.filter({ isSameAppDay($0.end, as: now, tz: tz) }).max(by: { $0.end < $1.end }) {
             out.rhr = .init(value: s.value, source: "primary", freshness: .fresh, recordedAt: s.end)
         } else {
@@ -79,7 +95,7 @@ enum MetricPicker {
 
         // --- Sleep (sum of asleep* segments overlapping the sleep window) ---
         let sleepSegments = samples.filter {
-            $0.kind == .asleep && $0.end > winStart && $0.end <= winEnd
+            $0.kind == .asleep && $0.end > winStart && $0.end <= winEnd && notFutureSkewed($0, now: now)
         }
         if !sleepSegments.isEmpty {
             let total = sleepSegments.reduce(0.0) { $0 + max(0, $1.value) }
