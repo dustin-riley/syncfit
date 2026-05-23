@@ -134,4 +134,58 @@ export const readinessAnalysis = pgTable("readiness_analysis", {
     .notNull(),
 });
 
+// ===== iOS companion =====
+
+export const healthMetric = pgTable(
+  "health_metric",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id").notNull(),
+    // user's date in APP_TZ ("America/New_York"), computed on iOS
+    metricDate: date("metric_date").notNull(),
+    // 'hrv' | 'rhr' | 'sleep_duration_seconds'
+    type: text("type").notNull(),
+    // ms for hrv, bpm for rhr, seconds for sleep_duration_seconds
+    value: numeric("value").notNull(),
+    // which step of the fallback ladder fired ('primary' | 'fallback_morning' | ...)
+    source: text("source").notNull(),
+    // 'fresh' | 'stale_24h' | 'stale_48h'
+    freshness: text("freshness").notNull(),
+    // original HealthKit sample timestamp
+    recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    // upsert key; multi-device → last-write-wins
+    uniqUserDateType: unique().on(t.userId, t.metricDate, t.type),
+  })
+);
+
+export const deviceToken = pgTable("device_token", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull(),
+  // sha256(plaintextToken). Plaintext only ever lives on iOS Keychain.
+  tokenHash: text("token_hash").notNull().unique(),
+  deviceName: text("device_name").notNull(),
+  platform: text("platform").notNull().default("ios"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+});
+
+export const devicePairing = pgTable("device_pairing", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull(),
+  // 6-digit numeric code, unique while live
+  code: text("code").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 export * from "./auth-schema";
