@@ -1,0 +1,109 @@
+name: integration
+
+on:
+  pull_request:
+    paths:
+      - "src/app/api/**"
+      - "src/app/actions/**"
+      - "src/lib/*-persist.ts"
+      - "src/lib/*-store.ts"
+      - "src/lib/readiness.ts"
+      - "src/lib/manual-log.ts"
+      - "src/lib/health-pairing.ts"
+      - "src/lib/health-signals.ts"
+      - "src/lib/device-auth.ts"
+      - "src/db/**"
+      - "drizzle/**"
+      - "tests/*.integration.test.ts"
+      - ".github/workflows/integration.yml"
+
+concurrency:
+  group: integration-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Create a Neon branch off the project default branch, scoped to this
+      # PR number so re-runs on the same PR reuse the branch (idempotent).
+      # The branch is deleted in the cleanup step below.
+      - name: Create Neon preview branch
+        id: neon
+        uses: neondatabase/create-branch-action@v5
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          branch_name: ci/pr-${{ github.event.pull_request.number }}
+          # `username` and `database` must be set explicitly — the action
+          # does NOT auto-detect the project default role/db, and without
+          # them neonctl builds a malformed connection string with an empty
+          # --role-name. `neondb_owner` and `neondb` are the modern Neon
+          # defaults; override via the optional secrets if your project
+          # uses different names.
+          username: ${{ secrets.NEON_ROLE_NAME || 'neondb_owner' }}
+          database: ${{ secrets.NEON_DATABASE_NAME || 'neondb' }}
+
+      # Start from an empty schema and apply committed migrations from
+      # ./drizzle/*.sql. This avoids `drizzle-kit push` entirely, which is
+      # interactive (prompts for rename-vs-add/drop resolution) and fails
+      # in CI with "Interactive prompts require a TTY". The parent Neon
+      # branch may be ahead of, behind, or laterally divergent from the
+      # PR's schema.ts — wiping guarantees a known starting point.
+      - name: Reset schema
+        run: |
+          node -e "const { neon } = require('@neondatabase/serverless'); \
+            const sql = neon(process.env.DATABASE_URL); \
+            (async () => { \
+              await sql.query('DROP SCHEMA IF EXISTS public CASCADE'); \
+              await sql.query('CREATE SCHEMA public'); \
+            })().catch(e => { console.error(e); process.exit(1); });"
+        env:
+          DATABASE_URL: ${{ steps.neon.outputs.db_url_with_pooler }}
+
+      # `drizzle-kit push` against an EMPTY schema is non-interactive — the
+      # interactive prompts only fire on rename-vs-add/drop ambiguity, which
+      # can't happen when there's nothing in the DB to rename FROM. We
+      # deliberately don't use `drizzle-kit migrate` because the committed
+      # migrations in ./drizzle/ are generated ad-hoc (CLAUDE.md describes
+      # `push` as the local dev flow) and can drift behind src/db/schema.ts.
+      # Push from empty guarantees CI tracks schema.ts exactly.
+      - name: Push schema from empty
+        run: npx drizzle-kit push
+        env:
+          DATABASE_URL: ${{ steps.neon.outputs.db_url_with_pooler }}
+
+      # Run integration tests directly via vitest instead of via the npm
+      # script, because the script uses `node --env-file=.env.local …` which
+      # requires the file to exist on disk. process.env already has what we
+      # need from the `env:` block.
+      - name: Run integration tests
+        run: npx vitest run --config vitest.integration.config.ts
+        env:
+          DATABASE_URL: ${{ steps.neon.outputs.db_url_with_pooler }}
+          BETTER_AUTH_SECRET: ci-dummy-secret-not-used-at-runtime
+          BETTER_AUTH_URL: http://localhost:3000
+
+      # Always tear down the branch — keeps the project tidy and avoids
+      # accidental usage charges. `if: always()` so failed test runs still
+      # clean up.
+      - name: Delete Neon preview branch
+        if: always() && steps.neon.outputs.branch_id != ''
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ secrets.NEON_PROJECT_ID }}
+          api_key: ${{ secrets.NEON_API_KEY }}
+          branch: ${{ steps.neon.outputs.branch_id }}
