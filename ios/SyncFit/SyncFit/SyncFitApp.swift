@@ -9,8 +9,10 @@ struct SyncFitApp: App {
             RootView()
                 .environmentObject(session)
                 .task {
-                    // On first launch, opportunistically check HealthKit
-                    // authorization status by attempting an empty request.
+                    // Refresh HealthKit authorization on every scene launch.
+                    // requestAuthorization is idempotent — Apple shows the
+                    // system prompt only the first time; later calls return
+                    // immediately and just update healthAuthorized.
                     try? await session.requestHealthAuthorization()
                 }
         }
