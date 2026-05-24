@@ -190,7 +190,7 @@ export const deviceToken = pgTable("device_token", {
 export const devicePairing = pgTable("device_pairing", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: text("user_id").notNull(),
-  // 6-digit numeric code, unique while live
+  // 6-char Crockford-style alphanumeric code, unique while live
   code: text("code").notNull().unique(),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })

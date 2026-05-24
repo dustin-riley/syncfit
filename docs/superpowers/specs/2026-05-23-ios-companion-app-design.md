@@ -3,6 +3,13 @@
 **Date:** 2026-05-23
 **Status:** Approved (brainstorming) — pending implementation plan
 
+> **Amendment (2026-05-23, post-implementation):** Pairing codes were
+> upgraded from 6 numeric digits to a 6-char Crockford-style alphanumeric
+> alphabet (`23456789ABCDEFGHJKMNPQRSTUVWXYZ`, excludes 0/O/1/I/L). Canonical
+> in `src/lib/health-pairing.ts`; the `/api/devices/pair` endpoint
+> normalizes input to uppercase and trims whitespace. References to
+> "6-digit" below should be read as "6-char alphanumeric."
+
 ## 1. Goal & Scope
 
 Add a native iOS companion app that reads Apple Health data (HRV, resting

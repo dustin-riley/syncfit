@@ -22,7 +22,7 @@ afterAll(async () => {
 
 describe("POST /api/devices/pair", () => {
   it("redeems a valid code, returns a one-time token, deletes the pairing row", async () => {
-    const code = "424242";
+    const code = "K7M2QX";
     const expiresAt = new Date(Date.now() + PAIRING_CODE_TTL_MS);
     await db.insert(devicePairing).values({ userId: U, code, expiresAt });
 
@@ -53,15 +53,42 @@ describe("POST /api/devices/pair", () => {
     expect(toks[0].deviceName).toBe("itest iPhone");
   });
 
+  it("accepts a code submitted in lowercase / with whitespace", async () => {
+    const code = "H8N3RY";
+    const expiresAt = new Date(Date.now() + PAIRING_CODE_TTL_MS);
+    await db.insert(devicePairing).values({ userId: U, code, expiresAt });
+
+    const resp = await pairPOST(
+      pairRequest({
+        code: "  h8n3ry  ",
+        deviceName: "case-normalize iPhone",
+      }) as never
+    );
+    expect(resp.status).toBe(200);
+
+    const pairs = await db
+      .select()
+      .from(devicePairing)
+      .where(eq(devicePairing.code, code));
+    expect(pairs.length).toBe(0);
+  });
+
+  it("rejects a code containing ambiguous glyphs (0/O/1/I/L) with 400", async () => {
+    const resp = await pairPOST(
+      pairRequest({ code: "0OIL1Z", deviceName: "itest" }) as never
+    );
+    expect(resp.status).toBe(400);
+  });
+
   it("rejects an unknown code with 400", async () => {
     const resp = await pairPOST(
-      pairRequest({ code: "999999", deviceName: "itest" }) as never
+      pairRequest({ code: "ZZZZZZ", deviceName: "itest" }) as never
     );
     expect(resp.status).toBe(400);
   });
 
   it("rejects an expired code with 400 and leaves the row alone", async () => {
-    const code = "313131";
+    const code = "T3VWX5";
     const expiresAt = new Date(Date.now() - 1000);
     await db.insert(devicePairing).values({ userId: U, code, expiresAt });
 
@@ -80,7 +107,7 @@ describe("POST /api/devices/pair", () => {
   });
 
   it("under concurrent redemption, only one request wins (the other gets 400)", async () => {
-    const code = "525252";
+    const code = "W4PQR8";
     const expiresAt = new Date(Date.now() + PAIRING_CODE_TTL_MS);
     await db.insert(devicePairing).values({ userId: U, code, expiresAt });
 
@@ -96,10 +123,9 @@ describe("POST /api/devices/pair", () => {
       .select()
       .from(deviceToken)
       .where(eq(deviceToken.userId, U));
-    // The earlier success case for code "424242" already inserted a row,
-    // so the total is 2 (one from the first happy-path test + one from this race).
-    // To avoid coupling to test ordering, just assert that adding "race-A"
-    // OR "race-B" appears exactly once.
+    // Earlier success cases already inserted rows for this user, so
+    // total grows across the suite. Just assert that exactly one of
+    // race-A / race-B made it in.
     const raceWinners = toks.filter(
       (t) => t.deviceName === "race-A" || t.deviceName === "race-B"
     );

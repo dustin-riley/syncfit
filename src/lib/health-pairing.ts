@@ -1,8 +1,19 @@
 import { randomBytes, randomInt, createHash } from "node:crypto";
 
-// 6-digit numeric pairing code. Uses crypto.randomInt to avoid modulo bias.
+// Crockford-style alphanumeric alphabet (31 chars). Excludes 0/O and
+// 1/I/L to avoid hand-transcription ambiguity.
+export const PAIRING_CODE_ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+export const PAIRING_CODE_LENGTH = 6;
+export const PAIRING_CODE_REGEX = /^[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{6}$/;
+
+// 6-char alphanumeric pairing code (~1B combinations). Uses
+// crypto.randomInt to avoid modulo bias.
 export function generatePairingCode(): string {
-  return randomInt(0, 1_000_000).toString().padStart(6, "0");
+  let s = "";
+  for (let i = 0; i < PAIRING_CODE_LENGTH; i++) {
+    s += PAIRING_CODE_ALPHABET[randomInt(0, PAIRING_CODE_ALPHABET.length)];
+  }
+  return s;
 }
 
 // 256-bit random token, base64url-encoded for safe transport in headers.

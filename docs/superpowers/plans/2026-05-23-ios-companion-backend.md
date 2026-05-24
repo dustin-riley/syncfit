@@ -2,6 +2,13 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Amendment (2026-05-23, post-implementation):** Pairing codes were
+> upgraded from 6 numeric digits to 6-char Crockford-style alphanumeric
+> (`23456789ABCDEFGHJKMNPQRSTUVWXYZ`, ~880M combos). The Zod schema in
+> `pair/route.ts` uppercases/trims input. Embedded code snippets below
+> reflect the original numeric design; the source of truth is
+> `src/lib/health-pairing.ts` and `tests/health-pairing.test.ts`.
+
 **Goal:** Ship the backend half of the iOS companion feature — Drizzle schema, device pairing flow, ingestion API, health-signals aggregator, and readiness prompt integration — so the iOS app (Plan B) has working endpoints to call and readiness analyses can already include Apple Health context as soon as data starts flowing.
 
 **Architecture:** Three new tables (`health_metric`, `device_token`, `device_pairing`), two new API routes (`POST /api/devices/pair`, `POST /api/health/sync`) authenticated by bearer device tokens, one web settings page for pairing, and a pure `loadHealthSignals` aggregator that joins the existing `Promise.all` in `runReadinessAnalysis`. `buildPrompt` gains a `## Health signals` block that is omitted entirely when all metrics are missing (same safe-rollout shape as the `goal` line).

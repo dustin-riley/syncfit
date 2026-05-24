@@ -4,21 +4,33 @@ import {
   hashToken,
   isPairingExpired,
   mintRandomToken,
+  PAIRING_CODE_ALPHABET,
+  PAIRING_CODE_LENGTH,
+  PAIRING_CODE_REGEX,
 } from "@/lib/health-pairing";
 
 describe("health-pairing helpers", () => {
-  it("generatePairingCode is 6 ASCII digits", () => {
+  it("generatePairingCode is 6 chars from the unambiguous alphabet", () => {
     for (let i = 0; i < 20; i++) {
       const code = generatePairingCode();
-      expect(code).toMatch(/^\d{6}$/);
+      expect(code).toMatch(PAIRING_CODE_REGEX);
+      expect(code.length).toBe(PAIRING_CODE_LENGTH);
+      for (const ch of code) {
+        expect(PAIRING_CODE_ALPHABET).toContain(ch);
+      }
+    }
+  });
+
+  it("generatePairingCode alphabet excludes ambiguous glyphs 0/O/1/I/L", () => {
+    for (const ch of "01ILO") {
+      expect(PAIRING_CODE_ALPHABET.includes(ch)).toBe(false);
     }
   });
 
   it("generatePairingCode is not trivially repeating", () => {
     const seen = new Set<string>();
     for (let i = 0; i < 50; i++) seen.add(generatePairingCode());
-    // Probability of <5 unique out of 50 6-digit codes is ~0; if this
-    // ever fails, the RNG is broken.
+    // 32^6 ≈ 1B combos; collisions in 50 draws are vanishingly unlikely.
     expect(seen.size).toBeGreaterThan(5);
   });
 

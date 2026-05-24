@@ -7,12 +7,17 @@ import {
   hashToken,
   isPairingExpired,
   mintRandomToken,
+  PAIRING_CODE_REGEX,
 } from "@/lib/health-pairing";
 
 export const runtime = "nodejs";
 
 const Body = z.object({
-  code: z.string().regex(/^\d{6}$/),
+  // Tolerate whitespace and lowercase from iOS auto-correct/keyboards.
+  code: z.preprocess(
+    (v) => (typeof v === "string" ? v.trim().toUpperCase() : v),
+    z.string().regex(PAIRING_CODE_REGEX)
+  ),
   deviceName: z.string().min(1).max(120),
 });
 
