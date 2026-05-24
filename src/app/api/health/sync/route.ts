@@ -4,19 +4,9 @@ import { sql } from "drizzle-orm";
 import { db } from "@/db";
 import { healthMetric } from "@/db/schema";
 import { resolveDeviceUser } from "@/lib/device-auth";
+import { isMetricDateWithinWindow } from "@/lib/health-window";
 
 export const runtime = "nodejs";
-
-// metricDate is bounded to [today-30d, today+1d] (the +1d tolerates TZ skew
-// between iOS and the server without admitting truly future dates).
-function isDateWithinWindow(dateStr: string, now: Date): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
-  const d = new Date(dateStr + "T00:00:00Z").getTime();
-  if (Number.isNaN(d)) return false;
-  const lo = now.getTime() - 30 * 86_400_000;
-  const hi = now.getTime() + 1 * 86_400_000;
-  return d >= lo && d <= hi;
-}
 
 const Upload = z.object({
   metricDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -47,7 +37,7 @@ export async function POST(req: NextRequest) {
 
   const now = new Date();
   for (const u of parsed.data.uploads) {
-    if (!isDateWithinWindow(u.metricDate, now)) {
+    if (!isMetricDateWithinWindow(u.metricDate, now)) {
       return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
     }
   }
