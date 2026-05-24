@@ -17,3 +17,6 @@ Package.resolved
 
 # XcodeGen-generated entitlements — regenerated from project.yml properties
 *.entitlements
+
+# Per-developer signing config (contains DEVELOPMENT_TEAM id)
+Signing.xcconfig
