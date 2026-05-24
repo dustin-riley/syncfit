@@ -57,11 +57,25 @@ jobs:
           username: ${{ secrets.NEON_ROLE_NAME || 'neondb_owner' }}
           database: ${{ secrets.NEON_DATABASE_NAME || 'neondb' }}
 
-      # Push the current Drizzle schema onto the freshly-branched DB so the
-      # integration tests see the same tables that local dev does. drizzle-kit
-      # respects DATABASE_URL from the env directly (no --env-file dance).
-      - name: Apply schema
-        run: npx drizzle-kit push
+      # Start from an empty schema and apply committed migrations from
+      # ./drizzle/*.sql. This avoids `drizzle-kit push` entirely, which is
+      # interactive (prompts for rename-vs-add/drop resolution) and fails
+      # in CI with "Interactive prompts require a TTY". The parent Neon
+      # branch may be ahead of, behind, or laterally divergent from the
+      # PR's schema.ts — wiping guarantees a known starting point.
+      - name: Reset schema
+        run: |
+          node -e "const { neon } = require('@neondatabase/serverless'); \
+            const sql = neon(process.env.DATABASE_URL); \
+            (async () => { \
+              await sql.query('DROP SCHEMA IF EXISTS public CASCADE'); \
+              await sql.query('CREATE SCHEMA public'); \
+            })().catch(e => { console.error(e); process.exit(1); });"
+        env:
+          DATABASE_URL: ${{ steps.neon.outputs.db_url_with_pooler }}
+
+      - name: Apply migrations
+        run: npx drizzle-kit migrate
         env:
           DATABASE_URL: ${{ steps.neon.outputs.db_url_with_pooler }}
 
