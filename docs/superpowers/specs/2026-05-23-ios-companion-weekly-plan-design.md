@@ -102,7 +102,7 @@ Native SwiftUI structure with design-system warm-neutral palette: `--ds-bg`, `--
     ]
   }
   ```
-- **Response 401:** missing or invalid bearer. JSON body `{ "error": "unauthorized" }`.
+- **Response 401:** missing or invalid bearer. No body (project-wide convention; see top-of-doc amendment).
 - **Response 500:** any unexpected error. JSON body `{ "error": "couldn't load plan" }` — driver messages are NOT leaked (same shape as `runReadinessAnalysis` error handling).
 - The response is **sparse** — only days the user actually saved appear. iOS fills the gaps with synthetic "rest" entries client-side.
 
@@ -111,25 +111,33 @@ Native SwiftUI structure with design-system warm-neutral palette: `--ds-bg`, `--
 The route follows the project's existing pure-compute / DB-loader split. A new pure module `src/lib/plan-week-handler.ts` exports:
 
 ```ts
+export type PlanWeekAuth = (req: Request) => Promise<{ userId: string } | null>;
+export type PlanWeekLoad = (userId: string) => Promise<PlanDay[]>;
+
 export async function handlePlanWeek(
   req: Request,
-  load: (userId: string) => Promise<PlanDay[]>
+  deps: { auth: PlanWeekAuth; load: PlanWeekLoad }
 ): Promise<NextResponse>;
 ```
 
 The handler:
 
-1. Calls `resolveDeviceUser(req)` → 401 on null.
-2. Calls `load(userId)` inside try/catch → 500 with generic body on throw.
+1. Calls `deps.auth(req)` → 401 (no body) on null.
+2. Calls `deps.load(userId)` inside try/catch → 500 with generic body on throw.
 3. Returns `NextResponse.json({ days })` with status 200.
 
-The thin route handler at `src/app/api/plan/week/route.ts` is one line:
+The thin route handler at `src/app/api/plan/week/route.ts` wires the real deps:
 
 ```ts
-export const GET = (req: Request) => handlePlanWeek(req, getPlanForUser);
+export async function GET(req: NextRequest) {
+  return handlePlanWeek(req, {
+    auth: resolveDeviceUser,
+    load: getPlanForUser,
+  });
+}
 ```
 
-This keeps `handlePlanWeek` unit-testable (stub `load`, stub the request) and the route file free of business logic, matching the established pattern from `readiness.ts` (`loadRecentTraining` DB ↔ `recent-training.ts` pure) and the existing `devices/pair` + `health/sync` routes.
+Injecting `auth` alongside `load` keeps the handler unit-testable for auth behavior without a DB. This matches the established pattern from `readiness.ts` (`loadRecentTraining` DB ↔ `recent-training.ts` pure) and the existing `devices/pair` + `health/sync` routes.
 
 ### 3.3 Server tests
 

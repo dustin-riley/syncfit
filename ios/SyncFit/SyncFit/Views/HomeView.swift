@@ -4,6 +4,7 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject var session: AppSession
     @State private var selectedDow: Int = 0
+    @State private var hasInitializedSelection = false
     @State private var syncing = false
     @State private var syncError: String?
 
@@ -33,13 +34,21 @@ struct HomeView: View {
             .navigationTitle("SyncFit")
             .toolbar { toolbarContent }
             .refreshable { await session.fetchPlan() }
+            .onAppear {
+                // Cache-hit case: planWeek is already set from AppSession.init
+                // before first paint. Initialize selectedDow synchronously so
+                // the first frame shows today selected, not Sunday.
+                initializeSelectedDowIfNeeded()
+            }
             .task {
                 await session.fetchPlan()
-                if let r = resolved { selectedDow = r.todayDow }
+                // Cold-start case: no cache, fetch completed, plan now exists.
+                initializeSelectedDowIfNeeded()
             }
-            .onChange(of: session.planWeek) { _, _ in
-                if let r = resolved { selectedDow = r.todayDow }
-            }
+            // Note: deliberately no .onChange(of: session.planWeek). Once the
+            // user has selected a day (programmatically or by tap), subsequent
+            // refreshes preserve their selection — refreshing the plan should
+            // not silently snap them back to today.
             .alert("Sync error",
                    isPresented: Binding(get: { syncError != nil },
                                         set: { if !$0 { syncError = nil } })) {
@@ -138,6 +147,14 @@ struct HomeView: View {
     private func dayLabel(r: ResolvedWeek) -> String {
         let name = Self.weekdayFull[selectedDow]
         return selectedDow == r.todayDow ? "\(name) · today" : name
+    }
+
+    // One-shot default to today's dow, gated by `hasInitializedSelection` so
+    // a refresh (or a user tap) is never overwritten by a subsequent fetch.
+    private func initializeSelectedDowIfNeeded() {
+        guard !hasInitializedSelection, let r = resolved else { return }
+        selectedDow = r.todayDow
+        hasInitializedSelection = true
     }
 
     private var staleBanner: some View {
