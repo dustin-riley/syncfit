@@ -74,8 +74,15 @@ jobs:
         env:
           DATABASE_URL: ${{ steps.neon.outputs.db_url_with_pooler }}
 
-      - name: Apply migrations
-        run: npx drizzle-kit migrate
+      # `drizzle-kit push` against an EMPTY schema is non-interactive — the
+      # interactive prompts only fire on rename-vs-add/drop ambiguity, which
+      # can't happen when there's nothing in the DB to rename FROM. We
+      # deliberately don't use `drizzle-kit migrate` because the committed
+      # migrations in ./drizzle/ are generated ad-hoc (CLAUDE.md describes
+      # `push` as the local dev flow) and can drift behind src/db/schema.ts.
+      # Push from empty guarantees CI tracks schema.ts exactly.
+      - name: Push schema from empty
+        run: npx drizzle-kit push
         env:
           DATABASE_URL: ${{ steps.neon.outputs.db_url_with_pooler }}
 
