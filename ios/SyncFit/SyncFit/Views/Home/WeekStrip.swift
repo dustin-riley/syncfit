@@ -23,18 +23,18 @@ struct WeekStrip: View {
         let glyph = PlanResolver.modalityChip(for: days[dow])
         let isToday = dow == todayDow
         let isSelected = dow == selectedDow
-        VStack(spacing: 2) {
+        VStack(spacing: 3) {
             Text(Self.weekdayLabels[dow])
-                .font(.system(size: 9, weight: .semibold))
+                .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(isToday ? DSColor.onPrimary : DSColor.textMuted)
             switch glyph {
             case .letter(let s):
                 Text(s)
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(glyphColor(for: days[dow], isToday: isToday))
             case .rest:
                 Text("·")
-                    .font(.system(size: 13))
+                    .font(.system(size: 18, weight: .bold))
                     .foregroundStyle(isToday ? DSColor.onPrimary : DSColor.textMuted)
             }
         }

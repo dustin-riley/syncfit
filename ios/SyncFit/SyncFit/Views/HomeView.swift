@@ -98,9 +98,13 @@ struct HomeView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
+            // iOS 26 Liquid Glass toolbar wraps items in an icon-button-sized
+            // capsule by default; .fixedSize forces the Text to claim its
+            // natural width so 'SyncFit' isn't truncated to 'S...'.
             Text("SyncFit")
                 .font(.system(size: 17, weight: .bold))
                 .foregroundStyle(DSColor.primary)
+                .fixedSize(horizontal: true, vertical: false)
         }
         ToolbarItem(placement: .topBarTrailing) {
             HStack(spacing: 10) {
