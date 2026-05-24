@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Release Info.plist. Used by TestFlight / App Store archives. No
+     NSAppTransportSecurity exception — Release builds talk to HTTPS only.
+     Keep in sync with Info-Debug.plist on every key except the ATS block. -->
 <plist version="1.0">
 <dict>
   <key>CFBundleDevelopmentRegion</key>
@@ -15,27 +18,15 @@
   <key>CFBundlePackageType</key>
   <string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
   <key>CFBundleShortVersionString</key>
-  <string>0.1.0</string>
+  <string>$(MARKETING_VERSION)</string>
   <key>CFBundleVersion</key>
-  <string>1</string>
+  <string>$(CURRENT_PROJECT_VERSION)</string>
   <key>LSRequiresIPhoneOS</key>
   <true/>
-  <key>NSAppTransportSecurity</key>
-  <dict>
-    <!-- DEV-ONLY: allow plain HTTP to localhost so the simulator can reach
-         `npm run dev` on the host Mac. Scoped narrowly to `localhost` — all
-         other domains still require HTTPS. -->
-    <key>NSExceptionDomains</key>
-    <dict>
-      <key>localhost</key>
-      <dict>
-        <key>NSExceptionAllowsInsecureHTTPLoads</key>
-        <true/>
-      </dict>
-    </dict>
-  </dict>
   <key>NSHealthShareUsageDescription</key>
   <string>SyncFit reads your heart rate variability, resting heart rate, sleep, and workout times to gauge your training readiness.</string>
+  <key>NSHealthUpdateUsageDescription</key>
+  <string>SyncFit reads HealthKit data to inform your training readiness. SyncFit does not currently write data to HealthKit.</string>
   <key>UILaunchScreen</key>
   <dict/>
   <key>UIApplicationSceneManifest</key>
