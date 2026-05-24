@@ -6,8 +6,9 @@ import {
   workoutSet,
   readinessAnalysis,
   enduranceActivity,
+  healthMetric,
 } from "@/db/schema";
-import { eq, and, gte } from "drizzle-orm";
+import { eq, and, gte, inArray } from "drizzle-orm";
 import {
   computeRecentTraining,
   type RecentTraining,
@@ -17,6 +18,14 @@ import {
 import { analyzeReadiness, MODEL_ID, type Readiness } from "@/lib/ai-engine";
 import { getPlanProfile } from "@/lib/plan-store";
 import { APP_TZ } from "@/lib/units";
+import {
+  computeHealthSignals,
+  todayDateInAppTz,
+  HEALTH_METRIC_KEYS,
+  type HealthSignals,
+  type HealthRow,
+  type Freshness,
+} from "@/lib/health-signals";
 
 type GenerateFn = (prompt: string) => Promise<unknown>;
 
@@ -43,6 +52,43 @@ export function todayInfo(now: Date) {
 }
 
 export type AnalyzeOutcome = { result?: Readiness; error?: string };
+
+export async function loadHealthSignals(
+  userId: string,
+  now: Date
+): Promise<HealthSignals> {
+  const cutoff = todayDateInAppTz(new Date(now.getTime() - 7 * 86_400_000));
+  const rows = await db
+    .select({
+      metricDate: healthMetric.metricDate,
+      type: healthMetric.type,
+      value: healthMetric.value,
+      source: healthMetric.source,
+      freshness: healthMetric.freshness,
+      recordedAt: healthMetric.recordedAt,
+    })
+    .from(healthMetric)
+    .where(
+      and(
+        eq(healthMetric.userId, userId),
+        gte(healthMetric.metricDate, cutoff),
+        inArray(healthMetric.type, [
+          HEALTH_METRIC_KEYS.HRV,
+          HEALTH_METRIC_KEYS.RHR,
+          HEALTH_METRIC_KEYS.SLEEP,
+        ])
+      )
+    );
+  const typed: HealthRow[] = rows.map((r) => ({
+    metricDate: r.metricDate,
+    type: r.type,
+    value: Number(r.value),
+    source: r.source,
+    freshness: r.freshness as Freshness,
+    recordedAt: r.recordedAt,
+  }));
+  return computeHealthSignals(typed, now);
+}
 
 export async function loadRecentTraining(
   userId: string,
@@ -135,9 +181,17 @@ export async function runReadinessAnalysis(opts: {
       targetWeight: Number(e.targetWeight),
     }));
 
-  const [recentTraining, goal] = await Promise.all([
+  const [recentTraining, goal, healthSignals] = await Promise.all([
     loadRecentTraining(opts.userId, now),
     getPlanProfile(opts.userId),
+    loadHealthSignals(opts.userId, now).catch((e) => {
+      console.error(
+        "loadHealthSignals failed; continuing without it",
+        { userId: opts.userId },
+        e
+      );
+      return undefined;
+    }),
   ]);
   try {
     const result = await analyzeReadiness(
@@ -150,6 +204,7 @@ export async function runReadinessAnalysis(opts: {
           exercises,
         },
         recentTraining,
+        healthSignals: healthSignals ?? undefined,
       },
       { generate: opts.generate }
     );
@@ -157,7 +212,10 @@ export async function runReadinessAnalysis(opts: {
       userId: opts.userId,
       analysisDate: date,
       planSnapshot: { session: planned, exercises, goal },
-      loadSnapshot: recentTraining as unknown as Record<string, unknown>,
+      loadSnapshot: {
+        ...(recentTraining as unknown as Record<string, unknown>),
+        healthSignals: healthSignals ?? null,
+      },
       verdict: result.verdict,
       headline: result.headline,
       rationale: result.rationale,

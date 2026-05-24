@@ -198,7 +198,15 @@ export function SiteNav({ email }: { email: string }) {
                   {email}
                 </p>
               </div>
-              {/* Reserved slot for a future settings link (spec §1) — intentionally empty. */}
+              <Link
+                href="/settings/devices"
+                role="menuitem"
+                className="ds-btn ds-btn-ghost w-full justify-start"
+                style={{ borderRadius: "var(--ds-radius-sm)" }}
+                onClick={() => setMenuOpen(false)}
+              >
+                Devices
+              </Link>
               <button
                 type="button"
                 role="menuitem"

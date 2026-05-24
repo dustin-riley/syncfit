@@ -9,7 +9,7 @@ export default function ImportPage() {
   const [busy, setBusy] = useState(false);
   return (
     <main className="ds-container p-8 max-w-lg">
-      <h1>Import Strong CSV</h1>
+      <h1 className="h1">Import Strong CSV</h1>
       <p style={{ color: "var(--ds-text-muted)" }}>
         Export from Strong → Settings → Export Data, then upload the CSV.
       </p>

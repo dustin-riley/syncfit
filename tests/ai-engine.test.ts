@@ -128,4 +128,77 @@ describe("ai-engine", () => {
     const p = buildPrompt({ ...input, goal: "" });
     expect(p).not.toContain("User's stated goal:");
   });
+
+  it("buildPrompt includes the health-signals block when at least one metric is non-missing", () => {
+    const p = buildPrompt({
+      ...input,
+      healthSignals: {
+        today: { hrv: 42.5, rhr: 58, sleepDuration: 22320 },
+        baseline7d: { hrv: 46.1, rhr: 55, sleepDuration: 25320 },
+        freshness: { hrv: "fresh", rhr: "fresh", sleepDuration: "fresh" },
+        baselineN: 7,
+      },
+    });
+    expect(p).toContain("## Health signals");
+    expect(p).toContain("HRV today: 42.5 ms (fresh)");
+    expect(p).toContain("7-day avg 46.1 ms");
+    expect(p).toContain("RHR today: 58 bpm (fresh)");
+    expect(p).toContain("Sleep last night:");
+  });
+
+  it("buildPrompt renders partial health block, omitting missing metrics individually", () => {
+    const p = buildPrompt({
+      ...input,
+      healthSignals: {
+        today: { hrv: null, rhr: 58, sleepDuration: 22320 },
+        baseline7d: { hrv: null, rhr: 55, sleepDuration: 25320 },
+        freshness: { hrv: null, rhr: "fresh", sleepDuration: "stale_24h" },
+        baselineN: 4,
+      },
+    });
+    expect(p).toContain("## Health signals");
+    expect(p).not.toContain("HRV today");
+    expect(p).toContain("RHR today: 58 bpm (fresh)");
+    expect(p).toContain("Sleep last night:");
+    expect(p).toContain("(stale_24h)");
+    expect(p).toContain("based on 4 days");
+  });
+
+  it("buildPrompt omits the whole health block when all metrics are missing", () => {
+    const p = buildPrompt({
+      ...input,
+      healthSignals: {
+        today: { hrv: null, rhr: null, sleepDuration: null },
+        baseline7d: { hrv: null, rhr: null, sleepDuration: null },
+        freshness: { hrv: null, rhr: null, sleepDuration: null },
+        baselineN: 0,
+      },
+    });
+    expect(p).not.toContain("## Health signals");
+  });
+
+  it("buildPrompt omits the health block when healthSignals is undefined", () => {
+    const p = buildPrompt(input);
+    expect(p).not.toContain("## Health signals");
+  });
+
+  it("buildPrompt renders today's metric without the baseline suffix when baseline7d is null", () => {
+    const p = buildPrompt({
+      ...input,
+      healthSignals: {
+        // today present, but no history yet (e.g., day 1 after pairing)
+        today: { hrv: 42.5, rhr: 58, sleepDuration: 22320 },
+        baseline7d: { hrv: null, rhr: null, sleepDuration: null },
+        freshness: { hrv: "fresh", rhr: "fresh", sleepDuration: "fresh" },
+        baselineN: 0,
+      },
+    });
+    expect(p).toContain("## Health signals");
+    expect(p).toContain("HRV today: 42.5 ms (fresh)");
+    expect(p).not.toContain("7-day avg");
+    expect(p).toContain("RHR today: 58 bpm (fresh)");
+    expect(p).toContain("Sleep last night:");
+    // baselineN === 0 → disclaimer appears
+    expect(p).toContain("based on 0 days");
+  });
 });

@@ -42,3 +42,7 @@ next-env.d.ts
 
 # Brainstorming visual companion (local only)
 .superpowers/
+
+# tooling artifacts
+tests/node_modules/
+.claude/worktrees/

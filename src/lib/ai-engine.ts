@@ -2,6 +2,7 @@ import { z } from "zod";
 import { appDate } from "@/lib/week";
 import { formatDuration } from "@/lib/duration";
 import type { RecentTraining } from "@/lib/recent-training";
+import type { HealthSignals } from "@/lib/health-signals";
 
 export const ReadinessSchema = z.object({
   verdict: z.enum([
@@ -46,7 +47,48 @@ export type AnalyzeInput = {
     exercises: PlannedExerciseInput[];
   };
   recentTraining: RecentTraining;
+  healthSignals?: HealthSignals;
 };
+
+function formatSleepDuration(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.round((seconds % 3600) / 60);
+  return `${h}h ${m.toString().padStart(2, "0")}m`;
+}
+
+function buildHealthBlock(h: HealthSignals): string | null {
+  const lines: string[] = [];
+  if (h.today.hrv !== null) {
+    const baseline =
+      h.baseline7d.hrv !== null
+        ? ` — 7-day avg ${h.baseline7d.hrv.toFixed(1)} ms`
+        : "";
+    lines.push(
+      `HRV today: ${h.today.hrv.toFixed(1)} ms (${h.freshness.hrv})${baseline}`
+    );
+  }
+  if (h.today.rhr !== null) {
+    const baseline =
+      h.baseline7d.rhr !== null
+        ? ` — 7-day avg ${Math.round(h.baseline7d.rhr)} bpm`
+        : "";
+    lines.push(
+      `RHR today: ${Math.round(h.today.rhr)} bpm (${h.freshness.rhr})${baseline}`
+    );
+  }
+  if (h.today.sleepDuration !== null) {
+    const baseline =
+      h.baseline7d.sleepDuration !== null
+        ? ` — 7-day avg ${formatSleepDuration(Math.round(h.baseline7d.sleepDuration))}`
+        : "";
+    lines.push(
+      `Sleep last night: ${formatSleepDuration(Math.round(h.today.sleepDuration))} (${h.freshness.sleepDuration})${baseline}`
+    );
+  }
+  if (lines.length === 0) return null;
+  const disclaim = h.baselineN < 7 ? ` (based on ${h.baselineN} days)` : "";
+  return ["## Health signals" + disclaim, ...lines].join("\n");
+}
 
 export function buildPrompt(i: AnalyzeInput): string {
   const ps = i.plannedSession;
@@ -80,6 +122,9 @@ export function buildPrompt(i: AnalyzeInput): string {
       .join(" | ") || "none";
   const goal = i.goal.trim();
   const goalLine = goal ? `User's stated goal: ${goal}` : null;
+  const healthBlock = i.healthSignals
+    ? buildHealthBlock(i.healthSignals)
+    : null;
   return [
     "You are a strength coach. Auto-regulate today's session using only the data below.",
     goalLine,
@@ -87,9 +132,11 @@ export function buildPrompt(i: AnalyzeInput): string {
     `Day notes: ${ps.notes || "none"}`,
     `Recent strength (last ${rt.windowDays}d): ${strength}`,
     `Recent endurance (last ${rt.windowDays}d): ${endurance}`,
+    healthBlock,
     "Match planned exercise names to recent-actual names by similarity (e.g. 'Bench' ~ 'Bench Press'); ignore planned exercises with no actual match.",
     "Endurance fatigue (runs/rides/swims) is real systemic load — weigh it when judging readiness for lower-body or heavy sessions.",
     "No RPE is available — judge fatigue from recent sets, frequency, endurance volume and rest only.",
+    "When health signals are present, treat HRV / RHR / sleep deltas vs the 7-day baseline as soft inputs (a low-HRV day + short sleep argues for reduce_intensity; an above-baseline HRV day supports proceeding). Weight by freshness — 'stale_*' values are weaker evidence than 'fresh'.",
     "Interpret readiness and progression through the user's stated goal when present (e.g. a fat-loss cut tolerates less added volume than a bulk).",
     "Return TWO separate lists:",
     "- todayAdjustments[]: ephemeral, today-only tweaks given current fatigue (do NOT change the program). Empty unless warranted.",

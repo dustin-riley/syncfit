@@ -134,4 +134,68 @@ export const readinessAnalysis = pgTable("readiness_analysis", {
     .notNull(),
 });
 
+// ===== iOS companion =====
+//
+// `user_id` columns on the three tables below are NOT declared as foreign
+// keys to Better Auth's `user` table. The pre-existing tables in this
+// schema (workout, workout_set, planned_session, etc.) follow the same
+// pattern — Better Auth's user lifecycle is managed by the library; we
+// scope by `user_id` at every query site instead of at the DB layer.
+// Match the existing project convention; do not retrofit FKs here.
+
+export const healthMetric = pgTable(
+  "health_metric",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id").notNull(),
+    // user's date in APP_TZ ("America/New_York"), computed on iOS
+    metricDate: date("metric_date").notNull(),
+    // 'hrv' | 'rhr' | 'sleep_duration_seconds'
+    type: text("type").notNull(),
+    // ms for hrv, bpm for rhr, seconds for sleep_duration_seconds
+    value: numeric("value").notNull(),
+    // which step of the fallback ladder fired ('primary' | 'fallback_morning' | ...)
+    source: text("source").notNull(),
+    // 'fresh' | 'stale_24h' | 'stale_48h'
+    freshness: text("freshness").notNull(),
+    // original HealthKit sample timestamp
+    recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    // upsert key; multi-device → last-write-wins. The leading
+    // (user_id, metric_date) of this unique index also serves
+    // loadHealthSignals' (userId, metric_date range) reads — no
+    // separate byUserDate index needed.
+    uniqUserDateType: unique().on(t.userId, t.metricDate, t.type),
+  })
+);
+
+export const deviceToken = pgTable("device_token", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull(),
+  // sha256(plaintextToken). Plaintext only ever lives on iOS Keychain.
+  tokenHash: text("token_hash").notNull().unique(),
+  deviceName: text("device_name").notNull(),
+  platform: text("platform").notNull().default("ios"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+});
+
+export const devicePairing = pgTable("device_pairing", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull(),
+  // 6-char Crockford-style alphanumeric code, unique while live
+  code: text("code").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 export * from "./auth-schema";

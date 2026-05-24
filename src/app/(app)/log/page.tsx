@@ -67,7 +67,7 @@ export default function LogPage() {
 
   return (
     <main className="ds-container p-8 max-w-lg">
-      <h1 className="h2">log a workout</h1>
+      <h1 className="h1">log a workout</h1>
       <div className="flex gap-2 my-3" role="group" aria-label="workout kind">
         <button
           type="button"
