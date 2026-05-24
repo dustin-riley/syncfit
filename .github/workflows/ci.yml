@@ -1,0 +1,42 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run lint
+
+      - run: npm run format:check
+
+      - run: npx tsc --noEmit
+
+      - run: npm test
+
+      # Dummy env vars: the neon driver and Better Auth don't connect at
+      # module load, so syntactically-valid placeholders are enough for
+      # `next build` to bundle. Tests stay offline (LLM is mocked, no DB).
+      - run: npm run build
+        env:
+          DATABASE_URL: postgres://ci:ci@localhost/ci?sslmode=require
+          BETTER_AUTH_SECRET: ci-dummy-secret-not-used-at-build-time
+          BETTER_AUTH_URL: http://localhost:3000
+          ANTHROPIC_API_KEY: ci-dummy-key-not-used-at-build-time

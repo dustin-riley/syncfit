@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "file=$(jq -r '.tool_input.file_path // empty' 2>/dev/null); case \"$file\" in *.env.local|*/.env.local|*/SyncFit.xcodeproj/*|*/SyncFit.xcodeproj|*.entitlements) echo \"Blocked: '$file' is gitignored/generated or holds secrets. Edit ios/SyncFit/project.yml (then run xcodegen generate) or .env.example instead. See CLAUDE.md.\" >&2; exit 2 ;; esac"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "file=$(jq -r '.tool_input.file_path // empty' 2>/dev/null); case \"$file\" in *.ts|*.tsx|*.js|*.jsx|*.mjs|*.cjs|*.json|*.md|*.css) [ -x ./node_modules/.bin/prettier ] && [ -f \"$file\" ] && ./node_modules/.bin/prettier --write \"$file\" >/dev/null 2>&1 ;; esac; exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}
