@@ -62,7 +62,6 @@ Allowed `txDb` callers — there are EXACTLY TWO:
 The rationale: the workout row consumes the `unique(userId, contentHash)` slot, so a partial write (workout inserted, sets failing) would make every retry look like a duplicate and silently drop the sets forever. Both writers must wrap workout + sets in one interactive transaction.
 
 **Flag**:
-
 - A NEW `import` of `@/db/tx` outside those two files — almost always wrong; ask whether the new caller genuinely needs interactive transactions.
 - `logEnduranceActivity` (or any other single-statement writer) being migrated to `txDb` — wrong direction.
 - The two existing writers being moved off `txDb` — would silently re-introduce the partial-write bug.
@@ -72,7 +71,6 @@ The rationale: the workout row consumes the `unique(userId, contentHash)` slot, 
 `src/db/index.ts` throws at module load when `DATABASE_URL` is unset (intentional guard for CLI tools). This means files importing `@/db` CANNOT be imported by unit tests (`npm test`).
 
 Established pattern:
-
 - Pure compute lives in one file (e.g., `src/lib/recent-training.ts`, `src/lib/health-signals.ts`)
 - DB loader lives in a separate file (e.g., `src/lib/readiness.ts` `loadRecentTraining` / `loadHealthSignals`)
 - Pure compute is unit-tested; DB loader is integration-tested
