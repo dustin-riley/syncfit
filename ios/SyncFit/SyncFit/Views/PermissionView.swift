@@ -5,7 +5,6 @@ struct PermissionView: View {
     @EnvironmentObject var session: AppSession
     @State private var requesting = false
     @State private var error: String?
-    @State private var openedSettings = false
 
     var body: some View {
         VStack(spacing: 24) {
