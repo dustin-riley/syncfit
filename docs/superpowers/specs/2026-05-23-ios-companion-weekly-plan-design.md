@@ -4,6 +4,19 @@
 **Status:** Approved (brainstorming) — pending implementation plan
 **Related:** [`2026-05-23-ios-companion-app-design.md`](2026-05-23-ios-companion-app-design.md) (parent / v1 iOS spec)
 
+> **Amendment (2026-05-24, during implementation):** Two small revisions made
+> when writing the implementation plan that this doc should reflect:
+>
+> - §3.1: the 401 response has **no body** (matches the project-wide pattern
+>   used by `/api/health/sync` and `/api/devices/pair`). The iOS client reads
+>   `http.statusCode == 401`, not the body. The `{ "error": "unauthorized" }`
+>   text below is superseded.
+> - §3.2: `handlePlanWeek` takes a `deps` object —
+>   `handlePlanWeek(req, { auth, load })` — instead of a bare `load`. The
+>   extra `auth` injection lets the handler be unit-tested for auth behavior
+>   without a DB. The route file wires
+>   `{ auth: resolveDeviceUser, load: getPlanForUser }`.
+
 ## 1. Goal & Scope
 
 Replace the current minimal iOS `HomeView` (just "Sync now" + last-synced + "Unpair") with a **plan-first home screen**: the user's weekly training plan is the primary content, with the existing sync controls demoted to the toolbar. The user opens the app and immediately sees what they're doing today plus a 7-day-week overview.
@@ -77,7 +90,13 @@ Native SwiftUI structure with design-system warm-neutral palette: `--ds-bg`, `--
         "notes": "focus on back squat",
         "modality": "strength",
         "exercises": [
-          { "id": "uuid-1", "name": "Back squat", "targetSets": 4, "targetReps": 5, "targetWeight": 245 }
+          {
+            "id": "uuid-1",
+            "name": "Back squat",
+            "targetSets": 4,
+            "targetReps": 5,
+            "targetWeight": 245
+          }
         ]
       }
     ]
@@ -95,15 +114,17 @@ The route follows the project's existing pure-compute / DB-loader split. A new p
 export async function handlePlanWeek(
   req: Request,
   load: (userId: string) => Promise<PlanDay[]>
-): Promise<NextResponse>
+): Promise<NextResponse>;
 ```
 
 The handler:
+
 1. Calls `resolveDeviceUser(req)` → 401 on null.
 2. Calls `load(userId)` inside try/catch → 500 with generic body on throw.
 3. Returns `NextResponse.json({ days })` with status 200.
 
 The thin route handler at `src/app/api/plan/week/route.ts` is one line:
+
 ```ts
 export const GET = (req: Request) => handlePlanWeek(req, getPlanForUser);
 ```
@@ -196,14 +217,14 @@ No integration test for this route. `getPlanForUser` is already exercised by eve
 
 ### 4.3 iOS error & cache flow
 
-| Network outcome | `planFetchStatus` | UI shown |
-|---|---|---|
-| 200, first load ever | `.ok` | strip + detail (live data), cache written |
-| 200, refresh | `.ok` | strip + detail (live data), cache updated |
-| Transport / 5xx, no cache | `.failed(reason)` | "Couldn't load your plan. Pull to refresh." |
-| Transport / 5xx, cache present | `.stale(reason)` | strip + detail (cached) + warm banner "⚠ offline — last updated Xh ago" |
-| 401 (any time) | (token cleared) | `RootView` flips to `PairingView`; cache cleared |
-| 200, `days: []` | `.ok` | empty-state banner; no strip |
+| Network outcome                | `planFetchStatus` | UI shown                                                                |
+| ------------------------------ | ----------------- | ----------------------------------------------------------------------- |
+| 200, first load ever           | `.ok`             | strip + detail (live data), cache written                               |
+| 200, refresh                   | `.ok`             | strip + detail (live data), cache updated                               |
+| Transport / 5xx, no cache      | `.failed(reason)` | "Couldn't load your plan. Pull to refresh."                             |
+| Transport / 5xx, cache present | `.stale(reason)`  | strip + detail (cached) + warm banner "⚠ offline — last updated Xh ago" |
+| 401 (any time)                 | (token cleared)   | `RootView` flips to `PairingView`; cache cleared                        |
+| 200, `days: []`                | `.ok`             | empty-state banner; no strip                                            |
 
 ### 4.4 Refresh model
 
@@ -214,14 +235,14 @@ No integration test for this route. `getPlanForUser` is already exercised by eve
 
 ## 5. Testing strategy
 
-| Layer | Tests | Location |
-|---|---|---|
-| Server | 4 unit tests on `handlePlanWeek` (401, 200, 500, empty days) | `tests/plan-week-handler.test.ts` |
-| Server | None new — `getPlanForUser` is already covered transitively | — |
-| iOS | PlanResolver fold + chip mapping + today selection across TZs | `SyncFitTests/PlanResolverTests.swift` |
-| iOS | PlanWeek JSON decoding round-trip + edge cases | `SyncFitTests/PlanWeekDecodingTests.swift` |
-| iOS | PlanCache round-trip + corrupt + clear | `SyncFitTests/PlanCacheTests.swift` |
-| iOS | `APIClient.getPlanWeek` error mapping (extends existing pattern) | `SyncFitTests/APIClientTests.swift` |
+| Layer  | Tests                                                            | Location                                   |
+| ------ | ---------------------------------------------------------------- | ------------------------------------------ |
+| Server | 4 unit tests on `handlePlanWeek` (401, 200, 500, empty days)     | `tests/plan-week-handler.test.ts`          |
+| Server | None new — `getPlanForUser` is already covered transitively      | —                                          |
+| iOS    | PlanResolver fold + chip mapping + today selection across TZs    | `SyncFitTests/PlanResolverTests.swift`     |
+| iOS    | PlanWeek JSON decoding round-trip + edge cases                   | `SyncFitTests/PlanWeekDecodingTests.swift` |
+| iOS    | PlanCache round-trip + corrupt + clear                           | `SyncFitTests/PlanCacheTests.swift`        |
+| iOS    | `APIClient.getPlanWeek` error mapping (extends existing pattern) | `SyncFitTests/APIClientTests.swift`        |
 
 Pre-merge gates unchanged: `npm test` + `npx tsc --noEmit` + `npm run lint` + `npm run format:check` + `npm run build`; `xcodebuild test` from `ios/SyncFit/` for iOS changes. No new integration-test class.
 
@@ -230,6 +251,7 @@ Pre-merge gates unchanged: `npm test` + `npx tsc --noEmit` + `npm run lint` + `n
 Purely additive. No schema migration. No breaking change to `/api/health/sync` or `/api/devices/pair`. Existing iOS builds keep working (they just don't see a plan); rebuilt iOS gets the new home screen on first launch.
 
 Sequence:
+
 1. Land server changes (`handlePlanWeek` + route + unit tests). Ship to production.
 2. Land iOS changes; regenerate `SyncFit.xcodeproj`; run `xcodebuild test`; ship via TestFlight.
 

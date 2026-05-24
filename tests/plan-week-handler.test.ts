@@ -23,12 +23,18 @@ const sampleDay: PlanDay = {
 };
 
 describe("handlePlanWeek", () => {
-  it("returns 401 when auth resolves null", async () => {
+  it("returns 401 with empty body when auth resolves null", async () => {
+    const loadSpy = vi.fn(async () => []);
     const res = await handlePlanWeek(makeReq(), {
       auth: async () => null,
-      load: async () => [],
+      load: loadSpy,
     });
     expect(res.status).toBe(401);
+    // Project convention: 401s carry no body — iOS reads only the status
+    // code. (Matches /api/health/sync and /api/devices/pair.)
+    expect(await res.text()).toBe("");
+    // load must not be called when auth fails.
+    expect(loadSpy).not.toHaveBeenCalled();
   });
 
   it("returns 200 with days from load", async () => {

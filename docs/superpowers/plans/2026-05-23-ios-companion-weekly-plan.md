@@ -15,11 +15,13 @@
 ## File Structure
 
 **Server (new):**
+
 - `src/lib/plan-week-handler.ts` — pure DI-seamed handler `handlePlanWeek(req, { auth, load })`. Returns `NextResponse`. Imports `PlanDay` as a type-only import to stay unit-testable (no `@/db` at module load).
 - `src/app/api/plan/week/route.ts` — one-line `GET` that wires `resolveDeviceUser` + `getPlanForUser` into the handler.
 - `tests/plan-week-handler.test.ts` — unit tests (Vitest, offline). 401, 200, 200-empty, 500-generic, userId-pass-through.
 
 **iOS (new):**
+
 - `ios/SyncFit/SyncFit/Models/PlanWeek.swift` — `PlanWeek`, `PlanDay`, `PlanExercise`. `Codable`, `Equatable`, `Sendable`.
 - `ios/SyncFit/SyncFit/DesignTokens.swift` — `DSColor`, `DSRadius`, `DSShadow` constants; `dsShadow(_:)` View modifier.
 - `ios/SyncFit/SyncFit/Plan/PlanResolver.swift` — `ResolvedDay`, `ResolvedWeek`, `ChipGlyph`, `resolveWeek`, `modalityChip`.
@@ -31,6 +33,7 @@
 - `ios/SyncFit/SyncFitTests/PlanCacheTests.swift`
 
 **iOS (modified):**
+
 - `ios/SyncFit/SyncFit/Net/APIClient.swift` — add `getPlanWeek() async throws -> PlanWeek`.
 - `ios/SyncFit/SyncFit/AppSession.swift` — add `planWeek`, `planFetchedAt`, `planFetchStatus`, `PlanFetchStatus`, `fetchPlan()`; load `PlanCache` in `init`; clear cache + bounce on 401.
 - `ios/SyncFit/SyncFit/Views/HomeView.swift` — full rewrite (strip-first layout).
@@ -41,6 +44,7 @@
 ## Task 1: Server — `handlePlanWeek` pure handler (TDD)
 
 **Files:**
+
 - Create: `tests/plan-week-handler.test.ts`
 - Create: `src/lib/plan-week-handler.ts`
 
@@ -135,9 +139,7 @@ Expected: FAIL — "Failed to resolve import '@/lib/plan-week-handler'".
 import { NextResponse } from "next/server";
 import type { PlanDay } from "@/lib/plan-store";
 
-export type PlanWeekAuth = (
-  req: Request
-) => Promise<{ userId: string } | null>;
+export type PlanWeekAuth = (req: Request) => Promise<{ userId: string } | null>;
 export type PlanWeekLoad = (userId: string) => Promise<PlanDay[]>;
 
 export async function handlePlanWeek(
@@ -179,6 +181,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 2: Server — wire route at `/api/plan/week`
 
 **Files:**
+
 - Create: `src/app/api/plan/week/route.ts`
 
 - [ ] **Step 1: Create the route handler**
@@ -263,6 +266,7 @@ git add -A && git commit -m "chore: prettier format pass"
 ## Task 4: iOS — `PlanWeek` model + decoding tests (TDD)
 
 **Files:**
+
 - Create: `ios/SyncFit/SyncFit/Models/PlanWeek.swift`
 - Create: `ios/SyncFit/SyncFitTests/PlanWeekDecodingTests.swift`
 
@@ -375,14 +379,17 @@ struct PlanExercise: Codable, Equatable, Sendable, Identifiable {
 - [ ] **Step 3: Regenerate the Xcode project so it sees the new files**
 
 Run:
+
 ```bash
 cd ios/SyncFit && xcodegen generate
 ```
+
 Expected: prints "Created project at SyncFit.xcodeproj". Files now visible in the project.
 
 - [ ] **Step 4: Run the tests to verify they pass**
 
 Run from `ios/SyncFit/`:
+
 ```bash
 xcodebuild test \
   -project SyncFit.xcodeproj \
@@ -391,6 +398,7 @@ xcodebuild test \
   -only-testing:SyncFitTests/PlanWeekDecodingTests \
   -quiet
 ```
+
 Expected: PASS — 5 tests passing.
 
 If `iPhone 17 Pro` doesn't exist on your simulator list, substitute any installed device (e.g., `xcrun simctl list devices available | grep "iPhone "`).
@@ -413,6 +421,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 5: iOS — `DesignTokens.swift`
 
 **Files:**
+
 - Create: `ios/SyncFit/SyncFit/DesignTokens.swift`
 
 - [ ] **Step 1: Create the design tokens file**
@@ -473,6 +482,7 @@ Run: `cd ios/SyncFit && xcodegen generate`
 - [ ] **Step 3: Build to verify it compiles**
 
 Run from `ios/SyncFit/`:
+
 ```bash
 xcodebuild build \
   -project SyncFit.xcodeproj \
@@ -480,6 +490,7 @@ xcodebuild build \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
   -quiet
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -499,6 +510,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 6: iOS — `PlanResolver` + tests (TDD)
 
 **Files:**
+
 - Create: `ios/SyncFit/SyncFitTests/PlanResolverTests.swift`
 - Create: `ios/SyncFit/SyncFit/Plan/PlanResolver.swift`
 
@@ -632,6 +644,7 @@ final class PlanResolverTests: XCTestCase {
 - [ ] **Step 2: Run tests to verify they fail (module not found)**
 
 Run from `ios/SyncFit/`:
+
 ```bash
 xcodebuild test \
   -project SyncFit.xcodeproj \
@@ -640,6 +653,7 @@ xcodebuild test \
   -only-testing:SyncFitTests/PlanResolverTests \
   -quiet
 ```
+
 Expected: BUILD FAILURE — "Cannot find 'PlanResolver' in scope".
 
 (If you haven't regenerated since adding the test file, run `xcodegen generate` first.)
@@ -730,6 +744,7 @@ Run: `cd ios/SyncFit && xcodegen generate`
 - [ ] **Step 5: Run tests to verify they pass**
 
 Run from `ios/SyncFit/`:
+
 ```bash
 xcodebuild test \
   -project SyncFit.xcodeproj \
@@ -738,6 +753,7 @@ xcodebuild test \
   -only-testing:SyncFitTests/PlanResolverTests \
   -quiet
 ```
+
 Expected: PASS — 11 tests passing.
 
 - [ ] **Step 6: Commit**
@@ -759,6 +775,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 7: iOS — `PlanCache` + tests (TDD)
 
 **Files:**
+
 - Create: `ios/SyncFit/SyncFitTests/PlanCacheTests.swift`
 - Create: `ios/SyncFit/SyncFit/Plan/PlanCache.swift`
 
@@ -843,6 +860,7 @@ xcodebuild test \
   -only-testing:SyncFitTests/PlanCacheTests \
   -quiet
 ```
+
 Expected: BUILD FAILURE — "Cannot find type 'UserDefaultsStore'".
 
 - [ ] **Step 3: Create the cache**
@@ -914,6 +932,7 @@ xcodebuild test \
   -only-testing:SyncFitTests/PlanCacheTests \
   -quiet
 ```
+
 Expected: PASS — 4 tests passing.
 
 - [ ] **Step 6: Commit**
@@ -934,6 +953,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 8: iOS — `APIClient.getPlanWeek` + tests (TDD)
 
 **Files:**
+
 - Modify: `ios/SyncFit/SyncFit/Net/APIClient.swift`
 - Modify: `ios/SyncFit/SyncFitTests/APIClientTests.swift`
 
@@ -1000,6 +1020,7 @@ xcodebuild test \
   -only-testing:SyncFitTests/APIClientTests \
   -quiet
 ```
+
 Expected: BUILD FAILURE — "Value of type 'APIClient' has no member 'getPlanWeek'".
 
 - [ ] **Step 3: Add the method to `APIClient`**
@@ -1049,6 +1070,7 @@ xcodebuild test \
   -only-testing:SyncFitTests/APIClientTests \
   -quiet
 ```
+
 Expected: PASS — all existing healthSync tests + 3 new getPlanWeek tests.
 
 - [ ] **Step 5: Commit**
@@ -1068,6 +1090,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 9: iOS — `AppSession` extension
 
 **Files:**
+
 - Modify: `ios/SyncFit/SyncFit/AppSession.swift`
 
 Note: `AppSession` is `@MainActor` and constructs `HealthKitClient`/`PairingClient` in `init`, which makes direct unit testing awkward. Existing tests don't cover it, and we won't add to that. The plan / cache / fetch logic is covered transitively via `PlanResolverTests`, `PlanCacheTests`, and `APIClientTests`.
@@ -1215,6 +1238,7 @@ xcodebuild build \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
   -quiet
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Run the full test suite to confirm no regressions**
@@ -1226,6 +1250,7 @@ xcodebuild test \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
   -quiet
 ```
+
 Expected: PASS — all previous tests still green.
 
 - [ ] **Step 5: Commit**
@@ -1247,6 +1272,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 10: iOS — `WeekStrip` view
 
 **Files:**
+
 - Create: `ios/SyncFit/SyncFit/Views/Home/WeekStrip.swift`
 
 - [ ] **Step 1: Create the view**
@@ -1370,6 +1396,7 @@ xcodebuild build \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
   -quiet
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -1390,6 +1417,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 11: iOS — `PlanDetailCard` view
 
 **Files:**
+
 - Create: `ios/SyncFit/SyncFit/Views/Home/PlanDetailCard.swift`
 
 - [ ] **Step 1: Create the view**
@@ -1532,6 +1560,7 @@ xcodebuild build \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
   -quiet
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -1553,6 +1582,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 ## Task 12: iOS — `HomeView` rewrite
 
 **Files:**
+
 - Modify: `ios/SyncFit/SyncFit/Views/HomeView.swift`
 
 - [ ] **Step 1: Replace the file**
@@ -1744,6 +1774,7 @@ xcodebuild build \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
   -quiet
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -1780,6 +1811,7 @@ xcodebuild test \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
   -quiet
 ```
+
 Expected: PASS — all existing iOS tests + the new `PlanWeekDecodingTests`, `PlanResolverTests`, `PlanCacheTests`, plus extended `APIClientTests`.
 
 - [ ] **Step 3: Run a clean build for the simulator**
@@ -1791,11 +1823,13 @@ xcodebuild build \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
   -quiet
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Smoke-test in the simulator (manual)**
 
 Open Xcode → Product → Run (⌘R) on the iPhone 17 Pro simulator. With local Next dev server running (`npm run dev`), pair the simulator against a user that has a saved plan; verify:
+
 - The home screen shows "This week" strip + today's detail card.
 - Tapping another day swaps the detail card.
 - Pull-to-refresh refetches.
@@ -1842,6 +1876,7 @@ gh pr create --base main --fill
 ```
 
 PR body should reference the spec at `docs/superpowers/specs/2026-05-23-ios-companion-weekly-plan-design.md` and call out:
+
 - New endpoint `GET /api/plan/week`
 - iOS `HomeView` rewrite
 - Out-of-scope items deferred per spec §1.

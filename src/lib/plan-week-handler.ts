@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import type { PlanDay } from "@/lib/plan-store";
 
-export type PlanWeekAuth = (
-  req: Request
-) => Promise<{ userId: string } | null>;
+export type PlanWeekAuth = (req: Request) => Promise<{ userId: string } | null>;
 export type PlanWeekLoad = (userId: string) => Promise<PlanDay[]>;
 
 export async function handlePlanWeek(
