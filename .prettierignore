@@ -3,4 +3,5 @@ node_modules
 drizzle
 package-lock.json
 .claude/skills
+.claude/agents
 docs/superpowers
