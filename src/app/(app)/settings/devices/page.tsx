@@ -4,10 +4,8 @@ import { DevicesClient } from "./devices-client";
 export default async function DevicesPage() {
   const devices = await listDevices();
   return (
-    <div
-      style={{ padding: "2rem 1.5rem", maxWidth: "40rem", margin: "0 auto" }}
-    >
-      <h1 className="h1">Devices</h1>
+    <main className="ds-container p-8">
+      <h1 className="h1">devices</h1>
       <p
         style={{
           marginTop: "var(--ds-space-3)",
@@ -18,6 +16,6 @@ export default async function DevicesPage() {
         readiness analysis.
       </p>
       <DevicesClient initialDevices={devices} />
-    </div>
+    </main>
   );
 }

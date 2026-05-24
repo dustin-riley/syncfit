@@ -27,7 +27,7 @@ export default async function PlanPage() {
   });
   return (
     <main className="ds-container p-8">
-      <h1 className="h2">weekly plan</h1>
+      <h1 className="h1">weekly plan</h1>
       <PlanWorkspace initialDays={initialDays} initialGoal={goal} />
     </main>
   );
