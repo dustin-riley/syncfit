@@ -48,6 +48,14 @@ jobs:
           project_id: ${{ secrets.NEON_PROJECT_ID }}
           api_key: ${{ secrets.NEON_API_KEY }}
           branch_name: ci/pr-${{ github.event.pull_request.number }}
+          # `username` and `database` must be set explicitly — the action
+          # does NOT auto-detect the project default role/db, and without
+          # them neonctl builds a malformed connection string with an empty
+          # --role-name. `neondb_owner` and `neondb` are the modern Neon
+          # defaults; override via the optional secrets if your project
+          # uses different names.
+          username: ${{ secrets.NEON_ROLE_NAME || 'neondb_owner' }}
+          database: ${{ secrets.NEON_DATABASE_NAME || 'neondb' }}
 
       # Push the current Drizzle schema onto the freshly-branched DB so the
       # integration tests see the same tables that local dev does. drizzle-kit
@@ -55,7 +63,7 @@ jobs:
       - name: Apply schema
         run: npx drizzle-kit push
         env:
-          DATABASE_URL: ${{ steps.neon.outputs.db_url_pooled }}
+          DATABASE_URL: ${{ steps.neon.outputs.db_url_with_pooler }}
 
       # Run integration tests directly via vitest instead of via the npm
       # script, because the script uses `node --env-file=.env.local …` which
@@ -64,7 +72,7 @@ jobs:
       - name: Run integration tests
         run: npx vitest run --config vitest.integration.config.ts
         env:
-          DATABASE_URL: ${{ steps.neon.outputs.db_url_pooled }}
+          DATABASE_URL: ${{ steps.neon.outputs.db_url_with_pooler }}
           BETTER_AUTH_SECRET: ci-dummy-secret-not-used-at-runtime
           BETTER_AUTH_URL: http://localhost:3000
 
