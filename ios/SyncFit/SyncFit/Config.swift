@@ -12,7 +12,7 @@ enum Config {
     #if DEBUG
     static let apiBaseURL = URL(string: "http://localhost:3000")!
     #else
-    static let apiBaseURL = URL(string: "https://syncfit.vercel.app")!
+    static let apiBaseURL = URL(string: "https://syncfit-chi.vercel.app")!
     #endif
 
     // Server's source-of-truth timezone. Matches the backend's APP_TZ
