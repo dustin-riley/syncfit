@@ -54,4 +54,35 @@ final class APIClient {
             throw APIClientError.server(http.statusCode)
         }
     }
+
+    func getPlanWeek() async throws -> PlanWeek {
+        let url = baseURL.appendingPathComponent("/api/plan/week")
+        var req = URLRequest(url: url)
+        req.httpMethod = "GET"
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        let (data, resp): (Data, URLResponse)
+        do {
+            (data, resp) = try await session.data(for: req)
+        } catch {
+            throw APIClientError.transport(error.localizedDescription)
+        }
+        guard let http = resp as? HTTPURLResponse else {
+            throw APIClientError.transport("non-HTTP response")
+        }
+        switch http.statusCode {
+        case 200:
+            do {
+                return try JSONDecoder().decode(PlanWeek.self, from: data)
+            } catch {
+                throw APIClientError.decoding(error.localizedDescription)
+            }
+        case 401:
+            throw APIClientError.unauthorized
+        case 400:
+            throw APIClientError.badRequest
+        default:
+            throw APIClientError.server(http.statusCode)
+        }
+    }
 }

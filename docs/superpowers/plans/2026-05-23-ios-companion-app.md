@@ -57,6 +57,7 @@ ios/
 ```
 
 **Generated (gitignored):**
+
 - `ios/SyncFit/SyncFit.xcodeproj/`
 - `ios/SyncFit/DerivedData/`, `ios/SyncFit/build/`
 
@@ -65,6 +66,7 @@ ios/
 ## Task 1: Bootstrap Xcode project (XcodeGen, HealthKit cap, Info.plist)
 
 **Files:**
+
 - Create: `ios/.gitignore`
 - Create: `ios/README.md`
 - Create: `ios/SyncFit/project.yml`
@@ -110,7 +112,7 @@ ios/
 
   Write:
 
-  ```markdown
+  ````markdown
   # SyncFit iOS companion
 
   Native Swift / SwiftUI app that reads Apple Health data and uploads daily HRV /
@@ -125,6 +127,7 @@ ios/
   xcodegen generate                 # produces SyncFit.xcodeproj from project.yml
   open SyncFit.xcodeproj            # opens in Xcode, optional
   ```
+  ````
 
   ## Tests
 
@@ -140,6 +143,9 @@ ios/
 
   The API base URL is a Swift constant in `SyncFit/Config.swift`. Change it for
   local dev (e.g., a tunnel to `npm run dev`) or for the deployed Vercel URL.
+
+  ```
+
   ```
 
 - [ ] **Step 4: Create `ios/SyncFit/SyncFit/Info.plist`.**
@@ -216,7 +222,7 @@ ios/
           PRODUCT_BUNDLE_IDENTIFIER: com.dustinriley.syncfit
           INFOPLIST_FILE: SyncFit/Info.plist
           ENABLE_PREVIEWS: "YES"
-          TARGETED_DEVICE_FAMILY: "1"   # iPhone only in v1
+          TARGETED_DEVICE_FAMILY: "1" # iPhone only in v1
       entitlements:
         path: SyncFit/SyncFit.entitlements
         properties:
@@ -313,6 +319,7 @@ ios/
 ## Task 2: Codable payload models
 
 **Files:**
+
 - Create: `ios/SyncFit/SyncFitTests/ModelsTests.swift`
 - Create: `ios/SyncFit/SyncFit/Models/HealthMetricUpload.swift`
 - Create: `ios/SyncFit/SyncFit/Models/PairResponse.swift`
@@ -472,6 +479,7 @@ TDD: failing test → run-fails → implement → run-passes → commit.
 ## Task 3: KeychainStore + XCTest round-trip (TDD)
 
 **Files:**
+
 - Create: `ios/SyncFit/SyncFitTests/KeychainStoreTests.swift`
 - Create: `ios/SyncFit/SyncFit/Keychain/KeychainStore.swift`
 
@@ -630,6 +638,7 @@ TDD: failing test → run-fails → implement → run-passes → commit.
 ## Task 4: HealthKitReading protocol + HKHealthKitClient impl
 
 **Files:**
+
 - Create: `ios/SyncFit/SyncFit/Health/HealthKitReading.swift`
 - Create: `ios/SyncFit/SyncFit/Health/HealthKitClient.swift`
 
@@ -798,6 +807,7 @@ No XCTest in this task — `HKHealthStore` cannot be exercised in a simulator un
 ## Task 5: MetricPicker (pure) + XCTest fallback-ladder coverage (TDD)
 
 **Files:**
+
 - Create: `ios/SyncFit/SyncFitTests/MetricPickerTests.swift`
 - Create: `ios/SyncFit/SyncFit/Health/MetricPicker.swift`
 
@@ -1095,6 +1105,7 @@ This is the highest-value test target in the plan — the entire fallback ladder
 ## Task 6: APIClient + XCTest
 
 **Files:**
+
 - Create: `ios/SyncFit/SyncFitTests/APIClientTests.swift`
 - Create: `ios/SyncFit/SyncFit/Net/APIClient.swift`
 
@@ -1277,6 +1288,7 @@ Test via `URLProtocol` stub so no network is hit.
 ## Task 7: PairingClient + XCTest
 
 **Files:**
+
 - Create: `ios/SyncFit/SyncFitTests/PairingClientTests.swift`
 - Create: `ios/SyncFit/SyncFit/Net/PairingClient.swift`
 
@@ -1400,6 +1412,7 @@ Test via `URLProtocol` stub so no network is hit.
 ## Task 8: SyncCoordinator + XCTest
 
 **Files:**
+
 - Create: `ios/SyncFit/SyncFitTests/SyncCoordinatorTests.swift`
 - Create: `ios/SyncFit/SyncFit/Coordinator/SyncCoordinator.swift`
 
@@ -1588,6 +1601,7 @@ Tests use fake `HealthKitReading` + a real `APIClient` with `StubURLProtocol`.
 ## Task 9: SwiftUI views (Root, Permission, Pairing, Home)
 
 **Files:**
+
 - Create: `ios/SyncFit/SyncFit/Views/RootView.swift`
 - Create: `ios/SyncFit/SyncFit/Views/PermissionView.swift`
 - Create: `ios/SyncFit/SyncFit/Views/PairingView.swift`
@@ -1768,6 +1782,7 @@ No unit tests on views in v1 (covered by simulator smoke). Keep styling minimal 
 ## Task 10: SyncFitApp entrypoint + AppSession environment object
 
 **Files:**
+
 - Modify: `ios/SyncFit/SyncFit/SyncFitApp.swift` (replace the stub from Task 1)
 - Create: `ios/SyncFit/SyncFit/AppSession.swift`
 
