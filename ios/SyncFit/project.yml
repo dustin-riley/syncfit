@@ -32,8 +32,15 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.dustinriley.syncfit
         ENABLE_PREVIEWS: "YES"
         TARGETED_DEVICE_FAMILY: "1"
-        INFOPLIST_FILE: SyncFit/Info.plist
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      # Per-config Info.plist: Debug carries an ATS exception for
+      # http://localhost (simulator → `npm run dev`); Release ships without it
+      # so TestFlight / App Store binaries are HTTPS-only.
+      configs:
+        Debug:
+          INFOPLIST_FILE: SyncFit/Info-Debug.plist
+        Release:
+          INFOPLIST_FILE: SyncFit/Info-Release.plist
     entitlements:
       path: SyncFit/SyncFit.entitlements
       properties:

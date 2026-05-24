@@ -160,12 +160,12 @@ scope until you ship to non-developers.
 | Code signing style | `project.yml` `CODE_SIGN_STYLE: Automatic` | Done — Xcode manages certs/profiles |
 | Bundle ID | `project.yml` `PRODUCT_BUNDLE_IDENTIFIER: com.dustinriley.syncfit` | Done |
 | HealthKit capability | `project.yml` `entitlements.properties` | Done |
-| HealthKit usage string | `SyncFit/Info.plist` `NSHealthShareUsageDescription` | Done — spec-verbatim wording |
+| HealthKit usage string | `SyncFit/Info-Debug.plist` + `Info-Release.plist` `NSHealthShareUsageDescription` | Done — spec-verbatim wording (mirror both files) |
 | Marketing version | `project.yml` `MARKETING_VERSION` (drives `CFBundleShortVersionString`) | Done — currently `0.1.0` |
 | Build number | `project.yml` `CURRENT_PROJECT_VERSION` (drives `CFBundleVersion`) | Done — bump per upload |
 | App icon | `SyncFit/Assets.xcassets/AppIcon.appiconset/icon-1024.png` | **Placeholder** — burnt-orange "SF" monogram, replace before public release |
 | Prod API URL | `SyncFit/Config.swift` `#else` branch | Done — `https://syncfit.vercel.app` |
-| ATS exception | `SyncFit/Info.plist` `NSExceptionDomains[localhost]` | Done — scoped to localhost only, no `NSAllowsArbitraryLoads` |
+| ATS exception | `SyncFit/Info-Debug.plist` `NSExceptionDomains[localhost]` | Done — Debug-only; `Info-Release.plist` has no ATS exception |
 
 ## Open follow-ups (after first successful TestFlight)
 

@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Release Info.plist. Used by TestFlight / App Store archives. No
+     NSAppTransportSecurity exception — Release builds talk to HTTPS only.
+     Keep in sync with Info-Debug.plist on every key except the ATS block. -->
 <plist version="1.0">
 <dict>
   <key>CFBundleDevelopmentRegion</key>
@@ -20,27 +23,8 @@
   <string>$(CURRENT_PROJECT_VERSION)</string>
   <key>LSRequiresIPhoneOS</key>
   <true/>
-  <key>NSAppTransportSecurity</key>
-  <dict>
-    <!-- DEV-ONLY: allow plain HTTP to localhost so the simulator can reach
-         `npm run dev` on the host Mac. Scoped narrowly to `localhost` — all
-         other domains still require HTTPS. -->
-    <key>NSExceptionDomains</key>
-    <dict>
-      <key>localhost</key>
-      <dict>
-        <key>NSExceptionAllowsInsecureHTTPLoads</key>
-        <true/>
-      </dict>
-    </dict>
-  </dict>
   <key>NSHealthShareUsageDescription</key>
   <string>SyncFit reads your heart rate variability, resting heart rate, sleep, and workout times to gauge your training readiness.</string>
-  <!-- Required even though the app never writes to HealthKit: Apple's static
-       validator demands both read and write purpose strings for any app
-       claiming the HealthKit entitlement. SyncFit calls
-       requestAuthorization(toShare: [], read: ...) so no write APIs are
-       reachable at runtime, but the string still has to be present. -->
   <key>NSHealthUpdateUsageDescription</key>
   <string>SyncFit reads HealthKit data to inform your training readiness. SyncFit does not currently write data to HealthKit.</string>
   <key>UILaunchScreen</key>
