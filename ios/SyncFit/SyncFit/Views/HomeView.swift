@@ -22,6 +22,9 @@ struct HomeView: View {
                     syncing = true; defer { syncing = false }
                     error = nil
                     do { try await session.syncNow() }
+                    catch APIClientError.unauthorized {
+                        self.error = "Pairing expired — re-pair this device."
+                    }
                     catch { self.error = "Sync failed. Try again." }
                 }
             }
