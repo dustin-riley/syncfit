@@ -53,6 +53,7 @@ enum PlanResolver {
             case "strength":  return .letter("S")
             case "endurance": return .letter("E")
             case "mixed":     return .letter("M")
+            case "rest":      return .rest
             case "":
                 let t = p.title.trimmingCharacters(in: .whitespaces)
                 if let c = t.first { return .letter(String(c).uppercased()) }

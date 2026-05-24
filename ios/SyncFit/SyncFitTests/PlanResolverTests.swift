@@ -110,6 +110,15 @@ final class PlanResolverTests: XCTestCase {
         )
     }
 
+    func testChipForSessionWithRestModalityIsRest() {
+        // A user can mark a session "rest" (e.g. a row with notes but no
+        // exercises, modality typed as "rest"). The chip should show the
+        // rest dot, not the letter "R" via the default fallback.
+        let day = ResolvedDay.session(.init(dayOfWeek: 0, title: "Off",
+            notes: "active recovery walk", modality: "rest", exercises: []))
+        XCTAssertEqual(PlanResolver.modalityChip(for: day), .rest)
+    }
+
     // MARK: helpers
 
     private func noon(_ ymd: String) -> Date {

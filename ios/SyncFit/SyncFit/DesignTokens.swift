@@ -5,7 +5,10 @@ import SwiftUI
 // Resync when the package version is bumped. Only tokens actually used
 // in the plan home screen are mirrored — see spec §2.4.
 enum DSColor {
-    static let bg            = Color(red: 0.980, green: 0.965, blue: 0.941) // #faf6f0
+    // iOS-only divergence from web (--ds-bg = #faf6f0). iPhone displays
+    // flatten the warmth of the web token; we nudge slightly creamier
+    // (#f5ecd9) so the warm-neutral character reads on the device.
+    static let bg            = Color(red: 0.961, green: 0.925, blue: 0.851) // #f5ecd9 (iOS override)
     static let surface       = Color(red: 0.953, green: 0.925, blue: 0.878) // #f3ece0
     static let surfaceSunken = Color(red: 0.929, green: 0.894, blue: 0.827) // #ede4d3
     static let border        = Color(red: 0.878, green: 0.835, blue: 0.761) // #e0d5c2

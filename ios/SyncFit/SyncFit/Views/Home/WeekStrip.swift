@@ -38,8 +38,10 @@ struct WeekStrip: View {
                     .foregroundStyle(isToday ? DSColor.onPrimary : DSColor.textMuted)
             }
         }
-        .frame(maxWidth: .infinity)
-        .aspectRatio(1.0 / 1.15, contentMode: .fit)
+        // Fixed minimum height (>= 44pt HIG tap target). Drop the prior
+        // .aspectRatio(.fit) — it was sizing chips to intrinsic content,
+        // making them sub-target on real devices.
+        .frame(maxWidth: .infinity, minHeight: 56)
         .background(
             RoundedRectangle(cornerRadius: DSRadius.sm)
                 .fill(bgColor(for: days[dow], isToday: isToday))

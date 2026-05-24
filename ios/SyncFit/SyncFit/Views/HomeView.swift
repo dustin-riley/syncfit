@@ -31,7 +31,8 @@ struct HomeView: View {
                 .padding(.top, 8)
             }
             .background(DSColor.bg.ignoresSafeArea())
-            .navigationTitle("SyncFit")
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
             .refreshable { await session.fetchPlan() }
             .onAppear {
@@ -96,6 +97,11 @@ struct HomeView: View {
 
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            Text("SyncFit")
+                .font(.system(size: 17, weight: .bold))
+                .foregroundStyle(DSColor.primary)
+        }
         ToolbarItem(placement: .topBarTrailing) {
             HStack(spacing: 10) {
                 Button {
