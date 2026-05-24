@@ -6,9 +6,9 @@ enum Config {
     // Debug builds (Run from Xcode) point at the local dev server running
     // on the Mac that hosts the simulator. The simulator can reach the host
     // via `http://localhost:3000` — the matching ATS exception for the
-    // `localhost` domain lives in Info.plist (DEV ONLY; prod uses HTTPS).
-    //
-    // Release builds point at the deployed Vercel URL.
+    // `localhost` domain lives in Info-Debug.plist only. Release builds use
+    // Info-Release.plist (no ATS exception) and point at the deployed
+    // Vercel URL.
     #if DEBUG
     static let apiBaseURL = URL(string: "http://localhost:3000")!
     #else

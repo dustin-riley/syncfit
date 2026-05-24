@@ -76,6 +76,7 @@ final class AppSession: ObservableObject {
             try await coord.run()
             lastSyncedAt = UserDefaults.standard.object(forKey: "lastSyncedAt") as? Date
         } catch APIClientError.unauthorized {
+            keychain.clear()
             deviceToken = nil
             throw APIClientError.unauthorized
         }
@@ -96,6 +97,7 @@ final class AppSession: ObservableObject {
             planFetchStatus = .ok
             planCache.save(week, fetchedAt: at)
         } catch APIClientError.unauthorized {
+            keychain.clear()
             planCache.clear()
             planWeek = nil
             planFetchedAt = nil

@@ -25,7 +25,7 @@ The authoritative scope/architecture decisions and deferred work live in `docs/s
 - `cd ios/SyncFit && xcodegen generate` — regenerate `SyncFit.xcodeproj` from `project.yml` (the source of truth; the `.xcodeproj` is gitignored). Run after any `project.yml` edit or when fresh source files are added.
 - `xcodebuild test -project SyncFit.xcodeproj -scheme SyncFit -destination 'platform=iOS Simulator,name=iPhone 17 Pro'` — run XCTest suite (or any installed iPhone simulator name; check `xcrun simctl list devices available`).
 - `xcodebuild build -project SyncFit.xcodeproj -scheme SyncFit -destination 'platform=iOS Simulator,name=iPhone 17 Pro' -quiet` — build only.
-- Archive + TestFlight upload is GUI-only via Xcode → Product → Archive → Distribute. See `ios/TESTFLIGHT.md` for the full runbook.
+- Archive + TestFlight upload is GUI-only via Xcode → Product → Archive → Distribute. Requires `ios/SyncFit/Signing.xcconfig` (per-developer, gitignored) with a valid `DEVELOPMENT_TEAM`; the 1024×1024 placeholder app icon at `ios/SyncFit/SyncFit/Assets.xcassets/AppIcon.appiconset/` is regeneratable via `swift ios/SyncFit/tools/generate-placeholder-icon.swift`. Version bumps live in `ios/SyncFit/project.yml` (`MARKETING_VERSION` + `CURRENT_PROJECT_VERSION`).
 
 ## Environment
 

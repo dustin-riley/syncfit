@@ -1,0 +1,12 @@
+// Signing configuration — copy this file to Signing.xcconfig (gitignored)
+// and fill in your Apple Developer team ID. Required for Archive / TestFlight
+// uploads. Simulator builds work without it.
+//
+// Find your team ID:
+//   - Apple Developer portal → Membership → Team ID (10-char alphanumeric)
+//   - Or in Xcode: Settings → Accounts → select team → look at "Team ID"
+//
+// Personal Team (free Apple ID) also works for development; only paid
+// Developer Program accounts can submit to TestFlight / App Store.
+
+DEVELOPMENT_TEAM = REPLACE_WITH_YOUR_TEAM_ID

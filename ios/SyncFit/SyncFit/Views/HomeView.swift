@@ -168,16 +168,20 @@ struct HomeView: View {
     }
 
     private var staleBanner: some View {
-        Text("⚠ offline — last updated \(Self.relativeAgo(session.planFetchedAt))")
-            .font(.system(size: 11))
-            .foregroundStyle(DSColor.textMuted)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: DSRadius.sm)
-                    .fill(DSColor.accentOchre.opacity(0.12))
-            )
+        HStack(spacing: 6) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 11, weight: .semibold))
+            Text("offline — last updated \(Self.relativeAgo(session.planFetchedAt))")
+                .font(.system(size: 11))
+        }
+        .foregroundStyle(DSColor.textMuted)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: DSRadius.sm)
+                .fill(DSColor.accentOchre.opacity(0.12))
+        )
     }
 
     private static func relativeAgo(_ d: Date?) -> String {
