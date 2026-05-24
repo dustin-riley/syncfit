@@ -50,10 +50,42 @@ final class MetricPickerTests: XCTestCase {
         XCTAssertEqual(picked.hrv?.freshness, .stale48h)
     }
 
-    func testHrvMissingWhenNoSampleWithin72h() {
+    func testHrvMissingWhenNoSampleWithin48h() {
         let samples: [HealthSample] = []
         let picked = MetricPicker.pickToday(samples: samples, now: now, appTz: Config.appTimeZone)
         XCTAssertNil(picked.hrv)
+    }
+
+    func testHrvFallbackMorningDemotedToStale48hWhenAfterWorkout() {
+        // Workout from 12:00–13:00 UTC today; HRV reading at 13:30 UTC (post-workout)
+        // must NOT be labeled fallback_morning per spec §6. The 48h fallback
+        // has no workout gate, so the sample still surfaces — but as stale_48h.
+        let samples: [HealthSample] = [
+            HealthSample(
+                kind: .workout, value: 0,
+                start: ISO8601DateFormatter().date(from: "2026-05-23T12:00:00Z")!,
+                end: ISO8601DateFormatter().date(from: "2026-05-23T13:00:00Z")!
+            ),
+            sample(.hrv, 38.0, end: "2026-05-23T13:30:00Z"),
+        ]
+        let picked = MetricPicker.pickToday(samples: samples, now: now, appTz: Config.appTimeZone)
+        XCTAssertEqual(picked.hrv?.source, "fallback_48h", "post-workout HRV must not be promoted to fallback_morning")
+        XCTAssertEqual(picked.hrv?.freshness, .stale48h)
+    }
+
+    func testHrvFallbackMorningAcceptedWhenBeforeWorkout() {
+        // Sample at 13:30 UTC; workout starts at 14:00 UTC — sample is pre-workout.
+        let samples: [HealthSample] = [
+            HealthSample(
+                kind: .workout, value: 0,
+                start: ISO8601DateFormatter().date(from: "2026-05-23T14:00:00Z")!,
+                end: ISO8601DateFormatter().date(from: "2026-05-23T15:00:00Z")!
+            ),
+            sample(.hrv, 38.0, end: "2026-05-23T13:30:00Z"),
+        ]
+        let picked = MetricPicker.pickToday(samples: samples, now: now, appTz: Config.appTimeZone)
+        XCTAssertEqual(picked.hrv?.value, 38.0)
+        XCTAssertEqual(picked.hrv?.source, "fallback_morning")
     }
 
     // MARK: RHR
@@ -139,5 +171,24 @@ final class MetricPickerTests: XCTestCase {
         let picked = MetricPicker.pickToday(samples: samples, now: now, appTz: Config.appTimeZone)
         // The future-skewed sample must not be chosen; the legit sleep-window sample wins.
         XCTAssertEqual(picked.hrv?.value, 42.5)
+    }
+
+    func testAcceptsHrvSampleAtExactlyFiveMinuteBoundary() {
+        // Sample whose end is exactly +5m from now: at the inclusive boundary.
+        // Per spec §9 tolerance ( `<= now + 5m` ), this MUST be accepted.
+        let samples: [HealthSample] = [
+            sample(.hrv, 77.0, end: "2026-05-23T16:05:00Z"),
+        ]
+        let picked = MetricPicker.pickToday(samples: samples, now: now, appTz: Config.appTimeZone)
+        XCTAssertEqual(picked.hrv?.value, 77.0, "sample at exactly +5m must be accepted (inclusive boundary)")
+    }
+
+    func testRejectsHrvSampleJustOverFiveMinuteBoundary() {
+        // Sample whose end is +5m +1s: just past the inclusive boundary.
+        let samples: [HealthSample] = [
+            sample(.hrv, 88.0, end: "2026-05-23T16:05:01Z"),
+        ]
+        let picked = MetricPicker.pickToday(samples: samples, now: now, appTz: Config.appTimeZone)
+        XCTAssertNil(picked.hrv, "sample at +5m +1s must be rejected")
     }
 }
