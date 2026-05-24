@@ -3,6 +3,7 @@ node_modules
 drizzle
 package-lock.json
 .claude/skills
+.claude/agents
 docs/superpowers
 # Xcode-owned asset catalog JSON — format is dictated by Xcode, not Prettier.
 ios/SyncFit/SyncFit/Assets.xcassets
