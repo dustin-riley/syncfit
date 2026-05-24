@@ -35,7 +35,7 @@
     </dict>
   </dict>
   <key>NSHealthShareUsageDescription</key>
-  <string>SyncFit reads your heart rate variability, resting heart rate, and sleep data to gauge your training readiness.</string>
+  <string>SyncFit reads your heart rate variability, resting heart rate, sleep, and workout times to gauge your training readiness.</string>
   <key>UILaunchScreen</key>
   <dict/>
   <key>UIApplicationSceneManifest</key>

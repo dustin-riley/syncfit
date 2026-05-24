@@ -46,7 +46,7 @@ enum MetricPicker {
         let today09 = cal.date(byAdding: .hour, value: 9, to: today00)!
 
         let asleepInDay = samples
-            .filter { $0.kind == .asleep && $0.end > priorDay22 && $0.end <= today09.addingTimeInterval(3 * 3600) && notFutureSkewed($0, now: now) }
+            .filter { $0.kind == .asleep && $0.end > priorDay22 && $0.end <= today09 && notFutureSkewed($0, now: now) }
         let windowEnd = asleepInDay.map(\.end).max() ?? today09
         return (priorDay22, windowEnd)
     }
@@ -63,12 +63,21 @@ enum MetricPicker {
 
         // --- HRV ---
         let hrvSamples = samples.filter { $0.kind == .hrv && notFutureSkewed($0, now: now) }
+        // Earliest HKWorkout start time on the reference day, used to gate
+        // the fallback_morning bucket per spec §6: a HRV reading taken after
+        // a workout reflects exertion, not baseline, so it must not be
+        // promoted to "morning" freshness.
+        let firstWorkoutStartToday: Date? = samples
+            .filter { $0.kind == .workout && isSameAppDay($0.start, as: now, tz: tz) }
+            .map(\.start)
+            .min()
         if let s = hrvSamples.filter({ $0.end > winStart && $0.end <= winEnd }).max(by: { $0.end < $1.end }) {
             out.hrv = .init(value: s.value, source: "primary", freshness: .fresh, recordedAt: s.end)
         } else {
-            // Morning today, after the sleep window
+            // Morning today, after the sleep window, before any workout
             let morning = hrvSamples
                 .filter { isSameAppDay($0.end, as: now, tz: tz) && $0.end > winEnd }
+                .filter { s in firstWorkoutStartToday.map { s.end < $0 } ?? true }
                 .sorted(by: { $0.end < $1.end })
                 .first
             if let s = morning {

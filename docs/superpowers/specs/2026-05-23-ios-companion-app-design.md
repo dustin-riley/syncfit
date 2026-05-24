@@ -352,9 +352,13 @@ Keychain/
 - **`HealthKitClient` is protocol-backed.** Real impl wraps `HKSampleQuery`;
   tests use a fake. Same `inject-the-thing-that-touches-the-world` pattern
   as `ai-engine.ts`'s injected `generate`.
-- **`SyncCoordinator.run()`** — fetch trailing 48h of samples → picker →
+- **`SyncCoordinator.run()`** — fetch trailing 72h of samples → picker →
   POST → on success persist `lastSyncedAt`; on 401 clear Keychain and
-  surface "re-pair required".
+  surface "re-pair required". (72h, not 48h, so that the picker's
+  yesterday-anchored `fallback_48h` per §7B-2 sees the full
+  [yesterday-48h, yesterday] range. The picker still emits
+  `freshness: "stale_48h"` for today; the extra 24h is purely for
+  yesterday's resync.)
 - **No background entitlements.** Just `NSHealthShareUsageDescription`
   in `Info.plist`.
 - **Minimal device state.** `lastSyncedAt` in `UserDefaults`, token in
@@ -363,8 +367,10 @@ Keychain/
 **HealthKit permission string** (App Store reviews this verbatim):
 
 - `NSHealthShareUsageDescription`: "SyncFit reads your heart rate
-  variability, resting heart rate, and sleep data to gauge your training
-  readiness."
+  variability, resting heart rate, sleep, and workout times to gauge
+  your training readiness." (Workout times gate the `fallback_morning`
+  HRV bucket per §6 — a HRV reading taken after a workout reflects
+  exertion, not baseline.)
 
 ## 9. Error Handling
 
