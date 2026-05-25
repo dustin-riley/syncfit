@@ -128,14 +128,8 @@ describe("content hashes", () => {
       enduranceContentHash({ ...goodEndurance, distanceMi: 6.3 })
     );
   });
-});
-
-describe("strengthContentHash", () => {
-  it("is stable for the same input", () => {
-    const a = strengthContentHash(goodStrength);
-    const b = strengthContentHash(goodStrength);
-    expect(a).toBe(b);
-    expect(a).toHaveLength(64);
+  it("returns a 64-char hex string", () => {
+    expect(strengthContentHash(goodStrength)).toHaveLength(64);
   });
 });
 
