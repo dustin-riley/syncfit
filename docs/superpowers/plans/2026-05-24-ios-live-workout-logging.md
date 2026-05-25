@@ -1525,7 +1525,7 @@ final class PostWorkoutCodableTests: XCTestCase {
         enc.outputFormatting = [.sortedKeys]
         let data = try enc.encode(req)
         let s = String(data: data, encoding: .utf8)!
-        XCTAssertTrue(s.contains("\"performedAt\":\"2024-05-23T22:53:20Z\""))
+        XCTAssertTrue(s.contains("\"performedAt\":\"2024-05-23T21:33:20Z\""))
         XCTAssertTrue(s.contains("\"title\":\"Pull Day\""))
         XCTAssertTrue(s.contains("\"exerciseName\":\"Pull-ups\""))
         XCTAssertTrue(s.contains("\"weight\":0"))
