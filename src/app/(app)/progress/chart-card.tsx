@@ -64,17 +64,20 @@ export function ChartCard({
       : `${series.totalSessions} sessions`;
 
   return (
-    <article className="ds-panel" style={{ padding: "14px 16px" }}>
+    <article
+      className="ds-panel"
+      style={{ padding: "var(--ds-space-3) var(--ds-space-4)" }}
+    >
       <header
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "baseline",
-          marginBottom: 4,
+          marginBottom: "var(--ds-space-1)",
         }}
       >
         <div>
-          <span className="h5" style={{ marginRight: 6 }}>
+          <span className="h5" style={{ marginRight: "var(--ds-space-2)" }}>
             {series.exerciseName}
           </span>
           {series.equipment && (
@@ -86,7 +89,7 @@ export function ChartCard({
         </span>
       </header>
 
-      <p className="ds-mono-note" style={{ margin: "0 0 8px" }}>
+      <p className="ds-mono-note" style={{ margin: "0 0 var(--ds-space-2)" }}>
         {agoLabel(series.lastPerformedAt)} · {sessionsLabel}
         {showDelta && (
           <>
@@ -97,7 +100,7 @@ export function ChartCard({
         )}
       </p>
 
-      <div style={{ width: "100%", height: 80 }}>
+      <div style={{ width: "100%", height: "var(--ds-space-9)" }}>
         <ResponsiveContainer>
           <LineChart
             data={chartData}

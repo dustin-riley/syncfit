@@ -55,21 +55,22 @@ describe("loadProgressData (live Neon)", () => {
 
     // Import action under test
     const { loadProgressData } = await import("@/app/actions/progress");
-    const { data, error } = await loadProgressData();
-    expect(error).toBeUndefined();
-    expect(data.series.length).toBeGreaterThan(0);
+    const result = await loadProgressData();
+    if (!("data" in result)) throw new Error("expected data branch");
+    expect(result.error).toBeUndefined();
+    expect(result.data.series.length).toBeGreaterThan(0);
 
     // Manual-logged "Goblet Squat" must appear exactly once with our two reps
     // collapsed to a single point (best set wins per day).
-    const goblet = data.series.find(
+    const goblet = result.data.series.find(
       (s) => s.exerciseName === "Goblet Squat" && s.equipment === ""
     );
     expect(goblet).toBeDefined();
     expect(goblet!.points).toHaveLength(1);
     expect(goblet!.points[0].topSetWeight).toBe(55);
 
-    // Default sort is most-recent-first → manual session (yesterday) should
-    // sit ahead of older imported sessions.
-    expect(data.series[0].exerciseName).toBe("Goblet Squat");
+    // Default sort is most-recent-first → the far-future manual session
+    // (2099) should sit ahead of older imported sessions.
+    expect(result.data.series[0].exerciseName).toBe("Goblet Squat");
   });
 });

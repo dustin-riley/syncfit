@@ -10,12 +10,13 @@ import {
   type ProgressInputRow,
 } from "@/lib/progress";
 
-export async function loadProgressData(): Promise<{
-  data: ProgressData;
-  error?: string;
-}> {
+type LoadProgressResult =
+  | { error: string }
+  | { data: ProgressData; error?: string };
+
+export async function loadProgressData(): Promise<LoadProgressResult> {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (!session) return { data: { series: [] } };
+  if (!session) return { error: "Not authenticated." };
   const userId = session.user.id;
 
   try {

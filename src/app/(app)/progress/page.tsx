@@ -10,12 +10,14 @@ export default async function ProgressPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) redirect("/login");
 
-  const { data, error } = await loadProgressData();
+  const result = await loadProgressData();
+  const series = "data" in result ? result.data.series : [];
+  const error = "error" in result ? result.error : undefined;
 
   return (
     <main className="ds-container p-8">
       <ProgressWorkspace
-        initialSeries={data.series.map((s) => ({
+        initialSeries={series.map((s) => ({
           ...s,
           // Dates serialise across the client boundary as strings; convert at
           // the edge so the client component receives Date instances.
