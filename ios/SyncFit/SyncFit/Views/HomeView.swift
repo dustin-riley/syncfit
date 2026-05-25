@@ -86,10 +86,21 @@ struct HomeView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 24)
         } else if let r = resolved {
+            if let avail = session.liveDraftAvailable {
+                resumeBanner(avail)
+            }
             sectionLabel("This week")
             WeekStrip(days: r.days, todayDow: r.todayDow, selectedDow: $selectedDow)
             sectionLabel(dayLabel(r: r))
-            PlanDetailCard(day: r.days[selectedDow])
+            PlanDetailCard(day: r.days[selectedDow], onStart: {
+                let dayToStart = r.days[selectedDow]
+                if case .session(let p) = dayToStart, !p.exercises.isEmpty {
+                    session.liveWorkoutStore.startFromPlan(p)
+                } else {
+                    session.liveWorkoutStore.startBlank()
+                }
+                session.presentLiveWorkoutSheet()
+            })
         }
     }
 
@@ -165,6 +176,27 @@ struct HomeView: View {
         guard !hasInitializedSelection, let r = resolved else { return }
         selectedDow = r.todayDow
         hasInitializedSelection = true
+    }
+
+    private func resumeBanner(_ draft: LiveWorkoutDraft) -> some View {
+        Button {
+            session.resumeLiveWorkout()
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "play.circle.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                Text("Resume workout — started \(Self.relativeAgo(draft.startedAt))")
+                    .font(.system(size: 12, weight: .semibold))
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .semibold))
+            }
+            .foregroundStyle(DSColor.primary)
+            .padding(.horizontal, 12).padding(.vertical, 10)
+            .background(RoundedRectangle(cornerRadius: DSRadius.sm)
+                            .fill(DSColor.primary.opacity(0.10)))
+        }
+        .buttonStyle(.plain)
     }
 
     private var staleBanner: some View {

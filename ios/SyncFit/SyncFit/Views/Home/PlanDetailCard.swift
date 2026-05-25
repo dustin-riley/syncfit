@@ -3,6 +3,7 @@ import SwiftUI
 
 struct PlanDetailCard: View {
     let day: ResolvedDay
+    var onStart: () -> Void = {}
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -59,6 +60,15 @@ struct PlanDetailCard: View {
             }
             .padding(.top, 11)
         }
+        Button(action: onStart) {
+            Text(p.exercises.isEmpty ? "Start blank workout" : "Start workout")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(RoundedRectangle(cornerRadius: DSRadius.pill).fill(DSColor.primary))
+        }
+        .padding(.top, 8)
     }
 
     @ViewBuilder
@@ -101,13 +111,13 @@ struct PlanDetailCard: View {
             .init(id: "2", name: "Romanian deadlift", targetSets: 3, targetReps: 8, targetWeight: 185),
             .init(id: "3", name: "Walking lunge", targetSets: 3, targetReps: 12, targetWeight: 35),
         ]
-    )))
+    )), onStart: {})
     .padding()
     .background(DSColor.bg)
 }
 
 #Preview("Rest day, blank") {
-    PlanDetailCard(day: .rest(dayOfWeek: 0, title: nil, notes: nil))
+    PlanDetailCard(day: .rest(dayOfWeek: 0, title: nil, notes: nil), onStart: {})
         .padding()
         .background(DSColor.bg)
 }
@@ -116,7 +126,7 @@ struct PlanDetailCard: View {
     PlanDetailCard(day: .session(.init(
         dayOfWeek: 4, title: "Long run", notes: "90 min easy",
         modality: "endurance", exercises: []
-    )))
+    )), onStart: {})
     .padding()
     .background(DSColor.bg)
 }
