@@ -22,7 +22,7 @@
 
 - **Create** `ios/SyncFit/SyncFit/LiveWorkout/LiveWorkoutDraft.swift` — `LiveWorkoutDraft` (top-level Codable struct).
 - **Create** `ios/SyncFit/SyncFit/LiveWorkout/DraftExercise.swift` — `DraftExercise`, `LoggedSet`, `PendingSet`.
-- **Create** `ios/SyncFit/SyncFit/LiveWorkout/LiveWorkoutDraft+Builders.swift` — static factories `startFromPlan(planDay:title:now:)`, `startBlank(now:)`.
+- **Create** `ios/SyncFit/SyncFit/LiveWorkout/LiveWorkoutDraft+Builders.swift` — static factories `startFromPlan(planDay:now:)`, `startBlank(now:)`.
 - **Create** `ios/SyncFit/SyncFit/LiveWorkout/LiveWorkoutDraft+CurrentExercise.swift` — computed `currentExerciseIndex` (topmost not-done).
 - **Create** `ios/SyncFit/SyncFit/LiveWorkout/LiveWorkoutDraft+Mutations.swift` — `appendLoggedSet`, `promotePending`, pending edits, `autoCommitDirty`, structural exercise mutations, logged-set edits.
 - **Create** `ios/SyncFit/SyncFit/LiveWorkout/LiveWorkoutDraft+Payload.swift` — `flattenForPost()` (auto-commit dirty+valid pendings; drop dirty-invalid; return `[PostWorkoutSet]`).
