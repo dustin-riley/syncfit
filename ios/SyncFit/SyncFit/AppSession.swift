@@ -99,6 +99,19 @@ final class AppSession: ObservableObject {
         liveWorkoutStore.discard()
     }
 
+    // Clears auth credentials only — does NOT discard the live-workout draft.
+    // Used by the 401 path in FinishWorkoutSheet so the user can re-pair and
+    // resume the in-progress workout. Spec §5.5 / §6: "401 → clear keychain,
+    // preserve local state, alert 'Pairing expired — re-pair this device'."
+    func clearAuthOnly() {
+        keychain.clear()
+        deviceToken = nil
+        planCache.clear()
+        planWeek = nil
+        planFetchedAt = nil
+        planFetchStatus = .idle
+    }
+
     func resumeLiveWorkout() {
         guard let d = liveDraftAvailable else { return }
         liveWorkoutStore.resume(d)

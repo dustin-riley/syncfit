@@ -65,7 +65,7 @@ struct FinishWorkoutSheet: View {
                 onSuccess()
                 dismiss()
             case .unauthorized:
-                session.unpair()
+                session.clearAuthOnly()
                 errorMessage = "Pairing expired — re-pair this device."
             case .transport(let m):
                 errorMessage = "Couldn't sync workout (\(m)). Try again."
