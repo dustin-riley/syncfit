@@ -12,6 +12,7 @@ export type NavItem = {
 
 export const NAV_ITEMS: readonly NavItem[] = [
   { href: "/", label: "Today", shortLabel: "Today" },
+  { href: "/progress", label: "Progress", shortLabel: "Progress" },
   { href: "/plan", label: "Weekly plan", shortLabel: "Plan" },
   { href: "/log", label: "Log workout", shortLabel: "Log" },
   { href: "/import", label: "Import", shortLabel: "Import" },
