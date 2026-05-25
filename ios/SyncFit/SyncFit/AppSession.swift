@@ -60,7 +60,11 @@ final class AppSession: ObservableObject {
         // inject their own.
         self.liveWorkoutStore = liveWorkoutStore ?? LiveWorkoutStore(
             postWorkout: { req in
-                guard let t = loadedToken ?? KeychainStore().load() else {
+                // Read keychain fresh on every call: handles first-pair (token
+                // didn't exist at init), re-pair (init-captured token is stale),
+                // and unpair-then-pair within one session — all without an
+                // [weak self] capture that would hit two-phase init issues.
+                guard let t = KeychainStore().load() else {
                     throw APIClientError.unauthorized
                 }
                 let api = APIClient(baseURL: Config.apiBaseURL, token: t)
