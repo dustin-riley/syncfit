@@ -7,6 +7,7 @@ struct HomeView: View {
     @State private var hasInitializedSelection = false
     @State private var syncing = false
     @State private var syncError: String?
+    @State private var showingInProgressAlert = false
 
     private static let weekdayFull = [
         "Sunday", "Monday", "Tuesday", "Wednesday",
@@ -57,6 +58,11 @@ struct HomeView: View {
             } message: {
                 Text(syncError ?? "")
             }
+            .alert("Finish current workout first", isPresented: $showingInProgressAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("You have an in-progress workout. Tap Resume on the Home banner or finish/discard it before starting a new one.")
+            }
         }
     }
 
@@ -93,6 +99,10 @@ struct HomeView: View {
             WeekStrip(days: r.days, todayDow: r.todayDow, selectedDow: $selectedDow)
             sectionLabel(dayLabel(r: r))
             PlanDetailCard(day: r.days[selectedDow], onStart: {
+                guard !session.hasInProgressWorkout else {
+                    showingInProgressAlert = true
+                    return
+                }
                 let dayToStart = r.days[selectedDow]
                 if case .session(let p) = dayToStart, !p.exercises.isEmpty {
                     session.liveWorkoutStore.startFromPlan(p)

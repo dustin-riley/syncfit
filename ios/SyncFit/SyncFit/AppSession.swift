@@ -112,6 +112,13 @@ final class AppSession: ObservableObject {
         planFetchStatus = .idle
     }
 
+    // Returns true when a workout is already in-progress (either restored from
+    // disk or currently running). Views check this before calling startFromPlan /
+    // startBlank so they can alert instead of silently no-op-ing (spec §6).
+    var hasInProgressWorkout: Bool {
+        liveDraftAvailable != nil || liveWorkoutStore.draft != nil
+    }
+
     func resumeLiveWorkout() {
         guard let d = liveDraftAvailable else { return }
         liveWorkoutStore.resume(d)

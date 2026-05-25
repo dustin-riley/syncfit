@@ -3,6 +3,7 @@ import SwiftUI
 struct LogView: View {
     @EnvironmentObject var session: AppSession
     @State private var pickingDay = false
+    @State private var showingInProgressAlert = false
 
     private static let weekdayFull = [
         "Sunday", "Monday", "Tuesday", "Wednesday",
@@ -28,6 +29,10 @@ struct LogView: View {
                 }
                 Section("Start a workout") {
                     Button {
+                        guard !session.hasInProgressWorkout else {
+                            showingInProgressAlert = true
+                            return
+                        }
                         if let today = todayPlanDay() {
                             session.liveWorkoutStore.startFromPlan(today)
                             session.presentLiveWorkoutSheet()
@@ -38,6 +43,10 @@ struct LogView: View {
                     .disabled(todayPlanDay()?.exercises.isEmpty ?? true)
 
                     Button {
+                        guard !session.hasInProgressWorkout else {
+                            showingInProgressAlert = true
+                            return
+                        }
                         pickingDay = true
                     } label: {
                         Text("Pick another day's plan")
@@ -45,6 +54,10 @@ struct LogView: View {
                     .disabled(session.planWeek == nil)
 
                     Button {
+                        guard !session.hasInProgressWorkout else {
+                            showingInProgressAlert = true
+                            return
+                        }
                         session.liveWorkoutStore.startBlank()
                         session.presentLiveWorkoutSheet()
                     } label: {
@@ -53,6 +66,11 @@ struct LogView: View {
                 }
             }
             .navigationTitle("Log")
+            .alert("Finish current workout first", isPresented: $showingInProgressAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("You have an in-progress workout. Tap Resume on the Home banner or finish/discard it before starting a new one.")
+            }
             .sheet(isPresented: $pickingDay) {
                 NavigationStack {
                     List {
