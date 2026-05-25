@@ -116,7 +116,8 @@ export type LogResult = {
 
 export async function logStrengthWorkout(
   userId: string,
-  input: ManualStrengthInput
+  input: ManualStrengthInput,
+  source: string = "manual"
 ): Promise<LogResult> {
   const { fieldErrors } = validateStrengthInput(input);
   if (Object.keys(fieldErrors).length)
@@ -139,7 +140,7 @@ export async function logStrengthWorkout(
         userId,
         performedAt: input.performedAt,
         title: input.title.trim() || "Workout",
-        source: "manual",
+        source,
         contentHash: strengthContentHash(input),
       })
       .onConflictDoNothing({ target: [workout.userId, workout.contentHash] })
