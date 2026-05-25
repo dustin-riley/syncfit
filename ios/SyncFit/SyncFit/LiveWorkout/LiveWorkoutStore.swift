@@ -133,6 +133,8 @@ final class LiveWorkoutStore: ObservableObject {
             return .server(0)
         } catch APIClientError.unauthorized {
             return .unauthorized
+        } catch APIClientError.badRequest {
+            return .server(400)
         } catch APIClientError.transport(let m) {
             return .transport(m)
         } catch APIClientError.server(let code) {
