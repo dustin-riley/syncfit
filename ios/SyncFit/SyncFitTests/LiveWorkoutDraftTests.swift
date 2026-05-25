@@ -55,4 +55,50 @@ final class LiveWorkoutDraftTests: XCTestCase {
         XCTAssertEqual(d.schemaVersion, LiveWorkoutDraft.currentSchemaVersion)
         XCTAssertTrue(d.exercises.isEmpty)
     }
+
+    // MARK: current-exercise
+
+    private func draft(_ exercises: [DraftExercise]) -> LiveWorkoutDraft {
+        LiveWorkoutDraft(
+            id: UUID(), startedAt: now, title: "t",
+            exercises: exercises,
+            schemaVersion: LiveWorkoutDraft.currentSchemaVersion
+        )
+    }
+
+    private func ex(target: Int?, logged: Int) -> DraftExercise {
+        DraftExercise(
+            id: UUID(), name: "Ex", targetSets: target,
+            targetReps: 8, targetWeight: 100,
+            loggedSets: (0..<logged).map { _ in
+                LoggedSet(id: UUID(), weight: 100, reps: 8, loggedAt: now)
+            },
+            pendingSet: nil
+        )
+    }
+
+    func testCurrentIsFirstExerciseWithNothingLogged() {
+        let d = draft([ex(target: 4, logged: 0), ex(target: 4, logged: 0)])
+        XCTAssertEqual(d.currentExerciseIndex, 0)
+    }
+
+    func testCurrentAdvancesPastFinishedExercise() {
+        let d = draft([ex(target: 4, logged: 4), ex(target: 4, logged: 1)])
+        XCTAssertEqual(d.currentExerciseIndex, 1)
+    }
+
+    func testUnplannedExerciseNeverAutoFinishes() {
+        // target=nil means "no planned set count"; treated as infinite.
+        let d = draft([ex(target: nil, logged: 99)])
+        XCTAssertEqual(d.currentExerciseIndex, 0)
+    }
+
+    func testCurrentReturnsNilWhenAllPlannedDone() {
+        let d = draft([ex(target: 4, logged: 4), ex(target: 3, logged: 3)])
+        XCTAssertNil(d.currentExerciseIndex)
+    }
+
+    func testCurrentReturnsNilOnEmptyDraft() {
+        XCTAssertNil(draft([]).currentExerciseIndex)
+    }
 }
