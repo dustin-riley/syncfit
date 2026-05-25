@@ -117,11 +117,13 @@ struct LiveWorkoutView: View {
     }
 
     private func cardState(forExerciseIndex i: Int, draft: LiveWorkoutDraft) -> ExerciseCard.CardState {
-        guard let current = draft.currentExerciseIndex else {
-            // All planned exercises done; default the topmost unfinished
-            // (which is none) to current → just mark everything done.
-            return .done
-        }
+        // Priority: manual override (tap) → auto-advance → last-exercise fallback.
+        // The fallback ensures there's always an ActiveSetEntry visible once the
+        // planned set count is reached on every exercise (spec §5.3 / §5.4).
+        let current: Int? = session.liveWorkoutStore.manualCurrentIndex
+            ?? draft.currentExerciseIndex
+            ?? draft.exercises.indices.last
+        guard let current else { return .done }
         if i < current { return .done }
         if i == current { return .current }
         return .upcoming

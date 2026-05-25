@@ -13,6 +13,10 @@ enum LiveWorkoutFinishResult {
 @MainActor
 final class LiveWorkoutStore: ObservableObject {
     @Published private(set) var draft: LiveWorkoutDraft?
+    // Set by navigate(toExerciseIndex:) so a tapped card stays expanded even
+    // after its planned sets are done. Cleared by logPending (re-engage
+    // auto-advance), discard, and all start/resume paths.
+    @Published private(set) var manualCurrentIndex: Int?
 
     private let persistence: LiveWorkoutPersistence
     private let postWorkout: (PostWorkoutRequest) async throws -> PostWorkoutResponse
@@ -41,6 +45,7 @@ final class LiveWorkoutStore: ObservableObject {
         guard draft == nil else { return }
         let d = LiveWorkoutDraft.startFromPlan(planDay: planDay, now: now)
         draft = d
+        manualCurrentIndex = nil
         persistence.save(d)
     }
 
@@ -48,6 +53,7 @@ final class LiveWorkoutStore: ObservableObject {
         guard draft == nil else { return }
         let d = LiveWorkoutDraft.startBlank(now: now)
         draft = d
+        manualCurrentIndex = nil
         persistence.save(d)
     }
 
@@ -55,11 +61,13 @@ final class LiveWorkoutStore: ObservableObject {
     func resume(_ d: LiveWorkoutDraft) {
         guard draft == nil else { return }
         draft = d
+        manualCurrentIndex = nil
         persistence.save(d) // touch
     }
 
     func discard() {
         draft = nil
+        manualCurrentIndex = nil
         persistence.clear()
     }
 
@@ -85,6 +93,9 @@ final class LiveWorkoutStore: ObservableObject {
     }
     func logPending(forExerciseIndex i: Int, now: Date = Date()) {
         mutate { $0.promotePending(forExerciseIndex: i, now: now) }
+        // Re-engage auto-advance: if the user just logged the last planned set,
+        // currentExerciseIndex goes nil and the last-exercise fallback kicks in.
+        manualCurrentIndex = nil
     }
     func navigate(toExerciseIndex i: Int, now: Date = Date()) {
         // Auto-commit dirty pending on the currently-current exercise before
@@ -96,6 +107,9 @@ final class LiveWorkoutStore: ObservableObject {
             }
             d.preparePendingIfNeeded(forExerciseIndex: i)
         }
+        // Manual override wins over the computed auto-advance index so a tapped
+        // .done or .upcoming card becomes .current (spec §5.3 / §5.4).
+        manualCurrentIndex = i
     }
     func addExercise(name: String) { mutate { $0.addExercise(name: name) } }
     func removeExercise(at i: Int) { mutate { $0.removeExercise(at: i) } }
