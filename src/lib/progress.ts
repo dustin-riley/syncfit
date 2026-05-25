@@ -50,10 +50,7 @@ function keyOf(name: string, equipment: string | null): string {
   return `${name}|${equipment ?? ""}`;
 }
 
-export function computeProgress(
-  rows: ProgressInputRow[],
-  _now: Date
-): ProgressData {
+export function computeProgress(rows: ProgressInputRow[]): ProgressData {
   // Group rows by exerciseKey, then collapse each (key, day) into the best set
   // (highest weight; tie-break on higher reps).
   type Bucket = {

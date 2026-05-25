@@ -10,7 +10,7 @@ const day = (n: number) => new Date(NOW.getTime() - n * 86_400_000);
 
 describe("computeProgress — grouping", () => {
   it("returns an empty series list for empty input", () => {
-    const out = computeProgress([], NOW);
+    const out = computeProgress([]);
     expect(out.series).toEqual([]);
   });
 
@@ -38,7 +38,7 @@ describe("computeProgress — grouping", () => {
         reps: 5,
       },
     ];
-    const out = computeProgress(rows, NOW);
+    const out = computeProgress(rows);
     const keys = out.series.map((s) => s.exerciseKey).sort();
     expect(keys).toEqual(["Bench Press|Barbell", "Bench Press|Dumbbell"]);
   });
@@ -60,7 +60,7 @@ describe("computeProgress — grouping", () => {
         reps: 12,
       },
     ];
-    const out = computeProgress(rows, NOW);
+    const out = computeProgress(rows);
     expect(out.series).toHaveLength(1);
     expect(out.series[0].exerciseKey).toBe("Pull Up|");
     expect(out.series[0].points).toHaveLength(2);
@@ -87,7 +87,7 @@ describe("computeProgress — per-day collapse", () => {
         reps: 3,
       },
     ];
-    const out = computeProgress(rows, NOW);
+    const out = computeProgress(rows);
     expect(out.series[0].points).toHaveLength(1);
     expect(out.series[0].points[0].topSetWeight).toBe(245);
     expect(out.series[0].points[0].topSetReps).toBe(3);
@@ -112,7 +112,7 @@ describe("computeProgress — per-day collapse", () => {
         reps: 5,
       },
     ];
-    const out = computeProgress(rows, NOW);
+    const out = computeProgress(rows);
     expect(out.series[0].points[0].topSetReps).toBe(5);
   });
 });
@@ -128,7 +128,7 @@ describe("computeProgress — e1RM and derived stats", () => {
         reps: 5,
       },
     ];
-    const out = computeProgress(rows, NOW);
+    const out = computeProgress(rows);
     expect(out.series[0].points[0].e1RM).toBeCloseTo(185 * (1 + 5 / 30), 5);
   });
 
@@ -156,7 +156,7 @@ describe("computeProgress — e1RM and derived stats", () => {
         reps: 5,
       },
     ];
-    const out = computeProgress(rows, NOW);
+    const out = computeProgress(rows);
     const s = out.series[0];
     expect(s.totalSessions).toBe(3);
     expect(s.firstTopSetWeight).toBe(155);
@@ -190,7 +190,7 @@ describe("computeProgress — e1RM and derived stats", () => {
         reps: 5,
       },
     ];
-    const out = computeProgress(rows, NOW);
+    const out = computeProgress(rows);
     expect(out.series.map((s) => s.exerciseName)).toEqual([
       "New Lift",
       "Mid Lift",
@@ -237,7 +237,7 @@ describe("sortSeries", () => {
   ];
 
   it("'recent' returns input order (already most-recent-first from computeProgress)", () => {
-    const out = computeProgress(rows, NOW2);
+    const out = computeProgress(rows);
     const sorted = sortSeries(out.series, "recent");
     expect(sorted.map((s) => s.exerciseName)).toEqual([
       "Brand New",
@@ -247,7 +247,7 @@ describe("sortSeries", () => {
   });
 
   it("'frequent' orders by totalSessions desc", () => {
-    const out = computeProgress(rows, NOW2);
+    const out = computeProgress(rows);
     const sorted = sortSeries(out.series, "frequent");
     expect(sorted.map((s) => s.exerciseName)).toEqual([
       "Stale Staple", // 5
@@ -267,7 +267,7 @@ describe("sortSeries", () => {
         reps: 8,
       },
     ];
-    const out = computeProgress(extra, NOW2);
+    const out = computeProgress(extra);
     const sorted = sortSeries(out.series, "az");
     expect(sorted.map((s) => `${s.exerciseName}|${s.equipment}`)).toEqual([
       "Brand New|Barbell",
@@ -278,7 +278,7 @@ describe("sortSeries", () => {
   });
 
   it("does not mutate the input array", () => {
-    const out = computeProgress(rows, NOW2);
+    const out = computeProgress(rows);
     const before = out.series.map((s) => s.exerciseKey);
     sortSeries(out.series, "frequent");
     const after = out.series.map((s) => s.exerciseKey);
