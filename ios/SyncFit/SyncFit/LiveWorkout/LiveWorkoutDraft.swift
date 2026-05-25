@@ -4,7 +4,7 @@ import Foundation
 // Bump LiveWorkoutDraft.currentSchemaVersion any time the on-disk shape changes;
 // persistence discards files with a mismatched version on load (no migrations
 // for a single-row local cache — single in-progress slot, low cost to lose).
-struct LiveWorkoutDraft: Codable, Equatable, Identifiable {
+struct LiveWorkoutDraft: Codable, Equatable, Sendable, Identifiable {
     static let currentSchemaVersion: Int = 1
 
     let id: UUID

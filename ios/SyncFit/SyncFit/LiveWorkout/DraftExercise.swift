@@ -1,6 +1,6 @@
 import Foundation
 
-struct DraftExercise: Codable, Equatable, Identifiable {
+struct DraftExercise: Codable, Equatable, Sendable, Identifiable {
     let id: UUID
     var name: String
     var targetSets: Int?
@@ -10,14 +10,14 @@ struct DraftExercise: Codable, Equatable, Identifiable {
     var pendingSet: PendingSet?
 }
 
-struct LoggedSet: Codable, Equatable, Identifiable {
+struct LoggedSet: Codable, Equatable, Sendable, Identifiable {
     let id: UUID
     var weight: Double
     var reps: Int
     let loggedAt: Date
 }
 
-struct PendingSet: Codable, Equatable {
+struct PendingSet: Codable, Equatable, Sendable {
     var weight: Double
     var reps: Int
     // Flipped true by any user-driven mutation (stepper / tap-to-type). Gates
