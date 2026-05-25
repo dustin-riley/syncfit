@@ -15,6 +15,12 @@ final class AppSession: ObservableObject {
     @Published private(set) var planFetchedAt: Date?
     @Published private(set) var planFetchStatus: PlanFetchStatus = .idle
 
+    // Drives sheet presentation in RootView when non-nil.
+    @Published var liveDraft: LiveWorkoutDraft?
+    // Survives across launches; signals "Resume workout" banner on Home.
+    @Published private(set) var liveDraftAvailable: LiveWorkoutDraft?
+    let liveWorkoutStore: LiveWorkoutStore
+
     enum PlanFetchStatus: Equatable {
         case idle
         case loading
@@ -33,20 +39,38 @@ final class AppSession: ObservableObject {
         health: HealthKitReading = HKHealthKitClient(),
         pairing: PairingClient = PairingClient(baseURL: Config.apiBaseURL),
         planCache: PlanCache = PlanCache(),
-        appTz: TimeZone = Config.appTimeZone
+        appTz: TimeZone = Config.appTimeZone,
+        liveWorkoutStore: LiveWorkoutStore? = nil
     ) {
         self.health = health
         self.pairing = pairing
         self.planCache = planCache
         self.appTz = appTz
-        self.deviceToken = keychain.load()
+        // Load the token first into a local so we can capture it in the closure
+        // below before self is fully initialized (Swift two-phase init).
+        let loadedToken = keychain.load()
+        self.deviceToken = loadedToken
         self.lastSyncedAt = UserDefaults.standard.object(forKey: "lastSyncedAt") as? Date
-        // Synchronous cache load so the first paint of HomeView shows the
-        // last-known plan with no flash.
         if let cached = planCache.load() {
             self.planWeek = cached.week
             self.planFetchedAt = cached.fetchedAt
         }
+        // Live workout store: a default instance wires to the live APIClient
+        // lazily (per-call) so it can pick up a freshly-paired token. Tests
+        // inject their own.
+        self.liveWorkoutStore = liveWorkoutStore ?? LiveWorkoutStore(
+            postWorkout: { req in
+                guard let t = loadedToken ?? KeychainStore().load() else {
+                    throw APIClientError.unauthorized
+                }
+                let api = APIClient(baseURL: Config.apiBaseURL, token: t)
+                return try await api.postWorkout(req)
+            }
+        )
+        // Restore on launch: if an in-progress draft exists on disk (and isn't
+        // aged-out), surface it as available-to-resume. Does NOT auto-present
+        // the sheet — the user taps Resume on Home (or Log tab).
+        self.liveDraftAvailable = self.liveWorkoutStore.restoreFromDisk()
     }
 
     func requestHealthAuthorization() async throws {
@@ -66,6 +90,29 @@ final class AppSession: ObservableObject {
         planWeek = nil
         planFetchedAt = nil
         planFetchStatus = .idle
+        liveDraft = nil
+        liveDraftAvailable = nil
+        liveWorkoutStore.discard()
+    }
+
+    func resumeLiveWorkout() {
+        guard let d = liveDraftAvailable else { return }
+        liveWorkoutStore.resume(d)
+        liveDraft = liveWorkoutStore.draft
+        liveDraftAvailable = nil
+    }
+
+    // Called by views after Start CTA (Home or Log tab).
+    func presentLiveWorkoutSheet() {
+        liveDraft = liveWorkoutStore.draft
+    }
+
+    // Called by sheet-dismiss handlers (Close or Finish/Discard).
+    func dismissLiveWorkoutSheet() {
+        liveDraft = nil
+        // After dismiss, expose the (still in-progress) draft as resumable
+        // so the Home banner appears.
+        liveDraftAvailable = liveWorkoutStore.draft
     }
 
     func syncNow() async throws {
