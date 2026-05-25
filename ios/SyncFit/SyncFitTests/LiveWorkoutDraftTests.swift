@@ -101,4 +101,136 @@ final class LiveWorkoutDraftTests: XCTestCase {
     func testCurrentReturnsNilOnEmptyDraft() {
         XCTAssertNil(draft([]).currentExerciseIndex)
     }
+
+    // MARK: mutations — pending
+
+    func testPreparePendingForUnplannedExerciseUsesZeros() {
+        var d = draft([ex(target: nil, logged: 0)])
+        d.preparePendingIfNeeded(forExerciseIndex: 0)
+        XCTAssertEqual(d.exercises[0].pendingSet?.weight, 0)
+        XCTAssertEqual(d.exercises[0].pendingSet?.reps, 0)
+        XCTAssertEqual(d.exercises[0].pendingSet?.dirty, false)
+    }
+
+    func testPreparePendingUsesPlanTargetOnFirstSet() {
+        var d = draft([ex(target: 4, logged: 0)])
+        d.preparePendingIfNeeded(forExerciseIndex: 0)
+        XCTAssertEqual(d.exercises[0].pendingSet?.weight, 100) // from ex() fixture
+        XCTAssertEqual(d.exercises[0].pendingSet?.reps, 8)
+        XCTAssertEqual(d.exercises[0].pendingSet?.dirty, false)
+    }
+
+    func testPreparePendingUsesLastLoggedSetOnSubsequentSets() {
+        var e = ex(target: 4, logged: 0)
+        e.loggedSets = [LoggedSet(id: UUID(), weight: 142.5, reps: 7, loggedAt: now)]
+        var d = draft([e])
+        d.preparePendingIfNeeded(forExerciseIndex: 0)
+        XCTAssertEqual(d.exercises[0].pendingSet?.weight, 142.5)
+        XCTAssertEqual(d.exercises[0].pendingSet?.reps, 7)
+    }
+
+    func testPreparePendingDoesNotOverwriteAnExistingPending() {
+        var e = ex(target: 4, logged: 0)
+        e.pendingSet = PendingSet(weight: 200, reps: 3, dirty: true)
+        var d = draft([e])
+        d.preparePendingIfNeeded(forExerciseIndex: 0)
+        XCTAssertEqual(d.exercises[0].pendingSet?.weight, 200)
+        XCTAssertEqual(d.exercises[0].pendingSet?.reps, 3)
+        XCTAssertEqual(d.exercises[0].pendingSet?.dirty, true)
+    }
+
+    func testSetPendingWeightFlipsDirty() {
+        var d = draft([ex(target: 4, logged: 0)])
+        d.preparePendingIfNeeded(forExerciseIndex: 0)
+        XCTAssertEqual(d.exercises[0].pendingSet?.dirty, false)
+        d.setPendingWeight(140, forExerciseIndex: 0)
+        XCTAssertEqual(d.exercises[0].pendingSet?.weight, 140)
+        XCTAssertEqual(d.exercises[0].pendingSet?.dirty, true)
+    }
+
+    func testSetPendingRepsFlipsDirty() {
+        var d = draft([ex(target: 4, logged: 0)])
+        d.preparePendingIfNeeded(forExerciseIndex: 0)
+        d.setPendingReps(7, forExerciseIndex: 0)
+        XCTAssertEqual(d.exercises[0].pendingSet?.reps, 7)
+        XCTAssertEqual(d.exercises[0].pendingSet?.dirty, true)
+    }
+
+    func testPromotePendingAppendsLoggedAndResetsPending() {
+        var d = draft([ex(target: 4, logged: 0)])
+        d.preparePendingIfNeeded(forExerciseIndex: 0)
+        d.setPendingWeight(135, forExerciseIndex: 0)
+        d.setPendingReps(8, forExerciseIndex: 0)
+        d.promotePending(forExerciseIndex: 0, now: now)
+        XCTAssertEqual(d.exercises[0].loggedSets.count, 1)
+        XCTAssertEqual(d.exercises[0].loggedSets[0].weight, 135)
+        XCTAssertEqual(d.exercises[0].loggedSets[0].reps, 8)
+        // Pending was reset, pre-filled from the just-logged values, dirty=false.
+        XCTAssertEqual(d.exercises[0].pendingSet?.weight, 135)
+        XCTAssertEqual(d.exercises[0].pendingSet?.reps, 8)
+        XCTAssertEqual(d.exercises[0].pendingSet?.dirty, false)
+    }
+
+    func testAutoCommitDirtyOnlyFiresWhenDirtyAndValid() {
+        // dirty + valid → committed
+        var d1 = draft([ex(target: 4, logged: 0)])
+        d1.preparePendingIfNeeded(forExerciseIndex: 0)
+        d1.setPendingReps(8, forExerciseIndex: 0)
+        d1.autoCommitDirty(forExerciseIndex: 0, now: now)
+        XCTAssertEqual(d1.exercises[0].loggedSets.count, 1)
+
+        // dirty + invalid (reps == 0) → preserved on exercise, NOT logged
+        var d2 = draft([ex(target: 4, logged: 0)])
+        d2.exercises[0].pendingSet = PendingSet(weight: 135, reps: 0, dirty: true)
+        d2.autoCommitDirty(forExerciseIndex: 0, now: now)
+        XCTAssertEqual(d2.exercises[0].loggedSets.count, 0)
+        XCTAssertEqual(d2.exercises[0].pendingSet?.weight, 135) // preserved
+
+        // not dirty → never committed (no fabrication)
+        var d3 = draft([ex(target: 4, logged: 0)])
+        d3.preparePendingIfNeeded(forExerciseIndex: 0)
+        d3.autoCommitDirty(forExerciseIndex: 0, now: now)
+        XCTAssertEqual(d3.exercises[0].loggedSets.count, 0)
+    }
+
+    // MARK: mutations — structural
+
+    func testAddExerciseAppendsAtTheBottom() {
+        var d = draft([ex(target: 4, logged: 0)])
+        d.addExercise(name: "Curl")
+        XCTAssertEqual(d.exercises.count, 2)
+        XCTAssertEqual(d.exercises[1].name, "Curl")
+        XCTAssertNil(d.exercises[1].targetSets) // unplanned
+        XCTAssertTrue(d.exercises[1].loggedSets.isEmpty)
+    }
+
+    func testRemoveExercise() {
+        var d = draft([ex(target: 4, logged: 0), ex(target: 3, logged: 0)])
+        d.removeExercise(at: 0)
+        XCTAssertEqual(d.exercises.count, 1)
+    }
+
+    func testMoveExercise() {
+        var d = draft([
+            { var e = ex(target: 4, logged: 0); e.name = "A"; return e }(),
+            { var e = ex(target: 4, logged: 0); e.name = "B"; return e }(),
+        ])
+        d.moveExercise(from: 0, to: 2) // SwiftUI move semantics: to = insertion index
+        XCTAssertEqual(d.exercises.map(\.name), ["B", "A"])
+    }
+
+    func testRenameExercise() {
+        var d = draft([ex(target: 4, logged: 0)])
+        d.renameExercise(at: 0, to: "  Pull-ups  ")
+        XCTAssertEqual(d.exercises[0].name, "Pull-ups")
+    }
+
+    func testEditLoggedSet() {
+        var e = ex(target: 4, logged: 1)
+        let setId = e.loggedSets[0].id
+        var d = draft([e])
+        d.editLoggedSet(exerciseIndex: 0, setId: setId, weight: 140, reps: 6)
+        XCTAssertEqual(d.exercises[0].loggedSets[0].weight, 140)
+        XCTAssertEqual(d.exercises[0].loggedSets[0].reps, 6)
+    }
 }
