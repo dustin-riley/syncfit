@@ -14,5 +14,6 @@ export const config = {
     "/log/:path*",
     "/import/:path*",
     "/settings/:path*",
+    "/progress/:path*",
   ],
 };
