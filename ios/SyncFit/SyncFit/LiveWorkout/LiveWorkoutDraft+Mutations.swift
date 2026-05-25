@@ -60,7 +60,7 @@ extension LiveWorkoutDraft {
 
     // MARK: structural — exercises
 
-    mutating func addExercise(name: String, now: Date = Date()) {
+    mutating func addExercise(name: String) {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
         exercises.append(
