@@ -233,4 +233,58 @@ final class LiveWorkoutDraftTests: XCTestCase {
         XCTAssertEqual(d.exercises[0].loggedSets[0].weight, 140)
         XCTAssertEqual(d.exercises[0].loggedSets[0].reps, 6)
     }
+
+    // MARK: payload
+
+    func testFlattenForPostIncludesAllLoggedSetsInOrder() {
+        var e1 = ex(target: 4, logged: 0)
+        e1.name = "Pull-ups"
+        e1.loggedSets = [
+            LoggedSet(id: UUID(), weight: 0, reps: 10, loggedAt: now),
+            LoggedSet(id: UUID(), weight: 0, reps: 9, loggedAt: now),
+        ]
+        var e2 = ex(target: 4, logged: 0)
+        e2.name = "Barbell Row"
+        e2.loggedSets = [
+            LoggedSet(id: UUID(), weight: 135, reps: 8, loggedAt: now),
+        ]
+        let d = draft([e1, e2])
+        let (payload, _) = d.flattenForPost(now: now)
+        XCTAssertEqual(payload.count, 3)
+        XCTAssertEqual(payload[0].exerciseName, "Pull-ups")
+        XCTAssertEqual(payload[0].reps, 10)
+        XCTAssertEqual(payload[2].exerciseName, "Barbell Row")
+    }
+
+    func testFlattenForPostAutoCommitsDirtyValidPendings() {
+        var d = draft([ex(target: 4, logged: 0)])
+        d.exercises[0].pendingSet = PendingSet(weight: 135, reps: 8, dirty: true)
+        let (payload, mutated) = d.flattenForPost(now: now)
+        XCTAssertEqual(payload.count, 1)
+        XCTAssertEqual(payload[0].weight, 135)
+        // The returned mutated draft reflects the promotion (caller persists it).
+        XCTAssertEqual(mutated.exercises[0].loggedSets.count, 1)
+    }
+
+    func testFlattenForPostSkipsDirtyButInvalidPendings() {
+        var d = draft([ex(target: 4, logged: 0)])
+        d.exercises[0].pendingSet = PendingSet(weight: 135, reps: 0, dirty: true)
+        let (payload, mutated) = d.flattenForPost(now: now)
+        XCTAssertTrue(payload.isEmpty)
+        XCTAssertTrue(mutated.exercises[0].loggedSets.isEmpty)
+        // Pending preserved so the user can fix on Resume.
+        XCTAssertEqual(mutated.exercises[0].pendingSet?.weight, 135)
+    }
+
+    func testFlattenForPostSkipsUntouchedPendings() {
+        var d = draft([ex(target: 4, logged: 0)])
+        d.exercises[0].pendingSet = PendingSet(weight: 135, reps: 8, dirty: false)
+        let (payload, _) = d.flattenForPost(now: now)
+        XCTAssertTrue(payload.isEmpty)
+    }
+
+    func testFlattenForPostIsEmptyForEmptyDraft() {
+        let (payload, _) = draft([]).flattenForPost(now: now)
+        XCTAssertTrue(payload.isEmpty)
+    }
 }
