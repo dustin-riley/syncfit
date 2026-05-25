@@ -121,3 +121,31 @@ export function computeProgress(
   );
   return { series };
 }
+
+export type ProgressSort = "recent" | "frequent" | "az";
+
+// Generic over the series shape so the client can pass a hydrated variant
+// (Date-typed lastPerformedAt / points[].performedAt) without casts.
+type Sortable = {
+  totalSessions: number;
+  exerciseName: string;
+  equipment: string;
+};
+
+export function sortSeries<T extends Sortable>(
+  series: T[],
+  mode: ProgressSort
+): T[] {
+  const copy = series.slice();
+  if (mode === "recent") return copy;
+  if (mode === "frequent") {
+    return copy.sort((a, b) => b.totalSessions - a.totalSessions);
+  }
+  // "az"
+  return copy.sort((a, b) => {
+    if (a.exerciseName !== b.exerciseName) {
+      return a.exerciseName.localeCompare(b.exerciseName);
+    }
+    return a.equipment.localeCompare(b.equipment);
+  });
+}

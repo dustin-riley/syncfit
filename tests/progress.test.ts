@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { computeProgress, type ProgressInputRow } from "@/lib/progress";
+import {
+  computeProgress,
+  sortSeries,
+  type ProgressInputRow,
+} from "@/lib/progress";
 
 const NOW = new Date("2026-05-24T16:00:00Z");
 const day = (n: number) => new Date(NOW.getTime() - n * 86_400_000);
@@ -192,5 +196,92 @@ describe("computeProgress — e1RM and derived stats", () => {
       "Mid Lift",
       "Old Lift",
     ]);
+  });
+});
+
+describe("sortSeries", () => {
+  const NOW2 = new Date("2026-05-24T16:00:00Z");
+  const dayAt = (n: number) => new Date(NOW2.getTime() - n * 86_400_000);
+  const rows: ProgressInputRow[] = [
+    // 5 sessions, most-recent 10d ago
+    ...Array.from({ length: 5 }, (_, i) => ({
+      performedAt: dayAt(10 + i * 7),
+      exerciseName: "Stale Staple",
+      equipment: "Barbell" as string | null,
+      weight: 100,
+      reps: 5,
+    })),
+    // 1 session, today
+    {
+      performedAt: dayAt(0),
+      exerciseName: "Brand New",
+      equipment: "Barbell",
+      weight: 100,
+      reps: 5,
+    },
+    // 2 sessions, mid-recency
+    {
+      performedAt: dayAt(3),
+      exerciseName: "Mid",
+      equipment: "Barbell",
+      weight: 100,
+      reps: 5,
+    },
+    {
+      performedAt: dayAt(20),
+      exerciseName: "Mid",
+      equipment: "Barbell",
+      weight: 100,
+      reps: 5,
+    },
+  ];
+
+  it("'recent' returns input order (already most-recent-first from computeProgress)", () => {
+    const out = computeProgress(rows, NOW2);
+    const sorted = sortSeries(out.series, "recent");
+    expect(sorted.map((s) => s.exerciseName)).toEqual([
+      "Brand New",
+      "Mid",
+      "Stale Staple",
+    ]);
+  });
+
+  it("'frequent' orders by totalSessions desc", () => {
+    const out = computeProgress(rows, NOW2);
+    const sorted = sortSeries(out.series, "frequent");
+    expect(sorted.map((s) => s.exerciseName)).toEqual([
+      "Stale Staple", // 5
+      "Mid", // 2
+      "Brand New", // 1
+    ]);
+  });
+
+  it("'az' orders alphabetically on exerciseName, tie-break on equipment", () => {
+    const extra: ProgressInputRow[] = [
+      ...rows,
+      {
+        performedAt: dayAt(2),
+        exerciseName: "Mid",
+        equipment: "Dumbbell",
+        weight: 50,
+        reps: 8,
+      },
+    ];
+    const out = computeProgress(extra, NOW2);
+    const sorted = sortSeries(out.series, "az");
+    expect(sorted.map((s) => `${s.exerciseName}|${s.equipment}`)).toEqual([
+      "Brand New|Barbell",
+      "Mid|Barbell",
+      "Mid|Dumbbell",
+      "Stale Staple|Barbell",
+    ]);
+  });
+
+  it("does not mutate the input array", () => {
+    const out = computeProgress(rows, NOW2);
+    const before = out.series.map((s) => s.exerciseKey);
+    sortSeries(out.series, "frequent");
+    const after = out.series.map((s) => s.exerciseKey);
+    expect(after).toEqual(before);
   });
 });
