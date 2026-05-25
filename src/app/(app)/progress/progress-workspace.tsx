@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { sortSeries, type ProgressSort } from "@/lib/progress";
 import { ChartCard } from "./chart-card";
+import { ChartCardBoundary } from "./chart-card-boundary";
 
 type SerializedPoint = {
   performedAt: string; // ISO
@@ -54,7 +55,7 @@ export function ProgressWorkspace({
   if (error) {
     return (
       <>
-        <h1 className="h2">Progress</h1>
+        <h1 className="h1">progress</h1>
         <section className="ds-panel p-4 my-4">
           <p>{error}</p>
         </section>
@@ -65,7 +66,7 @@ export function ProgressWorkspace({
   if (sorted.length === 0) {
     return (
       <>
-        <h1 className="h2">Progress</h1>
+        <h1 className="h1">progress</h1>
         <section className="ds-panel p-4 my-4">
           <p>
             Nothing to chart yet —{" "}
@@ -95,8 +96,8 @@ export function ProgressWorkspace({
           marginBottom: "var(--ds-space-4)",
         }}
       >
-        <h1 className="h2" style={{ margin: 0 }}>
-          Progress
+        <h1 className="h1" style={{ margin: 0 }}>
+          progress
         </h1>
         <div style={{ display: "flex", gap: "var(--ds-space-2)" }}>
           <PillToggle
@@ -131,7 +132,9 @@ export function ProgressWorkspace({
       >
         {sorted.map((s) => (
           <li key={s.exerciseKey}>
-            <ChartCard series={s} metric={metric} />
+            <ChartCardBoundary>
+              <ChartCard series={s} metric={metric} />
+            </ChartCardBoundary>
           </li>
         ))}
       </ul>
@@ -153,9 +156,9 @@ function PillToggle<T extends string>({
       className="ds-panel"
       style={{
         display: "inline-flex",
-        padding: 3,
-        gap: 2,
-        borderRadius: 999,
+        padding: "var(--ds-space-1)",
+        gap: "var(--ds-space-1)",
+        borderRadius: "var(--ds-radius-pill)",
       }}
     >
       {options.map((o) => {
@@ -167,9 +170,9 @@ function PillToggle<T extends string>({
             onClick={() => onChange(o.value)}
             className={active ? "ds-btn ds-btn-primary" : "ds-btn ds-btn-ghost"}
             style={{
-              borderRadius: 999,
-              padding: "4px 10px",
-              fontSize: 12,
+              borderRadius: "var(--ds-radius-pill)",
+              padding: "var(--ds-space-1) var(--ds-space-2)",
+              fontSize: "var(--ds-fs-caption)",
               lineHeight: 1,
             }}
           >

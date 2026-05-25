@@ -44,7 +44,7 @@ describe("loadProgressData (live Neon)", () => {
     // Add one manual strength workout for a brand-new exercise on a different
     // day so the series count and ordering are observable.
     const manual = await logStrengthWorkout(TEST_USER, {
-      performedAt: new Date(Date.now() - 86_400_000), // yesterday
+      performedAt: new Date("2099-01-15T12:00:00Z"),
       title: "Manual session",
       sets: [
         { exerciseName: "Goblet Squat", weight: 50, reps: 10, setNumber: 1 },
@@ -61,7 +61,9 @@ describe("loadProgressData (live Neon)", () => {
 
     // Manual-logged "Goblet Squat" must appear exactly once with our two reps
     // collapsed to a single point (best set wins per day).
-    const goblet = data.series.find((s) => s.exerciseName === "Goblet Squat");
+    const goblet = data.series.find(
+      (s) => s.exerciseName === "Goblet Squat" && s.equipment === ""
+    );
     expect(goblet).toBeDefined();
     expect(goblet!.points).toHaveLength(1);
     expect(goblet!.points[0].topSetWeight).toBe(55);

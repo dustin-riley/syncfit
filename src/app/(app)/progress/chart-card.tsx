@@ -120,7 +120,7 @@ export function ChartCard({
             <Line
               type="monotone"
               dataKey={dataKey}
-              stroke="var(--ds-accent, currentColor)"
+              stroke="var(--ds-accent-teal)"
               strokeWidth={2}
               dot={{ r: 2 }}
               activeDot={{ r: 3 }}
