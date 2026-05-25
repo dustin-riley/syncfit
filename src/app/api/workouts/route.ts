@@ -37,15 +37,20 @@ export async function POST(req: NextRequest) {
     reps: s.reps,
   }));
 
-  const res = await logStrengthWorkout(
-    device.userId,
-    {
-      performedAt: new Date(parsed.data.performedAt),
-      title: parsed.data.title,
-      sets: sequenceStrengthSets(raw),
-    },
-    "ios_live"
-  );
+  let res;
+  try {
+    res = await logStrengthWorkout(
+      device.userId,
+      {
+        performedAt: new Date(parsed.data.performedAt),
+        title: parsed.data.title,
+        sets: sequenceStrengthSets(raw),
+      },
+      "ios_live"
+    );
+  } catch {
+    return NextResponse.json({ error: "server_error" }, { status: 500 });
+  }
 
   if (!res.ok) {
     return NextResponse.json(
