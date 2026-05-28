@@ -22,7 +22,7 @@ export function Field({
   type?: string;
   autoComplete?: string;
   required?: boolean;
-  /** Visual error state (red border + aria-invalid). */
+  /** Visual error state (red outline + aria-invalid). */
   error?: boolean;
   /** Persistent helper text shown under the input. */
   hint?: string;

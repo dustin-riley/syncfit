@@ -138,6 +138,9 @@ export function PlanChatDrawer({
     <>
       <div
         className="scrim"
+        // Deliberate asymmetry: a backdrop click is treated as accidental and
+        // ignored while an unapplied proposal is pending; the X button is an
+        // explicit dismissal and always closes (chat is ephemeral — spec §6/§11).
         onClick={() => {
           if (!pending) onClose();
         }}

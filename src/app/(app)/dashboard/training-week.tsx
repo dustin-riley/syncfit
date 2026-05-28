@@ -172,7 +172,7 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                                     paddingTop: "var(--space-1)",
                                     paddingBottom: "var(--space-1)",
                                     color: s.isTop
-                                      ? "var(--primary)"
+                                      ? "var(--link)"
                                       : "var(--text-muted)",
                                     fontWeight: s.isTop ? 600 : 400,
                                   }}
