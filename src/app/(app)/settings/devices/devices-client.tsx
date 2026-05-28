@@ -132,6 +132,7 @@ export function DevicesClient({
               Enter this code in the SyncFit iOS app:
             </p>
             <p
+              className="display"
               style={{
                 fontFamily: "var(--font-mono)",
                 letterSpacing: "0.2em",
