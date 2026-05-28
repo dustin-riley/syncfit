@@ -74,7 +74,7 @@ export function PlanEditor({
   return (
     <>
       {DAYS.map((name, dow) => (
-        <section key={dow} className="ds-panel p-4 my-3">
+        <section key={dow} className="card p-4 my-3">
           <h2 className="h4">{name.toLowerCase()}</h2>
           <input
             type="hidden"
@@ -82,14 +82,14 @@ export function PlanEditor({
             value={days[dow].exercises.length}
           />
           <input
-            className="border rounded p-2 w-full my-1"
+            className="input w-full my-1"
             name={`title-${dow}`}
             placeholder="Title (e.g. heavy lower)"
             value={days[dow].title}
             onChange={(e) => setDay(dow, { title: e.target.value })}
           />
           <select
-            className="border rounded p-2 my-1"
+            className="input my-1"
             name={`modality-${dow}`}
             value={days[dow].modality}
             onChange={(e) => setDay(dow, { modality: e.target.value })}
@@ -101,12 +101,12 @@ export function PlanEditor({
 
           {days[dow].exercises.length > 0 && (
             <div className="flex gap-2 items-center" aria-hidden="true">
-              <span className="grid-label flex-1">exercise</span>
-              <span className="grid-label w-16">sets</span>
-              <span className="grid-label w-16">reps</span>
-              <span className="grid-label w-20">weight</span>
+              <span className="metric-label flex-1">exercise</span>
+              <span className="metric-label w-16">sets</span>
+              <span className="metric-label w-16">reps</span>
+              <span className="metric-label w-20">weight</span>
               <span
-                className="ds-btn ds-btn-ghost"
+                className="btn btn--ghost"
                 style={{ visibility: "hidden", pointerEvents: "none" }}
               >
                 <X size={16} aria-hidden="true" />
@@ -116,7 +116,7 @@ export function PlanEditor({
           {days[dow].exercises.map((ex, ei) => (
             <div key={ex.id} className="flex gap-2 my-1 items-center">
               <input
-                className="border rounded p-2 flex-1"
+                className="input flex-1"
                 aria-label="exercise name"
                 name={`ex-${dow}-${ei}-name`}
                 placeholder="exercise"
@@ -124,7 +124,7 @@ export function PlanEditor({
                 onChange={(e) => setEx(dow, ei, { name: e.target.value })}
               />
               <input
-                className="border rounded p-2 w-16"
+                className="input w-16"
                 type="number"
                 min={1}
                 aria-label="sets"
@@ -135,7 +135,7 @@ export function PlanEditor({
                 }
               />
               <input
-                className="border rounded p-2 w-16"
+                className="input w-16"
                 type="number"
                 min={1}
                 aria-label="reps"
@@ -146,7 +146,7 @@ export function PlanEditor({
                 }
               />
               <input
-                className="border rounded p-2 w-20"
+                className="input w-20"
                 type="number"
                 min={0}
                 step="any"
@@ -159,7 +159,7 @@ export function PlanEditor({
               />
               <button
                 type="button"
-                className="ds-btn ds-btn-ghost"
+                className="btn btn--ghost"
                 aria-label="remove exercise"
                 onClick={() => removeEx(dow, ei)}
               >
@@ -168,7 +168,7 @@ export function PlanEditor({
             </div>
           ))}
           <textarea
-            className="border rounded p-2 w-full my-1"
+            className="input w-full my-1"
             name={`notes-${dow}`}
             placeholder="notes the coach should read (e.g. deload, knee cranky)"
             value={days[dow].notes}
@@ -176,14 +176,14 @@ export function PlanEditor({
           />
           <button
             type="button"
-            className="ds-btn ds-btn-secondary"
+            className="btn btn--secondary"
             onClick={() => addEx(dow)}
           >
             <Plus size={16} aria-hidden="true" /> add exercise
           </button>
         </section>
       ))}
-      <button className="ds-btn ds-btn-primary" type="submit">
+      <button className="btn btn--cta" type="submit">
         Save plan
       </button>
     </>

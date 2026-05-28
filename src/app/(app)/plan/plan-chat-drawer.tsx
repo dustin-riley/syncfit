@@ -135,44 +135,38 @@ export function PlanChatDrawer({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex justify-end"
-      style={{
-        background: "color-mix(in srgb, var(--ds-text) 32%, transparent)",
-      }}
-      // Deliberate asymmetry: a backdrop click is treated as accidental, so it
-      // is ignored while an unapplied proposal is pending; the X button is an
-      // explicit dismissal and always closes (chat is ephemeral by design —
-      // spec §6/§11).
-      onClick={() => {
-        if (!pending) onClose();
-      }}
-    >
+    <>
+      <div
+        className="scrim"
+        onClick={() => {
+          if (!pending) onClose();
+        }}
+      />
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="ds-panel h-full w-full max-w-md p-4 flex flex-col gap-3"
-        onClick={(e) => e.stopPropagation()}
+        className="sheet sheet--large"
         onKeyDown={handlePanelKeyDown}
         role="dialog"
         aria-modal="true"
         aria-label="build plan with ai"
       >
-        <div className="flex items-center justify-between">
-          <h2 className="h4">build with ai</h2>
+        <span className="sheet-grabber" aria-hidden="true" />
+        <div className="sheet-head">
+          <h2 className="sheet-title">build with ai</h2>
           <button
             type="button"
-            className="ds-btn ds-btn-ghost"
+            className="sheet-close"
             aria-label="close"
             onClick={onClose}
           >
-            <X size={16} aria-hidden="true" />
+            <X size={12} aria-hidden="true" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto flex flex-col gap-2">
+        <div className="sheet-body flex flex-col gap-2">
           {messages.length === 0 && (
-            <p className="text-sm opacity-70">
+            <p className="caption">
               tell the coach your goal, schedule, and any constraints. it may
               ask a few questions before proposing a week.
             </p>
@@ -180,57 +174,63 @@ export function PlanChatDrawer({
           {messages.map((m, i) => (
             <div
               key={i}
-              className={
-                m.role === "user"
-                  ? "self-end ds-panel p-2 text-sm"
-                  : "self-start p-2 text-sm"
-              }
+              className={m.role === "user" ? "self-end" : "self-start"}
             >
-              {m.content}
+              <span
+                className={m.role === "user" ? "bubble bubble--user" : "bubble"}
+              >
+                {m.content}
+              </span>
             </div>
           ))}
-          {busy && <p className="text-sm opacity-70">thinking…</p>}
+          {busy && <p className="caption">thinking…</p>}
           {error && (
-            <p className="text-sm" role="alert">
+            <p
+              className="caption"
+              role="alert"
+              style={{ color: "var(--error)" }}
+            >
               {error}
             </p>
           )}
         </div>
 
-        {pending && (
-          <button
-            type="button"
-            className="ds-btn ds-btn-primary"
-            onClick={() => onApply(toDays(pending.plan), pending.goal)}
-          >
-            apply this plan to the editor
-          </button>
-        )}
-
-        <div className="flex gap-2">
-          <input
-            className="border rounded p-2 flex-1"
-            aria-label="message"
-            placeholder="message the coach…"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                void send();
-              }
-            }}
-          />
-          <button
-            type="button"
-            className="ds-btn ds-btn-secondary"
-            disabled={busy}
-            onClick={() => void send()}
-          >
-            send
-          </button>
+        <div className="sheet-foot flex flex-col gap-2">
+          {pending && (
+            <button
+              type="button"
+              className="btn btn--cta"
+              onClick={() => onApply(toDays(pending.plan), pending.goal)}
+            >
+              apply this plan to the editor
+            </button>
+          )}
+          <div className="flex gap-2">
+            <input
+              className="input flex-1"
+              aria-label="message"
+              placeholder="message the coach…"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void send();
+                }
+              }}
+            />
+            <button
+              type="button"
+              className="btn btn--secondary"
+              aria-busy={busy}
+              disabled={busy}
+              onClick={() => void send()}
+            >
+              send
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
