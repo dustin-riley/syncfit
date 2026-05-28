@@ -1,5 +1,17 @@
 # Design-system v0.5 nav migration + conformance pass — Implementation Plan
 
+> **Amendment — 2026-05-28 (post-execution).** After this plan was executed, a
+> revised v0.5 handoff (ref `tbB1AA_k7-UUuu9sDuy5LQ`) changed `.site-nav__menu`
+> from a CSS-grid **sibling** to an absolutely-positioned **child** of
+> `.site-nav__account` so opening the menu never reflows content. The Task 1
+> recipe and Task 2 component below therefore describe the **superseded**
+> sibling/grid + dual-ref (`accountRef`+`menuRef`) approach; the shipped code uses
+> the child/absolute + single-`accountRef` approach. A follow-up `role="none"`
+> a11y fix (wrapping the email + sign-out-error `<p>`s) was also applied on top of
+> the handoff. See the amendment at the top of the spec
+> (`docs/superpowers/specs/2026-05-28-design-system-v0.5-nav-design.md`) and
+> commits `5b59105` (reflow fix) for the authoritative current state.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Migrate SyncFit's signed-in nav off the pre-v0.5 floating pill onto the canonical `.site-nav` design-system recipe, and close the one structural conformance gap the v0.5 UI audit found.

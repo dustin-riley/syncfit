@@ -140,7 +140,13 @@ export function SiteNav({ email }: { email: string }) {
             aria-label="Account"
             className="site-nav__menu"
           >
-            <p className="site-nav__menu-email">{email}</p>
+            {/* role="none" — a bare <p> is not a valid owned child of
+                role="menu"; the wrapper removes it from menu semantics
+                while keeping the text visible (restores fix from 5e02203,
+                which the v0.5 handoff dropped). */}
+            <div role="none">
+              <p className="site-nav__menu-email">{email}</p>
+            </div>
             <Link
               href="/settings/devices"
               role="menuitem"
@@ -160,13 +166,15 @@ export function SiteNav({ email }: { email: string }) {
               {signingOut ? "Signing out…" : "Sign out"}
             </button>
             {signOutError ? (
-              <p
-                role="alert"
-                className="site-nav__menu-email"
-                style={{ color: "var(--error)", borderBottom: "none" }}
-              >
-                {signOutError}
-              </p>
+              <div role="none">
+                <p
+                  role="alert"
+                  className="site-nav__menu-email"
+                  style={{ color: "var(--error)", borderBottom: "none" }}
+                >
+                  {signOutError}
+                </p>
+              </div>
             ) : null}
           </div>
         ) : null}

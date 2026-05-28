@@ -95,6 +95,23 @@ deliberately.
       exact re-vendor steps (so any future update is mechanical), and adopt
       recipe-level versioning so the consumer can tell what changed. Consider whether
       a published package is worth it once a second consumer appears.
+- [ ] **[upstream]** **Carry the `role="none"` menu fix into the handoff.** The
+      bundle's `site-nav.tsx` renders the email and sign-out-error `<p>`s as direct
+      children of `role="menu"`, which isn't valid menu ARIA (a menu owns only
+      `menuitem`/`separator`/`group`/presentational children). SyncFit re-applied the
+      `role="none"` wrapper locally (it had been fixed in `5e02203`, then dropped by
+      the v0.5 handoff); the handoff should ship with it so the next re-vendor doesn't
+      revert it again.
+- [ ] **[upstream]** **Desktop primary-nav landmark.** The `.site-nav__links` `<ul>`
+      is placed directly in the CSS grid, so at desktop width there is no `<nav>`
+      navigation landmark (the mobile rail, which is the `<nav>`, is `display:none`
+      there). Wrapping the `<ul>` in a `<nav>` in the consumer would break the grid
+      placement, so this needs to be solved in the recipe (e.g. make the landmark the
+      grid child). Low severity.
+- [ ] **[upstream]** **`.site-nav__menu` desktop min-width floor.** The v0.5 recipe
+      drops the old `min-width: 248px` because the menu now spans the chip exactly for
+      the connected seam. If a short email makes the chip (and thus the menu) too
+      narrow in practice, consider a min-width floor that doesn't break the seam.
 - [ ] **[consumer]** **Clear residual migration markers.** A few `.ds-*` / `--ds-*`
       references remain as comments (`src/app/globals.css` L6–7,
       `src/styles/design/components.css` L1334 region). Confirm they're purely
