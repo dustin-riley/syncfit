@@ -1,0 +1,299 @@
+/* ============================================================
+   Dustin Riley Design System — TOKENS
+
+   The atomic-value layer: colors, type families/scale, spacing,
+   radii, shadows, motion, fitness semantics, v0.3 mobile additions.
+   Shared cross-platform; iOS hand-mirrors this file as
+   Tokens.swift (see ../tokens/Tokens.swift + validate.mjs).
+
+   Recipes (.btn, .card, .seg, .input, .sheet, …) live in
+   ../web/components.css and stay platform-additive per the
+   Consistency Audit Q-02 decision: each platform adds the
+   recipes its surfaces actually need.
+
+   v0.5 — May 2026
+   ============================================================ */
+
+:root {
+  /* -------- Color: Warm Neutrals -------- */
+  --bg: #faf6f0;
+  --surface: #f3ece0;
+  --surface-sunken: #ede4d3;
+  --border: #e0d5c2;
+  --text: #1f1a14;
+  --text-muted: #6b5f50;
+
+  /* iOS-tuned background companion. iPhone displays flatten the warmth
+     of #FAF6F0; #F5ECD9 nudges slightly creamier so the warm-neutral
+     character reads on the device. iOS recipes apply --bg-ios where
+     web applies --bg; the two are paired tokens, not "same name,
+     different value." When dark mode lands, the matrix becomes
+     bg / bg-dark / bg-ios / bg-ios-dark — explicit names beat an
+     allowlist of intentional value drift. Resolves Migration Review G-06. */
+  --bg-ios: #f5ecd9;
+
+  /* -------- Color: Primary (burnt orange) -------- */
+  --primary: #b8541c;
+  --primary-hover: #9e4615;
+  --primary-pressed: #85390f;
+
+  /* -------- Color: Accents -------- */
+  --accent-ochre: #c9922b;
+  --accent-teal: #2e7d7a;
+
+  /* -------- Color: Link --------
+     Hyperlinks resolve to --primary-hover (a darker burnt orange)
+     so anchor copy clears AA contrast on both --bg AND --surface.
+     The base --primary stays the canonical brand value for
+     buttons, accents, and large display elements where it only
+     ever lives on --bg or fills a button. */
+  --link: #9e4615;
+  --link-hover: #85390f;
+
+  /* -------- Color: Semantic -------- */
+  --success: #5c7a3e;
+  --warning: #c9922b;
+  --error: #a8392e;
+
+  --on-primary: #ffffff;
+  --on-accent: #ffffff;
+
+  /* -------- Color: AI content --------
+     A plum-derived surface + paired foreground; together they
+     signal "AI / model output" without inventing a new hue.
+     Plum itself stays a usable tertiary accent. WCAG AA: foreground
+     clears ~6.55:1 on --surface-ai. */
+  --surface-ai: #f1e9ef;
+  --on-surface-ai: #6a4763;
+
+  /* -------- Typography: families -------- */
+  --font-display: "Outfit", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* -------- Typography: scale (perfect-fourth-ish, tuned by eye; 16px root) --------
+     Earlier comments here claimed a strict 1.25 ratio. The actual
+     values (48/36/28/22/18/16/14/12) drift between ~1.33 at the
+     top and ~1.14 at the bottom — the scale was tuned by eye for
+     hierarchy, not generated from a single multiplier. Documenting
+     the truth so the next reader doesn't try to "correct" it. */
+  --fs-display: 3rem;
+  --fs-h1: 2.25rem;
+  --fs-h2: 1.75rem;
+  --fs-h3: 1.375rem;
+  --fs-h4: 1.125rem;
+  --fs-h5: 1rem;
+  --fs-body-lg: 1.125rem;
+  --fs-body: 1rem;
+  --fs-body-sm: 0.875rem;
+  --fs-caption: 0.75rem;
+
+  --lh-display: 1.1;
+  --lh-h1: 1.15;
+  --lh-h2: 1.2;
+  --lh-h3: 1.3;
+  --lh-h4: 1.35;
+  --lh-h5: 1.4;
+  --lh-body-lg: 1.5;
+  --lh-body: 1.5;
+  --lh-body-sm: 1.45;
+  --lh-caption: 1.4;
+
+  --tracking-display: -0.02em;
+  --tracking-h1: -0.02em;
+  --tracking-h2: -0.01em;
+  --tracking-h3: -0.01em;
+  --tracking-h4: -0.005em;
+  --tracking-h5: 0;
+  --tracking-body: 0;
+
+  /* -------- Spacing: 4px base -------- */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  /* -------- Radius (base set; overlay adds 2 more) -------- */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-pill: 999px;
+
+  /* -------- Shadow (warm-tinted; 3 styles) -------- */
+  --shadow-sm:
+    0 1px 2px rgba(74, 52, 28, 0.06), 0 1px 1px rgba(74, 52, 28, 0.04);
+  --shadow-md:
+    0 4px 8px rgba(74, 52, 28, 0.08), 0 2px 4px rgba(74, 52, 28, 0.05);
+  --shadow-lg:
+    0 16px 32px rgba(74, 52, 28, 0.12), 0 4px 8px rgba(74, 52, 28, 0.06);
+
+  /* -------- Motion --------
+     One easing curve, three durations, plus a celebration timing
+     for the burst/pop pair. The v0.1 brief described a spring
+     system (snappy/smooth/gentle) but only the CSS-transition
+     half was ever wired up — v0.2 commits to that and drops the
+     unused spring naming. If you need a real spring, reach for
+     Popmotion or Framer; the design system stays declarative.
+
+     duration-fast (120ms)   — hover, press, focus, color shift
+     duration-base (200ms)   — state toggles, segmented control,
+                               input focus, anything where a value
+                               settles into a new resting state
+     duration-slow (280ms)   — layout-affecting changes (modals,
+                               disclosure, large surface lifts)
+     duration-celebration    — PR burst + number pop · only motion
+                               permitted to exceed 300ms */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 280ms;
+  --duration-celebration: 900ms;
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* Focus ring — solid (v0.2). Was a 40%-opacity glow before;
+     the soft falloff didn't match the hard-edge cards/buttons.
+     Sits flush against the structural stroke (no gap) so it reads
+     as part of the button, not a halo around it.
+
+     The earlier `--focus-ring` (box-shadow form) was retired in v0.3:
+     v0.2 buttons gained a structural stroke, so the box-shadow form
+     is no longer needed — every primitive now uses the outline form
+     below. See Consistency Audit N-03. */
+  --focus-outline: 3px solid var(--primary);
+
+  /* Loader artwork — single source for every loading affordance
+     (button busy state, standalone .loader, pull-to-refresh).
+     Used as a CSS mask so the shape inherits surrounding color
+     via background-color: var(--loader-tint). See Bar Curl Loader
+     Spec for the full architecture (artwork shared cross-platform,
+     motion forked per platform). */
+  --mask-loader-bar-curl: url("/loader-bar-curl.svg");
+
+  /* ============================================================
+     FITNESS OVERLAY · v0.2 additions
+     Built for workout / hybrid-athlete products (SyncFit). All
+     additions opt-in via the utility classes at the bottom of
+     this file; nothing above this banner was modified.
+
+     DNA: same warm mid-century palette, leaning Wyman/Aicher
+     (hard edges, athletic blocks, tabular numerals).
+     ============================================================ */
+
+  /* -------- Structural ink + hard offset shadow --------
+     Substitute for hairline + soft shadow on action surfaces. */
+  --rule: #2d2620;
+  --rule-width: 1.5px;
+  --shadow-hard: 4px 4px 0 0 var(--rule);
+  --shadow-hard-sm: 2px 2px 0 0 var(--rule);
+
+  /* Translucent hatch fill used by the Increase Contrast override
+     to mark disabled state with a SHAPE, not just opacity (the
+     Differentiate Without Color rule). Channels of --rule with
+     an 18% alpha. Paired with Tokens.swift's `DRColor.rule.opacity(0.18)`
+     — keep the two in sync if --rule changes. Resolves Consistency
+     Audit N-06 (was an inline rgba literal before Q-01 decided the
+     hand-sync token strategy). */
+  --rule-translucent-hatch: rgba(45, 38, 32, 0.18);
+
+  /* -------- Radii additions (for action surfaces) -------- */
+  --radius-block: 0;
+  --radius-chip: 4px;
+
+  /* -------- Metric type scale --------
+     For measurements only. Always tabular-nums slashed-zero
+     via the .metric utility. */
+  --fs-metric-sm: 2.25rem; /* 36 */
+  --fs-metric-md: 4rem; /* 64 */
+  --fs-metric-lg: 6rem; /* 96 */
+  --fs-metric-xl: 9rem; /* 144 */
+  --tracking-metric: -0.035em;
+
+  /* -------- Fitness semantics: readiness (90+ → <50) --------
+     v0.2 patch · May 2026: darkened the two cool-end values
+     (rested + primed) so #fff text at 11px clears WCAG AA. The
+     gradient still reads cool → hot; it's just more confident. */
+  --readiness-rested: #2e6a6a;
+  --readiness-primed: #3f7c4f;
+  --readiness-strained: #d4a017;
+  --readiness-depleted: #a8392e;
+
+  /* -------- Fitness semantics: intensity zones (Z1 → Z5) --------
+     Mirrors the readiness palette so chip + zone-bar legends
+     stay consistent. Same v0.2 patch as readiness above. */
+  --zone-1: #2e6a6a;
+  --zone-2: #3f7c4f;
+  --zone-3: #d4a017;
+  --zone-4: #d8541a;
+  --zone-5: #a8392e;
+
+  /* -------- Fitness semantics: PR + streak -------- */
+  --pr: #d4a017;
+  --pr-ink: #1a1612;
+
+  /* -------- Data-viz: categorical (muscle groups, types) -------- */
+  --cat-push: #d8541a;
+  --cat-pull: #1f6f7c;
+  --cat-legs: #d4a017;
+  --cat-core: #6e3a5e;
+  --cat-cardio: #5c7a3e;
+  --cat-accessory: #2a4c8a;
+  --cat-other: #1a1612;
+
+  /* -------- Data-viz: heat ramp (cool → hot, 7 steps) -------- */
+  --heat-0: #cfe0d8;
+  --heat-1: #9fc4a8;
+  --heat-2: #d4cf6a;
+  --heat-3: #d4a017;
+  --heat-4: #df8423;
+  --heat-5: #d8541a;
+  --heat-6: #8b2a1c;
+
+  /* ============================================================
+     v0.3 · iOS-ready additions (May 2026)
+     Touch + safe-area + breakpoints + mobile grid. Wired up by
+     the nine v0.3 specs. Base + fitness layers above unchanged.
+     ============================================================ */
+
+  /* -------- Touch · Press State + Tap Target specs --------
+     These are TOKENS only. They live here so any consumer can reach
+     for the canonical HIG floor / comfortable size by name. The web
+     recipes below intentionally do NOT apply them — web inputs and
+     buttons are sized typographically and gain hit area from labels.
+     iOS recipes (SwiftUI Components in the sibling ios/ tree) apply
+     them via `.frame(minHeight:)`. See Q-01 in the Consistency Audit
+     for the architectural rationale (tokens shared, recipes forked). */
+  --tap-target-min: 44px; /* HIG floor · Material is 48 */
+  --tap-target-comfortable: 48px; /* primary screen CTAs */
+
+  /* -------- Safe area · Safe Area & Grid spec --------
+     iOS env() values; degrade to 0 on web/older devices.
+     Apply via the .container utility, never hard-coded. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
+  /* -------- Breakpoints · Safe Area & Grid spec -------- */
+  --bp-phone: 600px; /* phone → tablet */
+  --bp-tablet: 1024px; /* tablet → desktop */
+
+  /* -------- Layout: mobile (phone defaults; bump via @media) -------- */
+  --margin: 16px;
+  --gutter-mobile: 16px;
+  --cols-phone: 4;
+  --cols-tablet: 8;
+  --cols-desktop: 12;
+
+  /* -------- Container · page-level wrapper width cap --------
+     The default product-page max width. README "Visual Foundations · Layout
+     rules" cites 960–1040px as the historical site container range; 1080
+     leaves a hair more room for dashboards without going dashboard-wide.
+     Apply via the `.container` utility in components.css (`max-width` +
+     `margin-inline: auto` + safe-area aware padding). Tokenized so consumers
+     can override at the :root level if they want a narrower or wider cap. */
+  --container-max-width: 1080px;
+}
