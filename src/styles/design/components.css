@@ -1543,15 +1543,21 @@ select.input {
    account wrap when the menu is mounted; the wrap flattens its
    bottom corners and the menu's top border merges cleanly.
 
-   Below --bp-phone the metaphor scales up: the avatar is too small
-   to be a connecting surface at that width, so the BAR becomes it
-   — the nav's bottom rule hands off to the menu's top rule via a
-   :has() rule. The consumer still only sets data-open on the wrap;
-   CSS handles the rest.
+   The menu lives INSIDE .site-nav__account (which is the only
+   positioned element it needs), so it is a plain absolutely-
+   positioned dropdown — no grid placement, no :has(), nothing
+   breakpoint-specific about how it's anchored. It overlays the
+   page; nothing reflows when it opens.
+
+   Below --bp-phone the link row collapses to a scrolling rail and
+   the menu goes full-bleed: still anchored to the chip, just
+   widened to the viewport (width: 100vw) and dropped to the bar's
+   bottom edge so it reads as the bar opening. The chip itself
+   shrinks to just the avatar.
 
    Container-query driven so the nav adapts to its OWN inline size
    rather than the viewport — the recipe Just Works inside any
-   parent (including the preview card).
+   parent.
 
    ANATOMY
      <header class="site-nav">
@@ -1563,36 +1569,36 @@ select.input {
            <span class="site-nav__email">…</span>
            <span class="site-nav__chev" aria-hidden="true">…</span>
          </button>
+         {open && (
+           <div class="site-nav__menu" role="menu">
+             <div class="site-nav__menu-email">…</div>
+             <a class="site-nav__menu-item" role="menuitem">…</a>
+             <div class="site-nav__menu-separator" role="separator"></div>
+             <button class="site-nav__menu-item" role="menuitem">…</button>
+           </div>
+         )}
        </div>
-       {open && (
-         <div class="site-nav__menu" role="menu">
-           <div class="site-nav__menu-email">…</div>
-           <a class="site-nav__menu-item" role="menuitem">…</a>
-           <div class="site-nav__menu-separator" role="separator"></div>
-           <button class="site-nav__menu-item" role="menuitem">…</button>
-         </div>
-       )}
        <nav class="site-nav__rail">…a (mobile rail)…</nav>
      </header>
 
-   The menu is a SIBLING of .site-nav__account (not nested) so it
-   can flow as its own row on mobile, beneath the bar's first row
-   and above the rail. On desktop it stacks directly under the
-   account wrap (col 3, row 2 of the grid) and visually connects
-   via the negative top margin.
+   The menu is a CHILD of .site-nav__account so a single containment
+   ref (on the account wrap) covers both the trigger and the menu
+   for outside-click dismissal.
    ============================================================ */
 .site-nav {
+  --sn-pad-x: 28px;
+  --sn-pad-y: 13px;
   container-type: inline-size;
   position: sticky;
   top: 0;
   z-index: 40;
   display: grid;
   grid-template-columns: auto 1fr auto;
-  grid-template-rows: auto auto auto;
+  grid-template-rows: auto auto;
   align-items: center;
   column-gap: var(--space-6);
   width: 100%;
-  padding: 13px 28px;
+  padding: var(--sn-pad-y) var(--sn-pad-x);
   background: var(--bg);
   border-bottom: var(--rule-width) solid var(--rule);
   font-family: var(--font-body);
@@ -1720,16 +1726,24 @@ select.input {
 }
 
 /* -------- connected-chip dropdown --------
-   Hangs flush from .site-nav__account on desktop, sharing its
-   vertical rules. No shadow — the rule does the structural work.
-   Adding a shadow would re-introduce the "floating panel" reading
-   the connected metaphor is designed to avoid. */
+   A plain absolutely-positioned dropdown, anchored to its parent
+   .site-nav__account (the only positioned element it needs). Hangs
+   flush from the chip's bottom edge, sharing the chip's vertical
+   rules. No shadow — the rule does the structural work; a shadow
+   would re-introduce the "floating panel" reading the connected
+   metaphor avoids. Out of flow, so opening it OVERLAYS the page
+   rather than pushing anything down. */
 .site-nav__menu {
-  grid-column: 3; grid-row: 2;
-  justify-self: end;
-  align-self: start;
-  min-width: 248px;
-  margin-top: calc(var(--rule-width) * -1);
+  position: absolute;
+  box-sizing: border-box;
+  /* Spans the chip exactly — left + right anchored to the chip's outer
+     edges (one rule-width past the padding box on each side) so both
+     vertical rules line up with the chip's for a true connected seam.
+     top pulled up one rule-width so the menu's top sits ON the chip's
+     bottom border. */
+  top: calc(100% - var(--rule-width));
+  left: calc(var(--rule-width) * -1);
+  right: calc(var(--rule-width) * -1);
   background: var(--bg);
   border: var(--rule-width) solid var(--rule);
   border-top: none;
@@ -1814,7 +1828,7 @@ select.input {
    lighter weight — the rail is more navigational chrome than
    page-state assertion. */
 .site-nav__rail {
-  grid-column: 1 / -1; grid-row: 3;
+  grid-column: 1 / -1; grid-row: 2;
   display: none;
   gap: 0;
   padding: 0 12px;
@@ -1849,28 +1863,22 @@ select.input {
 /* -------- < --bp-phone container query --------
    Below 600px the nav's own inline size triggers the mobile
    layout: link row hides, rail shows, email + chev hide from the
-   trigger, the connecting surface becomes the BAR instead of the
-   chip, and the menu spans the full bar width edge-to-edge. */
+   trigger so the chip is just the avatar, and the menu goes
+   full-bleed — still anchored to the chip, widened to the
+   viewport and dropped to the bar's bottom edge. */
 @container (max-width: 600px) {
   .site-nav {
+    --sn-pad-x: 16px;
+    --sn-pad-y: 12px;
     column-gap: var(--space-3);
-    padding: 12px 16px;
   }
   .site-nav__links { display: none; }
   .site-nav__rail { display: flex; }
   .site-nav__email,
   .site-nav__chev { display: none; }
-  /* Wrap is no longer the connecting surface — the bar is.
-     Keep the chip's full radius regardless of data-open. */
-  .site-nav__account[data-open="true"] {
-    border-bottom-left-radius: var(--radius-chip);
-    border-bottom-right-radius: var(--radius-chip);
-  }
-  /* Email + chev are hidden here, so the chip is just the avatar.
-     Match the exploration: the ink rule sits DIRECTLY on the avatar
-     (no wrap border, no inset) so the ochre fills right to the rule
-     with no --bg showing through. The wrap and trigger collapse to
-     pure layout boxes. */
+  /* The chip is just the avatar now — the ink rule sits DIRECTLY on
+     it (no wrap border, no inset) so the ochre fills right to the
+     rule. The wrap and trigger collapse to pure layout boxes. */
   .site-nav__account {
     padding: 0;
     border: none;
@@ -1884,21 +1892,22 @@ select.input {
     font-size: 12px;
     border: var(--rule-width) solid var(--rule);
   }
-  /* Menu spans full bar width; sides go to viewport edges with
-     no vertical rules (nothing to share with there). Bar's bottom
-     rule hands off to the menu's top rule, then a fresh bottom rule
-     closes the menu off cleanly. */
+  /* Full-bleed: still anchored to the chip, but widened to the
+     viewport (width: 100vw, right edge pushed out past the nav's
+     side padding) and dropped to the bar's bottom edge (chip bottom
+     + the nav's bottom padding). It overlays the rail and the page;
+     nothing reflows. A top + bottom rule frame the slice. */
   .site-nav__menu {
-    grid-column: 1 / -1; grid-row: 2;
-    justify-self: stretch;
-    margin-top: 0;
-    margin-left: -16px;
-    margin-right: -16px;
+    top: calc(100% + var(--sn-pad-y));
+    left: auto;
+    right: calc(var(--sn-pad-x) * -1);
+    width: 100vw;
+    min-width: 0;
     border: none;
     border-top: var(--rule-width) solid var(--rule);
     border-bottom: var(--rule-width) solid var(--rule);
     border-radius: 0;
-    padding: 6px 16px 10px;
+    padding: 6px var(--sn-pad-x) 10px;
   }
   .site-nav__menu-item {
     padding: 12px 8px;
@@ -1908,11 +1917,7 @@ select.input {
     padding: 8px;
   }
   .site-nav__rail {
-    margin-left: -16px;
-    margin-right: -16px;
-  }
-  /* Bar hands its bottom rule off to the menu's top rule */
-  .site-nav:has(.site-nav__account[data-open="true"]) {
-    border-bottom: none;
+    margin-left: calc(var(--sn-pad-x) * -1);
+    margin-right: calc(var(--sn-pad-x) * -1);
   }
 }

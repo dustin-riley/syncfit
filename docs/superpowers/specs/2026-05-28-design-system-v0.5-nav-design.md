@@ -4,6 +4,26 @@
 **Date:** 2026-05-28
 **Source bundle:** `syncfit-design-system` v0.5 handoff (claude.ai/design, ref `RuMCl2dEL80GzcYrEseK1g`)
 
+> **Amendment — 2026-05-28 (post-implementation): `.site-nav__menu` reflow fix.**
+> A revised v0.5 handoff bundle (ref `tbB1AA_k7-UUuu9sDuy5LQ`) changed the
+> account-menu anchoring. The original recipe placed `.site-nav__menu` as a CSS-grid
+> **sibling** of `.site-nav__account` (its own grid row), so opening the menu
+> reflowed the bar/rail/page content. The revised recipe makes the menu an
+> **absolutely-positioned child** of `.site-nav__account` that overlays the page —
+> opening it never reflows anything. Concretely: `.site-nav` grid drops from three
+> rows to two; the menu gains `position: absolute` anchored to the chip via
+> `top/left/right` rule-width offsets; on mobile the menu goes full-bleed
+> (`width: 100vw`, dropped to the bar's bottom edge) instead of taking a grid row;
+> the `:has()` bar-border handoff and the mobile `data-open` radius reset are
+> removed. New `--sn-pad-x`/`--sn-pad-y` custom properties on `.site-nav` keep the
+> bar padding and the menu's full-bleed offsets in sync. In the component, the menu
+> moves **inside** `.site-nav__account`, so the dual `accountRef`+`menuRef`
+> containment test collapses back to a single `accountRef` (a pointer-down anywhere
+> in the wrap — trigger or menu — counts as "inside"). Behavior contract otherwise
+> unchanged. Both vendored files (`components.css` `.site-nav` block, `site-nav.tsx`)
+> updated to byte-match the revised bundle. This supersedes the sibling/dual-ref
+> details in §2 and §3 below.
+
 ## Summary
 
 The Dustin Riley design system shipped a v0.5 release. The headline change is a

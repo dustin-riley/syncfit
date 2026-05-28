@@ -11,13 +11,14 @@
 //                 .site-nav__links            (full labels; hidden < --bp-phone)
 //                 .site-nav__account[data-open]
 //                   .site-nav__trigger > avatar / email / chev
-//                 .site-nav__menu             (connected-chip dropdown; mounted when open)
+//                   .site-nav__menu           (connected-chip dropdown; mounted when open)
 //                 .site-nav__rail             (short labels; shown < --bp-phone)
 //
-// The menu is a SIBLING of .site-nav__account, not a child — CSS grid places
-// it directly under the chip on desktop and as a full-bar slice on mobile.
-// `data-open` on the account wrap drives the connected-chip seam (and, via a
-// :has() rule, the bar's bottom-border handoff on mobile). No extra props.
+// The menu is a CHILD of .site-nav__account (the only positioned element it
+// needs) — a plain absolutely-positioned dropdown that overlays the page;
+// nothing reflows when it opens. `data-open` on the account wrap drives the
+// connected-chip seam. Because the menu lives inside the wrap, a single
+// containment ref on the wrap covers both the trigger and the menu.
 
 "use client";
 
@@ -33,23 +34,21 @@ export function SiteNav({ email }: { email: string }) {
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState("");
   const accountRef = useRef<HTMLDivElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const initial = (email.trim()[0] ?? "?").toUpperCase();
 
   // Dismiss the menu on outside pointer-down and on Escape; return focus to
-  // the trigger so keyboard users are not stranded. The menu is a DOM sibling
-  // of the account wrap (CSS grid positions it), so the containment test must
-  // cover BOTH the wrap and the menu — otherwise a pointer-down on a menu item
-  // counts as "outside" and dismisses before the item's click can land
-  // (pointerdown precedes click).
+  // the trigger so keyboard users are not stranded. The menu lives INSIDE
+  // .site-nav__account, so a single containment test on the wrap covers both
+  // the trigger and the menu — a pointer-down anywhere inside is "inside,"
+  // so menu-item clicks are never dismissed before they land.
   useEffect(() => {
     if (!menuOpen) return;
     function onPointerDown(e: PointerEvent) {
-      const t = e.target as Node;
-      const insideAccount = accountRef.current?.contains(t) ?? false;
-      const insideMenu = menuRef.current?.contains(t) ?? false;
-      if (!insideAccount && !insideMenu) {
+      if (
+        accountRef.current &&
+        !accountRef.current.contains(e.target as Node)
+      ) {
         setMenuOpen(false);
       }
     }
@@ -107,8 +106,8 @@ export function SiteNav({ email }: { email: string }) {
       </ul>
 
       {/* Account chip. data-open flattens the bottom corners so the menu
-          connects, and (via :has() on mobile) hands the bar's bottom rule
-          to the menu's top rule. */}
+          connects seamlessly. The menu is nested inside so a single ref
+          covers trigger + menu for outside-click dismissal. */}
       <div className="site-nav__account" data-open={menuOpen} ref={accountRef}>
         <button
           ref={triggerRef}
@@ -130,48 +129,48 @@ export function SiteNav({ email }: { email: string }) {
             ▾
           </span>
         </button>
-      </div>
 
-      {/* Connected-chip dropdown. Sibling of the account wrap so CSS grid can
-          place it under the chip (desktop) or as a full-bar slice (mobile). */}
-      {menuOpen ? (
-        <div
-          id="account-menu"
-          role="menu"
-          aria-label="Account"
-          className="site-nav__menu"
-          ref={menuRef}
-        >
-          <p className="site-nav__menu-email">{email}</p>
-          <Link
-            href="/settings/devices"
-            role="menuitem"
-            className="site-nav__menu-item"
-            onClick={() => setMenuOpen(false)}
+        {/* Connected-chip dropdown — child of the chip, absolutely positioned,
+            overlays the page. Conditionally mounted so the open animation
+            replays each time. */}
+        {menuOpen ? (
+          <div
+            id="account-menu"
+            role="menu"
+            aria-label="Account"
+            className="site-nav__menu"
           >
-            Devices
-          </Link>
-          <div className="site-nav__menu-separator" role="separator" />
-          <button
-            type="button"
-            role="menuitem"
-            className="site-nav__menu-item"
-            onClick={onSignOut}
-            disabled={signingOut}
-          >
-            {signingOut ? "Signing out…" : "Sign out"}
-          </button>
-          {signOutError ? (
-            <p
-              role="alert"
-              className="site-nav__menu-email"
-              style={{ color: "var(--error)", borderBottom: "none" }}
+            <p className="site-nav__menu-email">{email}</p>
+            <Link
+              href="/settings/devices"
+              role="menuitem"
+              className="site-nav__menu-item"
+              onClick={() => setMenuOpen(false)}
             >
-              {signOutError}
-            </p>
-          ) : null}
-        </div>
-      ) : null}
+              Devices
+            </Link>
+            <div className="site-nav__menu-separator" role="separator" />
+            <button
+              type="button"
+              role="menuitem"
+              className="site-nav__menu-item"
+              onClick={onSignOut}
+              disabled={signingOut}
+            >
+              {signingOut ? "Signing out…" : "Sign out"}
+            </button>
+            {signOutError ? (
+              <p
+                role="alert"
+                className="site-nav__menu-email"
+                style={{ color: "var(--error)", borderBottom: "none" }}
+              >
+                {signOutError}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
 
       {/* Mobile rail — short labels. Shown below --bp-phone via container query. */}
       <nav className="site-nav__rail" aria-label="Primary">
