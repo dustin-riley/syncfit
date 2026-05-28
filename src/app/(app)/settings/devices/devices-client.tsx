@@ -100,57 +100,58 @@ export function DevicesClient({
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: "var(--ds-space-5)",
-        marginTop: "var(--ds-space-5)",
+        gap: "var(--space-5)",
+        marginTop: "var(--space-5)",
       }}
     >
       {error && (
         <div
           role="alert"
-          className="ds-panel"
+          className="card"
           style={{
-            padding: "var(--ds-space-3) var(--ds-space-4)",
-            color: "var(--ds-error)",
+            padding: "var(--space-3) var(--space-4)",
+            color: "var(--error)",
           }}
         >
           {error}
         </div>
       )}
 
-      <section className="ds-panel" style={{ padding: "var(--ds-space-4)" }}>
+      <section className="card" style={{ padding: "var(--space-4)" }}>
         <h2 className="h2">Pair iOS app</h2>
         {code ? (
           <div
             style={{
-              marginTop: "var(--ds-space-3)",
+              marginTop: "var(--space-3)",
               display: "flex",
               flexDirection: "column",
-              gap: "var(--ds-space-2)",
+              gap: "var(--space-2)",
             }}
           >
-            <p style={{ color: "var(--ds-text-muted)" }}>
+            <p style={{ color: "var(--text-muted)" }}>
               Enter this code in the SyncFit iOS app:
             </p>
             <p
-              className="ds-display"
+              className="display"
               style={{
-                fontFamily: "var(--ds-font-mono)",
+                fontFamily: "var(--font-mono)",
                 letterSpacing: "0.2em",
                 margin: 0,
               }}
             >
               {code.code}
             </p>
-            <p className="ds-mono-note" style={{ margin: 0 }}>
+            <p className="caption" style={{ margin: 0 }}>
               Code expires at {new Date(code.expiresAt).toLocaleTimeString()}.
             </p>
           </div>
         ) : (
-          <div style={{ marginTop: "var(--ds-space-3)" }}>
+          <div style={{ marginTop: "var(--space-3)" }}>
             <button
-              className="ds-btn ds-btn-primary"
+              className="btn btn--cta"
               onClick={onGenerate}
               disabled={generating}
+              aria-busy={generating}
             >
               {generating ? "Generating…" : "Generate pairing code"}
             </button>
@@ -158,13 +159,10 @@ export function DevicesClient({
         )}
       </section>
 
-      <section className="ds-panel" style={{ padding: "var(--ds-space-4)" }}>
+      <section className="card" style={{ padding: "var(--space-4)" }}>
         <h2 className="h2">Paired devices</h2>
         {devices.length === 0 ? (
-          <p
-            className="ds-mono-note"
-            style={{ marginTop: "var(--ds-space-3)" }}
-          >
+          <p className="caption" style={{ marginTop: "var(--space-3)" }}>
             No devices paired yet.
           </p>
         ) : (
@@ -173,10 +171,10 @@ export function DevicesClient({
               listStyle: "none",
               padding: 0,
               margin: 0,
-              marginTop: "var(--ds-space-3)",
+              marginTop: "var(--space-3)",
               display: "flex",
               flexDirection: "column",
-              gap: "var(--ds-space-2)",
+              gap: "var(--space-2)",
             }}
           >
             {devices.map((d) => (
@@ -186,19 +184,19 @@ export function DevicesClient({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  gap: "var(--ds-space-3)",
-                  padding: "var(--ds-space-2) 0",
-                  borderBottom: "var(--ds-border-width) solid var(--ds-border)",
+                  gap: "var(--space-3)",
+                  padding: "var(--space-2) 0",
+                  borderBottom: "1px solid var(--border)",
                 }}
               >
                 <span>
-                  {d.deviceName}{" "}
-                  <span className="ds-mono-note">({d.platform})</span>
+                  {d.deviceName} <span className="caption">({d.platform})</span>
                 </span>
                 <button
-                  className="ds-btn ds-btn-ghost"
+                  className="btn btn--danger"
                   onClick={() => onRevoke(d.id)}
                   disabled={revokingId === d.id}
+                  aria-busy={revokingId === d.id}
                 >
                   {revokingId === d.id ? "Revoking…" : "Revoke"}
                 </button>

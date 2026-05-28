@@ -1,0 +1,1530 @@
+/* ============================================================
+   Dustin Riley Design System — WEB RECIPES
+
+   The web-side recipe layer: semantic element defaults,
+   primitives (.btn, .card, .chip, .seg, .input, .tog,
+   .readiness, .field, …), sheets, loaders, celebration
+   motion, and the v0.3 system overrides. Imports the shared
+   token layer; consumers only need to link THIS file.
+
+   Per the Q-02 platform-additive policy: this file is the
+   WEB recipe layer. iOS recipes live in ../ios/Components/
+   (SwiftUI). Some recipes here have an iOS parallel
+   (`.btn`/`DRButton`, `.input`/`DRTextField`, `.sheet`/`DRSheet`),
+   others don’t (web-only modals when added, iOS-only action
+   sheets, etc.) — absence on either side is “no current
+   need,” not “system says no.”
+
+   v0.5 — May 2026
+   ============================================================ */
+
+@import "./tokens.css";
+
+/* ============================================================
+   Semantic element styles (base — unchanged)
+   ============================================================ */
+
+html {
+  font-size: 16px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.display,
+h1.display {
+  font-family: var(--font-display);
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  letter-spacing: var(--tracking-display);
+  font-weight: 600;
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  letter-spacing: var(--tracking-h1);
+  font-weight: 600;
+}
+
+h2 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  letter-spacing: var(--tracking-h2);
+  font-weight: 600;
+}
+
+h3 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  letter-spacing: var(--tracking-h3);
+  font-weight: 500;
+}
+
+/* -------- Type as utility classes --------
+   The canonical way to apply heading visual size. Element selectors above
+   are defaults — the moment a class lands on an element, the class wins by
+   specificity. So `<h2 className="h4">` keeps the right doc-outline level
+   for accessibility / SEO while taking the smaller visual treatment the
+   layout calls for. Same idea as Material UI's `<Typography variant="h4"
+   component="h2">`. See README "Visual Foundations · Type" for the policy. */
+.h1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  letter-spacing: var(--tracking-h1);
+  font-weight: 600;
+}
+.h2 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  letter-spacing: var(--tracking-h2);
+  font-weight: 600;
+}
+.h3 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  letter-spacing: var(--tracking-h3);
+  font-weight: 500;
+}
+.h4 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h4);
+  line-height: var(--lh-h4);
+  letter-spacing: var(--tracking-h4);
+  font-weight: 500;
+}
+.h5 {
+  font-family: var(--font-display);
+  font-size: var(--fs-h5);
+  line-height: var(--lh-h5);
+  letter-spacing: var(--tracking-h5);
+  font-weight: 500;
+}
+
+/* -------- .container · page-level wrapper --------
+   Caps content width at `--container-max-width` and adds horizontal padding
+   that respects safe-area insets on devices that have them. Vertical padding
+   is per-page; the container only handles the horizontal story.
+
+   Use as the page root inside `<main>` or equivalent:
+     <main class="container"> … </main>
+
+   On notched landscape phones, `--safe-left` / `--safe-right` exceed
+   `--margin` and win the `max()`. On desktop, `--margin` always wins. */
+.container {
+  max-width: var(--container-max-width);
+  margin-inline: auto;
+  padding-left: max(var(--margin), var(--safe-left));
+  padding-right: max(var(--margin), var(--safe-right));
+}
+
+.body-lg {
+  font-size: var(--fs-body-lg);
+  line-height: var(--lh-body-lg);
+}
+.body {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+.body-sm {
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-body-sm);
+}
+.caption {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+code {
+  background: var(--surface-sunken);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+a {
+  color: var(--link);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+a:hover {
+  color: var(--link-hover);
+}
+
+/* ============================================================
+   FITNESS OVERLAY · utilities + primitives
+   All additive; the portfolio components above are untouched.
+   ============================================================ */
+
+/* -------- metric · big-number measurements -------- */
+.metric {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: var(--tracking-metric);
+  font-variant-numeric: tabular-nums slashed-zero;
+  font-feature-settings:
+    "tnum" 1,
+    "zero" 1;
+  color: var(--text);
+}
+.metric-sm {
+  font-size: var(--fs-metric-sm);
+}
+.metric-md {
+  font-size: var(--fs-metric-md);
+}
+.metric-lg {
+  font-size: var(--fs-metric-lg);
+}
+.metric-xl {
+  font-size: var(--fs-metric-xl);
+}
+
+.metric-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   COMPONENTS · buttons, cards, chips, controls
+
+   The design system converged on the harder-edge direction
+   in v0.2. The canonical `.btn` and `.card` now use a 1.5px
+   `--rule` stroke + offset shadow + tight chip radius. The
+   older friendly aesthetic (pill radius + soft hairline +
+   warm shadow) is still available via the `--soft` modifier
+   on each — use it for casual chrome (footer mailto links,
+   marketing tags) where the structural treatment reads too
+   commit-like.
+
+   Aliases: `.btn-action` and `.card-hard` are kept as aliases
+   so the v0.2 fitness-overlay code paths keep working.
+   ============================================================ */
+
+/* -------- .btn · canonical button --------
+   .btn               = primary (orange filled)
+   .btn--ghost        = transparent
+   .btn--ink          = near-black filled
+   .btn--secondary    = paper filled, still ink-ruled
+   .btn--soft         = friendly pill aesthetic (pre-v0.2)
+   Aliases: .btn-action == .btn (back-compat) */
+.btn,
+.btn-action {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: 0.005em;
+  padding: 12px 22px;
+  border-radius: var(--radius-chip);
+  border: var(--rule-width) solid var(--rule);
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: var(--shadow-hard-sm);
+  text-decoration: none;
+  line-height: 1.2;
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard);
+}
+.btn:hover,
+.btn-action:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 0 var(--rule);
+  background: var(--primary-hover);
+  color: #fff;
+}
+.btn:active,
+.btn-action:active {
+  /* Drop into shadow — v0.3 (was translate(0,0) in v0.2).
+     Button slides into the 2x2 offset it was casting at rest, shadow
+     collapses to 0. Same metaphor on web and iOS. Reduce Motion drops
+     the translate but keeps the background shift. */
+  transform: translate(2px, 2px);
+  box-shadow: none;
+  background: var(--primary-pressed);
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn:active,
+  .btn-action:active {
+    transform: translate(0, 0);
+    box-shadow: var(--shadow-hard-sm);
+    /* background shift retained */
+  }
+}
+.btn:disabled,
+.btn-action:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+.btn:focus-visible,
+.btn-action:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: 0;
+}
+
+.btn--ghost,
+.btn-action--ghost {
+  background: transparent;
+  color: var(--rule);
+  box-shadow: none;
+}
+.btn--ghost:hover,
+.btn-action--ghost:hover {
+  background: var(--surface);
+  color: var(--rule);
+}
+/* Explicit :active so keyboard activation (Enter on a focused ghost) and
+   touch tap don't flash the orange primary-pressed background inherited
+   from .btn:active. Mouse clicks already work because :hover ties on
+   specificity and wins by source order — see Consistency Audit B-04. */
+.btn--ghost:active,
+.btn-action--ghost:active {
+  background: var(--surface-sunken);
+  color: var(--rule);
+}
+
+.btn--ink,
+.btn-action--ink {
+  background: var(--rule);
+  border-color: var(--rule);
+  color: #fff;
+}
+.btn--ink:hover,
+.btn-action--ink:hover {
+  background: #1a1612;
+  color: #fff;
+}
+.btn--ink:active,
+.btn-action--ink:active {
+  background: #0e0b08;
+  color: #fff;
+}
+
+.btn--secondary {
+  background: var(--surface);
+  color: var(--rule);
+}
+.btn--secondary:hover {
+  background: var(--surface-sunken);
+  color: var(--rule);
+}
+.btn--secondary:active {
+  background: var(--border);
+  color: var(--rule);
+}
+
+/* -------- .btn--danger · destructive confirm --------
+   Use for the destructive half of a confirm pair (delete account,
+   discard workout, remove PR). Per Sheets & Modals spec, the one-step
+   destructive flow lives in a compact bottom sheet — this is the
+   button that finishes it. Pair with .btn--ghost or .btn--secondary
+   for "cancel"; never with another filled variant. Color comes from
+   --error so it stays in the system palette; pressed is a darker step
+   that holds AA on the white label. */
+.btn--danger {
+  background: var(--error);
+  color: #fff;
+}
+.btn--danger:hover {
+  background: #8e2e25;
+  color: #fff;
+}
+.btn--danger:active {
+  background: #7a2922;
+  color: #fff;
+}
+
+/* -------- .btn[aria-busy="true"] · loading state --------
+   Resolves Consistency Audit M-05. Mark the button busy with
+   `aria-busy="true"` while a request is in flight; clear the
+   attribute when it settles. The loader is rendered automatically
+   via ::before — the consumer just flips the attribute and
+   (optionally) re-words the label:
+
+     <button class="btn" aria-busy="true">analyzing…</button>
+
+   - pointer-events: none turns re-clicks into no-ops
+   - cursor: progress shows for the rare mouse user
+   - the ::before pseudo masks assets/loader-bar-curl.svg and
+     tints via currentColor; it sits to the left of the label,
+     spaced by the button's existing 8px flex gap
+   Pair with `aria-live="polite"` on a sibling status region if
+   the caller wants to announce the outcome — `aria-busy` alone
+   is inconsistently announced across screen readers. */
+.btn[aria-busy="true"],
+.btn-action[aria-busy="true"] {
+  pointer-events: none;
+  cursor: progress;
+}
+.btn[aria-busy="true"]::before,
+.btn-action[aria-busy="true"]::before {
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  background-color: currentColor;
+  -webkit-mask: var(--mask-loader-bar-curl) center / contain no-repeat;
+  mask: var(--mask-loader-bar-curl) center / contain no-repeat;
+  animation: loader-bar-curl 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn[aria-busy="true"]::before,
+  .btn-action[aria-busy="true"]::before {
+    animation-duration: 2800ms;
+  }
+}
+
+/* -------- .loader · canonical loading indicator --------
+   The one loader in the system. Drop it inside any element
+   that has a loading state — button label, sheet body, empty
+   state, refresh indicator. The mask renders the bar-curl
+   artwork (assets/loader-bar-curl.svg); `currentColor` tints
+   the shape to whatever text color surrounds it. Default 16px
+   for button-friendly inline use; override via inline width/
+   height for larger contexts.
+
+   See Bar Curl Loader Spec for the motion contract. */
+.loader {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  vertical-align: -2px; /* optical baseline next to button text */
+  flex-shrink: 0;
+  background-color: currentColor;
+  -webkit-mask: var(--mask-loader-bar-curl) center / contain no-repeat;
+  mask: var(--mask-loader-bar-curl) center / contain no-repeat;
+  animation: loader-bar-curl 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes loader-bar-curl {
+  0%,
+  100% {
+    transform: rotate(-26deg);
+  }
+  50% {
+    transform: rotate(26deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loader {
+    animation-duration: 2800ms;
+  }
+}
+
+/* -------- .refresh-indicator · pull-to-refresh --------
+   See Bar Curl Loader Spec §05 for the full contract.
+   The design system supplies the visual treatment only; the
+   consumer wires up the gesture (Pointer Events on web,
+   UIScrollView/UIRefreshControl on iOS) and drives state:
+
+     --ptr-progress  (0 → 1)   set inline as the user pulls;
+                               drives opacity + tip angle so the
+                               bar tips harder the further you pull
+     [data-refreshing="true"]  request is in flight; the loader
+                               snaps to the canonical cycling motion
+                               at full opacity
+
+   Layout: place .refresh-indicator above the scroll region's
+   content (negative top margin or absolute-positioned at top:0).
+   The element itself is zero-height at rest — the loader is the
+   ::before pseudo and overflows upward into the safe area. */
+.refresh-indicator {
+  --ptr-progress: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 0;
+  pointer-events: none;
+}
+.refresh-indicator::before {
+  content: "";
+  display: block;
+  width: 28px;
+  height: 28px;
+  background-color: var(--text-muted);
+  -webkit-mask: var(--mask-loader-bar-curl) center / contain no-repeat;
+  mask: var(--mask-loader-bar-curl) center / contain no-repeat;
+  opacity: var(--ptr-progress);
+  transform: translateY(calc(var(--ptr-progress) * 36px - 36px))
+    rotate(calc(var(--ptr-progress) * -26deg + -26deg));
+  transition:
+    opacity 80ms linear,
+    background-color var(--duration-fast) var(--ease-standard);
+}
+/* At/past the trigger threshold the loader tints to --primary so
+   the user gets a confirm cue that releasing will fire the refresh.
+   Consumer sets `data-ptr-state="ready"` once --ptr-progress >= 1. */
+.refresh-indicator[data-ptr-state="ready"]::before {
+  background-color: var(--primary);
+}
+/* Request in flight: snap to full opacity, settle into position,
+   take over rotation with the canonical motion. Consumer clears
+   --ptr-progress and sets [data-refreshing="true"]. */
+.refresh-indicator[data-refreshing="true"]::before {
+  opacity: 1;
+  transform: translateY(0);
+  background-color: var(--primary);
+  animation: loader-bar-curl 1.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .refresh-indicator[data-refreshing="true"]::before {
+    animation-duration: 2800ms;
+  }
+}
+
+/* -------- .btn--cta · primary screen CTAs --------
+   The single "finish workout", "start session", "submit" action
+   per screen. Heavier padding + larger label for visual emphasis;
+   on iOS this naturally clears --tap-target-comfortable, on web the
+   typography does the work. Compose on top of any variant. */
+.btn--cta {
+  padding: 14px 28px;
+  font-size: 15px;
+}
+
+/* -------- .btn--soft · friendly pill aesthetic --------
+   For casual chrome where the structural look reads too
+   commit-like. Reverts to pre-v0.2 pill + warm soft shadow.
+   Apply on top of any variant: `.btn .btn--soft`,
+   `.btn .btn--ghost .btn--soft`, etc. */
+.btn--soft {
+  border-radius: var(--radius-pill);
+  border: none;
+  box-shadow: var(--shadow-sm);
+  font-weight: 500;
+}
+.btn--soft:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+.btn--soft:active {
+  transform: scale(0.97);
+  box-shadow: var(--shadow-sm);
+}
+.btn--soft.btn--ghost,
+.btn--soft.btn--secondary {
+  box-shadow: none;
+}
+.btn--soft.btn--secondary {
+  border: 1px solid var(--border);
+}
+
+/* -------- .card · canonical card --------
+   Hard-edge: 1.5px ink rule + 4px offset shadow. The pre-v0.2
+   hairline + warm shadow card is .card--soft.
+   Aliases: .card-hard == .card (back-compat). */
+.card,
+.card-hard {
+  background: var(--surface);
+  border: var(--rule-width) solid var(--rule);
+  border-radius: var(--radius-block);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-hard);
+}
+.card.interactive,
+.card-hard.interactive {
+  cursor: pointer;
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard);
+}
+.card.interactive:hover,
+.card-hard.interactive:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 0 var(--rule);
+}
+.card.interactive:active,
+.card-hard.interactive:active {
+  transform: translate(0, 0);
+  box-shadow: var(--shadow-hard-sm);
+}
+
+.card--soft {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+.card--soft.interactive:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+.card--soft.interactive:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* -------- field · flat full-bleed color section -------- */
+.field {
+  padding: var(--space-5);
+  background: var(--surface);
+  color: var(--text);
+}
+.field--orange {
+  background: var(--primary);
+  color: #fff;
+}
+.field--ink {
+  background: var(--rule);
+  color: #fff;
+}
+.field--teal {
+  background: var(--accent-teal);
+  color: #fff;
+}
+.field--mustard {
+  background: var(--accent-ochre);
+  color: var(--text);
+}
+.field--plum {
+  background: #6e3a5e;
+  color: #fff;
+}
+.field--olive {
+  background: var(--success);
+  color: #fff;
+}
+.field--paper {
+  background: var(--surface);
+  color: var(--text);
+}
+.field--canvas {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.field-grid {
+  display: grid;
+  gap: 0;
+  border: var(--rule-width) solid var(--rule);
+}
+
+/* -------- (button block moved above, into the unified COMPONENTS section) -------- */
+
+/* -------- chip · hard-edge utility for tags, status -------- */
+.chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 9px;
+  border-radius: var(--radius-chip);
+  border: var(--rule-width) solid var(--rule);
+  background: var(--bg);
+  color: var(--rule);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.chip--pill {
+  border-radius: var(--radius-pill);
+}
+.chip--solid {
+  background: var(--rule);
+  color: #fff;
+}
+
+/* Interactive (toggle) form. Opt in with `.chip[role="button"]`,
+   `[aria-pressed]`, or `.chip.is-interactive` so static status chips
+   stay flat. The active/pressed state uses the ink fill (matches
+   `.chip--solid`) so it reads as the same family. */
+.chip[role="button"],
+.chip[aria-pressed],
+.chip.is-interactive {
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+.chip[role="button"]:hover,
+.chip[aria-pressed]:hover,
+.chip.is-interactive:hover {
+  background: var(--surface);
+}
+.chip.active,
+.chip[aria-pressed="true"] {
+  background: var(--rule);
+  color: #fff;
+}
+.chip.active:hover,
+.chip[aria-pressed="true"]:hover {
+  background: #0e0b08;
+}
+.chip[role="button"]:active,
+.chip[aria-pressed]:active,
+.chip.is-interactive:active {
+  background: var(--surface-sunken);
+}
+.chip.active:active,
+.chip[aria-pressed="true"]:active {
+  background: #0e0b08;
+}
+.chip:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: 0;
+}
+.chip[aria-disabled="true"],
+.chip:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ============================================================
+   FORMS & CONTROLS · v0.3
+   Promoted out of preview/inputs.html + preview/controls.html
+   into the canonical layer. Focus behavior follows the Focus
+   Ring Policy: text inputs use plain `:focus` (tap is a valid
+   focus intent for inputs), every other primitive uses
+   `:focus-visible`.
+   ============================================================ */
+
+/* -------- .input · text inputs, textarea, select --------
+   .input             = canonical text field
+   .input--sunken     = inner-shadow well (README §visual foundations)
+   [aria-invalid]     = error state, color from --error */
+.input,
+input.input,
+textarea.input,
+select.input {
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 10px 12px;
+  border-radius: var(--radius-chip);
+  border: var(--rule-width) solid var(--rule);
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  transition:
+    background var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+.input::placeholder {
+  color: var(--text-muted);
+}
+/* Plain :focus per Focus Ring Policy §04 — text inputs show the ring
+   on tap too, because there's no press state to fall back on. */
+.input:focus {
+  outline: 3px solid var(--primary);
+  outline-offset: 0;
+}
+.input[aria-invalid="true"] {
+  border-color: var(--error);
+  /* Match focus-ring weight so the error reads as equally demanding
+     at rest. Outline (not border) avoids layout shift. When the field
+     is focused, the :focus rule below keeps outline-color: --error so
+     the ring stays continuous. */
+  outline: 3px solid var(--error);
+  outline-offset: 0;
+}
+.input[aria-invalid="true"]:focus {
+  outline-color: var(--error);
+}
+.input:disabled {
+  opacity: 0.5;
+  background: var(--surface-sunken);
+  pointer-events: none;
+}
+.input--sunken {
+  background: var(--surface-sunken);
+  box-shadow:
+    inset 0 1px 2px rgba(74, 52, 28, 0.08),
+    inset 0 1px 0 rgba(74, 52, 28, 0.04);
+}
+
+/* -------- .seg · segmented control --------
+   Hard-edge wrapper, ink "on" state. Buttons inside use
+   :focus-visible so a mouse click doesn't leave the ring behind. */
+.seg {
+  display: inline-flex;
+  background: var(--bg);
+  border: var(--rule-width) solid var(--rule);
+  border-radius: var(--radius-chip);
+  padding: 3px;
+  gap: 2px;
+}
+.seg > button {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: 2px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  line-height: 1.2;
+  transition:
+    background var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+.seg > button:hover {
+  background: var(--surface);
+}
+.seg > button:active {
+  background: var(--surface-sunken);
+}
+.seg > button.on,
+.seg > button[aria-pressed="true"] {
+  background: var(--rule);
+  color: #fff;
+}
+.seg > button.on:hover,
+.seg > button[aria-pressed="true"]:hover {
+  background: #1a1612;
+}
+.seg > button.on:active,
+.seg > button[aria-pressed="true"]:active {
+  background: #0e0b08;
+}
+.seg > button:focus {
+  outline: none;
+}
+.seg > button:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: 0;
+  position: relative; /* keep the ring above sibling rule */
+}
+.seg > button:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* -------- .tog · binary toggle --------
+   24pt pill with an ink-ruled thumb. Container is 40×24 visually;
+   wrap it in a 44pt hit zone (‘.tog-hit’ or label padding) on real
+   surfaces — the visual size stays tight. */
+.tog {
+  width: 40px;
+  height: 24px;
+  background: var(--surface-sunken);
+  border: var(--rule-width) solid var(--rule);
+  border-radius: var(--radius-pill);
+  position: relative;
+  cursor: pointer;
+  display: inline-block;
+  flex-shrink: 0;
+  transition: background var(--duration-base) var(--ease-standard);
+}
+.tog::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  box-sizing: border-box;
+  background: #fff;
+  border: var(--rule-width) solid var(--rule);
+  border-radius: var(--radius-pill);
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+.tog.on,
+.tog[aria-checked="true"] {
+  background: var(--primary);
+}
+.tog.on::after,
+.tog[aria-checked="true"]::after {
+  transform: translateX(16px);
+}
+.tog:focus {
+  outline: none;
+}
+.tog:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: 2px;
+}
+.tog[aria-disabled="true"],
+.tog:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tog,
+  .tog::after {
+    transition: none;
+  }
+}
+
+/* -------- readiness · semantic state pill --------
+   Always color + glyph + label together. Never color alone. */
+.readiness {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  border: var(--rule-width) solid var(--rule);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.readiness::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+}
+.readiness--rested {
+  background: var(--readiness-rested);
+  color: #fff;
+}
+.readiness--primed {
+  background: var(--readiness-primed);
+  color: #fff;
+}
+.readiness--strained {
+  background: var(--readiness-strained);
+  color: var(--text);
+}
+.readiness--strained::before {
+  background: var(--text);
+}
+.readiness--depleted {
+  background: var(--readiness-depleted);
+  color: #fff;
+}
+
+/* -------- zone utilities · Z1 → Z5 -------- */
+.zone-1 {
+  background: var(--zone-1);
+  color: #fff;
+}
+.zone-2 {
+  background: var(--zone-2);
+  color: #fff;
+}
+.zone-3 {
+  background: var(--zone-3);
+  color: var(--text);
+}
+.zone-4 {
+  background: var(--zone-4);
+  color: #fff;
+}
+.zone-5 {
+  background: var(--zone-5);
+  color: #fff;
+}
+
+/* -------- pr-badge · gold field + ink mark -------- */
+.pr-badge {
+  background: var(--pr);
+  color: var(--pr-ink);
+  border: var(--rule-width) solid var(--rule);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-hard);
+}
+.pr-badge .pr-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* -------- celebration motion · burst + pop --------
+   See celebrate.js for the JS helper that injects blocks. */
+.burst {
+  position: relative;
+}
+.burst .burst-block {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.burst.is-bursting .burst-block {
+  animation: burst-fly var(--duration-celebration) var(--ease-standard) forwards;
+}
+@keyframes burst-fly {
+  0% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)))
+      rotate(var(--rot)) scale(1);
+    opacity: 0;
+  }
+}
+
+.pop {
+  display: inline-block;
+}
+.pop.is-popping {
+  animation: pop-scale calc(var(--duration-celebration) * 0.55)
+    var(--ease-standard);
+}
+@keyframes pop-scale {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ============================================================
+   SHEETS · v0.3
+   Promoted from Sheets & Modals spec into the canonical layer.
+
+   Scope today: the surfaces shipping on iOS (SyncFit) and the
+   web (dustinriley site) only need bottom sheets — confirmations,
+   secondary actions, sub-flows. The system therefore ships only
+   bottom-sheet recipes for now. This is a "no current need," not
+   a ban on centered modals — see Q-02 in the Consistency Audit
+   for the platform-divergence policy. If a future web surface
+   wants a `.modal` recipe, adding one is the normal next step;
+   iOS would not get a parallel recipe because iOS conventions
+   favor sheets and action sheets for the same job.
+
+   Web / iOS split (what's in scope here, sheets-wise):
+   - Visual treatment (radius, border, scrim, grabber, head/body/foot
+     chrome) is shared. Same look on both platforms.
+   - Detent VOCABULARY (compact / medium / large / full) is shared.
+   - Detent APPLICATION is forked. Web uses fixed-height modifier
+     classes — no native drag-to-resize. iOS uses SwiftUI's
+     `.presentationDetents` (see DRSheet.swift in the spec) which
+     supplies drag-to-resize and swipe-to-dismiss for free.
+   - Open/close animation is the consumer's job — React/Vue apps
+     have their own transition machinery, and SwiftUI's .sheet
+     handles iOS. The CSS sets up the resting state.
+   ============================================================ */
+
+/* -------- .scrim · backdrop for sheets and long-press peeks --------
+   Single 45% --rule overlay used by both surfaces (see System
+   Overrides Spec §04 — Reduce Transparency swaps both to solid
+   in one rule). `.sheet-scrim` is an alias for callers who prefer
+   the explicit name. */
+.scrim,
+.sheet-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(45, 38, 32, 0.45);
+  z-index: 100;
+  /* No transition by default — consumer drives enter/exit */
+}
+
+/* -------- .sheet · canonical bottom sheet --------
+   Top corners 12pt, sides and bottom flush with the viewport edge.
+   Hard 1.5pt --rule top border + inverted hard-offset shadow.
+   Default detent is medium (60vh) — pick a smaller / larger
+   modifier only when content demands it (see spec §03). */
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--text);
+  border-top: var(--rule-width) solid var(--rule);
+  border-radius: 12px 12px 0 0;
+  box-shadow: 0 -4px 0 0 var(--rule); /* inverted hard shadow */
+  overflow: hidden;
+  /* Honor the safe-area inset at the bottom (home indicator on iPhone X+) */
+  padding-bottom: var(--safe-bottom);
+  /* Default detent · medium */
+  height: 60vh;
+  max-height: 90vh;
+}
+
+/* -------- Detents · pick by content, not by author preference --------
+   compact · single-action prompts (delete confirm, mark done)
+   medium  · focused output, short forms (default)
+   large   · deep sub-views with their own scroll
+   full    · multi-step flows that own the screen (no grabber, no scrim)
+
+   On iOS these become `PresentationDetent` values via DRDetent.swiftUIValues.
+   See spec §03 for the canonical sizing. */
+.sheet--compact {
+  height: 33vh;
+}
+.sheet--medium {
+  height: 60vh;
+}
+.sheet--large {
+  height: 90vh;
+}
+
+.sheet--full {
+  top: 0;
+  bottom: 0;
+  height: 100vh;
+  max-height: 100vh;
+  border-radius: 0;
+  border-top: none;
+  box-shadow: none;
+  padding-top: var(--safe-top);
+}
+
+/* -------- .sheet-grabber · drag handle --------
+   36×4pt mark at 55% --text-muted, 8pt from top edge. The spec is
+   explicit about reading as a "rule mark, not a pill" — hence
+   tighter than iOS default (36×5). Drag behavior is iOS-only via
+   `.presentationDragIndicator(.visible)`; on web the grabber is a
+   visual cue only (sheet stays at its assigned detent).
+
+   Full-screen cover drops the grabber per spec §02. */
+.sheet-grabber {
+  width: 36px;
+  height: 4px;
+  margin: 8px auto 0;
+  background: var(--text-muted);
+  opacity: 0.55;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.sheet--full .sheet-grabber {
+  display: none;
+}
+
+/* -------- .sheet-head · title + close --------
+   H3-sized title left, close button right. Compact detent drops
+   the header entirely (the confirm pattern uses an icon + body
+   instead — see spec §04). */
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.sheet--compact .sheet-head {
+  display: none;
+}
+
+.sheet-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  letter-spacing: -0.005em;
+  margin: 0;
+}
+
+.sheet-close {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: var(--rule-width) solid var(--rule);
+  background: var(--surface);
+  color: var(--rule);
+  border-radius: var(--radius-chip);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-hard-sm);
+  cursor: pointer;
+  padding: 0;
+  transition:
+    transform var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard);
+}
+.sheet-close:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 0 var(--rule);
+  background: var(--surface-sunken);
+}
+.sheet-close:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+.sheet-close:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: 0;
+}
+.sheet-close svg {
+  width: 12px;
+  height: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet-close:active {
+    transform: translate(0, 0);
+    box-shadow: var(--shadow-hard-sm);
+  }
+}
+
+/* -------- .sheet-body · scrollable content --------
+   `overscroll-behavior: contain` keeps scroll from leaking into
+   the underlying page when the user hits a body edge. */
+.sheet-body {
+  padding: 12px 18px;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* -------- .sheet-foot · primary CTA area --------
+   Top divider + --surface bg per spec. Primary action only;
+   secondary/cancel sits below the destructive button in confirm
+   sheets, but those use the compact recipe (header dropped,
+   content + actions stacked). */
+.sheet-foot {
+  padding: 12px 18px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+/* -------- Destructive confirm composition --------
+   Per spec §04, the destructive confirm is a `.sheet--compact`
+   with this content shape — NO separate recipe class, just the
+   composition. Documented here so consumers don't reinvent it:
+
+     <div class="scrim"></div>
+     <aside class="sheet sheet--compact">
+       <span class="sheet-grabber"></span>
+       <div class="sheet-confirm">
+         <svg class="sheet-confirm-icon">…trash…</svg>
+         <h3 class="sheet-confirm-title">Delete this workout?</h3>
+         <p class="sheet-confirm-copy">Tempo run · 6mi · Tue. This can't be undone.</p>
+         <div class="sheet-confirm-actions">
+           <button class="btn btn--danger">Delete workout</button>
+           <button class="btn btn--ghost">Cancel</button>
+         </div>
+       </div>
+     </aside>
+
+   `.btn--danger` already lives in the system (see M-03 resolution). */
+.sheet-confirm {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 14px 18px 18px;
+  flex: 1 1 auto;
+  text-align: center;
+}
+.sheet-confirm-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--readiness-depleted);
+  margin: 0 auto 8px;
+}
+.sheet-confirm-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  margin: 0 0 6px;
+}
+.sheet-confirm-title--high-stakes {
+  color: var(--readiness-depleted);
+}
+.sheet-confirm-copy {
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  margin: 0 0 14px;
+}
+.sheet-confirm-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sheet-confirm-actions .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+/* -------- advice · coach copy blocks --------
+   Left-border accent for directive-but-conversational copy — coach
+   advice, plan notes, gentle nudges. NOT for model output / verdicts
+   (use `.ai-banner` for those). The two recipes are siblings:
+
+     .advice     · coach voice, second-person, non-state-bearing
+     .ai-banner  · model verdict, state-colored, optional bot eyebrow
+
+   Reach for `.advice` when the copy reads like a coach talking;
+   `.ai-banner` when the copy reads like a model returning a result.
+   The voice rules in README §Content Fundamentals cover the split. */
+.advice {
+  border-left: 4px solid var(--primary);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg);
+}
+.advice h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1rem;
+  margin: 0 0 var(--space-1);
+}
+.advice p {
+  font-size: 0.9375rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* -------- ai-banner · model verdict surface --------
+   The canonical "the model says X" recipe. Plum-tinted AI surface
+   (--surface-ai) + ink rule + soft 2x2 offset. Composes:
+
+     .ai-banner__eyebrow   · mono micro-caption · bot glyph + "the model says · {model}"
+     .ai-banner__verdict   · state-colored line · icon + label ("push harder", "rest")
+     .ai-banner__headline  · the one-line read ("you're recovered; hit it")
+     .ai-banner__body      · rationale copy
+
+   State modifiers tint the .ai-banner__verdict line ONLY (not the
+   surface — the plum is the AI signal, the state color is the verdict
+   signal, and they have to stay distinct):
+
+     .ai-banner--proceed   · --success    · "proceed as planned"
+     .ai-banner--push      · --primary    · "push harder"
+     .ai-banner--reduce    · --warning    · "reduce intensity"
+     .ai-banner--rest      · --readiness-rested · "rest"
+
+   Resolves H-02 (Migration Review) — replaces the consumer's
+   ad-hoc `.ds-panel .ds-ai` composition. The Differentiate
+   Without Color rule is satisfied because every variant pairs
+   the state color with the verdict's icon glyph. */
+.ai-banner {
+  background: var(--surface-ai);
+  border: var(--rule-width) solid var(--rule);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-hard-sm);
+}
+.ai-banner__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--on-surface-ai);
+  margin: 0 0 var(--space-3);
+}
+.ai-banner__verdict {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  color: var(--rule); /* neutral fallback if no state modifier set */
+  margin: 0 0 var(--space-2);
+}
+.ai-banner__verdict svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+.ai-banner__headline {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-h4);
+  line-height: var(--lh-h4);
+  letter-spacing: var(--tracking-h4);
+  color: var(--text);
+  margin: 0 0 var(--space-1);
+}
+.ai-banner__body {
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-body-sm);
+  color: var(--text-muted);
+  margin: 0;
+}
+.ai-banner--proceed .ai-banner__verdict {
+  color: var(--success);
+}
+.ai-banner--push .ai-banner__verdict {
+  color: var(--primary);
+}
+.ai-banner--reduce .ai-banner__verdict {
+  color: var(--warning);
+}
+.ai-banner--rest .ai-banner__verdict {
+  color: var(--readiness-rested);
+}
+
+/* -------- bubble · conversational message --------
+   For chat bubbles in plan-chat / coach-chat drawers. Soft-chrome
+   sibling of .card--soft: hairline border + medium radius, no
+   shadow (bubbles sit inside a sheet body, which already has its
+   own elevation). Author the parent as flex column with gap; the
+   bubble owns only its own shape.
+
+     .bubble         · assistant / inbound · paper surface + ink text
+     .bubble--user   · user / outbound     · ink fill + white text
+
+   max-width caps reading measure at ~36ch so long replies wrap
+   into something that reads like speech, not paragraphs. Use
+   `align-self: flex-end` on the parent to right-align the user
+   variant; the recipe doesn't impose that because the alignment
+   story is parent-owned. */
+.bubble {
+  display: inline-block;
+  max-width: 36ch;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-body-sm);
+}
+.bubble--user {
+  background: var(--rule);
+  color: #fff;
+  border-color: var(--rule);
+}
+
+/* ============================================================
+   v0.3 · SYSTEM OVERRIDES
+   Honors the four OS-level accessibility settings the
+   System Overrides Spec ratifies. Reduce Motion is handled
+   inline next to each motion rule (`.btn:active`, `.loader`,
+   `.refresh-indicator`, `.tog`, `.btn[aria-busy]`) so the
+   override sits next to the rule it overrides. The other
+   three live here because they touch tokens / many surfaces
+   at once.
+
+   Architecture note: this file is the WEB recipe layer. iOS
+   reads the same accessibility environment via SwiftUI's
+   `@Environment` values and applies its own recipes inside
+   `DRButton` / `DRText` / `DRSheet`. Token-level decisions
+   (which value to use) match across platforms; recipe-level
+   decisions (how to apply it) are forked. Same pattern as
+   the tap-target tokens — see Q-01 in the Consistency Audit.
+   ============================================================ */
+
+/* -------- Increase Contrast · prefers-contrast: more --------
+   Muted greys harden, hairlines thicken, ghost buttons get an
+   explicit fill, focus ring widens. The system's hard-edge
+   aesthetic already does most of this work — the structural
+   `--rule` stroke passes AAA at rest — so the override is
+   mostly token-level. Disabled buttons gain a diagonal hatch
+   so the state is carried by a shape, not just opacity. */
+@media (prefers-contrast: more) {
+  :root {
+    --text-muted: var(--text);
+    --border: var(--rule);
+    --rule-width: 2px;
+    --focus-outline: 4px solid var(--primary);
+  }
+  /* Ghost button stops being transparent; the surface fill
+     gives it a defined edge against the page. */
+  .btn--ghost,
+  .btn-action--ghost {
+    background: var(--surface);
+  }
+  /* Disabled · color isn't carrying the meaning alone (Differentiate
+     Without Color rule). Hatch + heavier opacity together. The hatch
+     uses --rule-translucent-hatch — a paired token in tokens.css
+     mirrored in Tokens.swift, so the channels stay in lockstep with
+     --rule. (Resolves Consistency Audit N-06.) */
+  .btn:disabled,
+  .btn-action:disabled,
+  .input:disabled,
+  .chip[aria-disabled="true"],
+  .chip:disabled,
+  .tog[aria-disabled="true"],
+  .tog:disabled {
+    opacity: 0.7;
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent 0,
+      transparent 3px,
+      var(--rule-translucent-hatch) 3px,
+      var(--rule-translucent-hatch) 4px
+    );
+  }
+}
+
+/* -------- Reduce Transparency · prefers-reduced-transparency: reduce --------
+   The system uses two translucent surfaces (sheet scrim, long-press
+   scrim — both 45% --rule) plus one backdrop blur (long-press peek
+   siblings). All three drop here. The selectors below match the
+   names ratified in the Sheets & Modals spec and the Gesture
+   Vocabulary spec — even though the .sheet / .lp-* recipes haven't
+   landed yet (Consistency Audit M-08), naming the override against
+   the documented selectors means task 11 picks this up for free. */
+@media (prefers-reduced-transparency: reduce) {
+  .sheet-scrim,
+  .lp-scrim,
+  .scrim {
+    background: var(--rule);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  /* Long-press peek · siblings keep the brightness dim that signals
+     "deemphasized" but drop the blur that signals "out of focus". */
+  .lp-stage.peeking .lp-card:not(.target) {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    filter: brightness(0.85);
+  }
+}
+
+/* -------- Bold Text · iOS-only --------
+   Bold Text is the one accessibility setting with no web analog;
+   the CSS `prefers-*` family does not surface it. Following the
+   recipe-forked-per-platform pattern (see Q-01), the override
+   lives in the iOS `DRText` component which reads
+   `@Environment(\.legibilityWeight)` and bumps each weight up one
+   notch — body 400 → 500, display 700 → 800, mono 500 → 600, etc.
+   Both Outfit (400–800) and DM Sans (400–700) ship the extra
+   weights, so the swap is purely declarative on iOS.
+
+   No CSS rules are emitted here on purpose. Documenting the gap
+   so the next reader doesn't wonder if it was missed. See
+   System Overrides Spec §03 for the full weight-bump table. */

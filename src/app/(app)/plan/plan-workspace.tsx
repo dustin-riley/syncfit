@@ -19,7 +19,7 @@ export function PlanWorkspace({
     <>
       <div className="flex items-center justify-between gap-3 my-3">
         <input
-          className="border rounded p-2 flex-1"
+          className="input flex-1"
           aria-label="training goal"
           placeholder="training goal (e.g. lose fat, keep my squat)"
           value={goal}
@@ -27,7 +27,7 @@ export function PlanWorkspace({
         />
         <button
           type="button"
-          className="ds-btn ds-btn-secondary"
+          className="btn btn--secondary"
           onClick={() => setDrawerOpen(true)}
         >
           build with ai

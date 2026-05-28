@@ -2,20 +2,24 @@ import { ArrowUp, ArrowDown, Check, Pause, Bot } from "lucide-react";
 
 const MAP: Record<
   string,
-  { label: string; Icon: typeof Check; token: string }
+  { label: string; Icon: typeof Check; modifier: string }
 > = {
   proceed_as_planned: {
     label: "proceed as planned",
     Icon: Check,
-    token: "--ds-success",
+    modifier: "ai-banner--proceed",
   },
-  push_harder: { label: "push harder", Icon: ArrowUp, token: "--ds-primary" },
+  push_harder: {
+    label: "push harder",
+    Icon: ArrowUp,
+    modifier: "ai-banner--push",
+  },
   reduce_intensity: {
     label: "reduce intensity",
     Icon: ArrowDown,
-    token: "--ds-warning",
+    modifier: "ai-banner--reduce",
   },
-  rest: { label: "rest", Icon: Pause, token: "--ds-text-muted" },
+  rest: { label: "rest", Icon: Pause, modifier: "ai-banner--rest" },
 };
 
 export function VerdictBanner({
@@ -31,19 +35,16 @@ export function VerdictBanner({
 }) {
   const v = MAP[verdict] ?? MAP.proceed_as_planned;
   return (
-    <div className="ds-panel ds-ai p-4 my-3">
-      <span className="ds-ai-mark">
+    <div className={`ai-banner ${v.modifier} my-3`}>
+      <span className="ai-banner__eyebrow">
         <Bot size={13} aria-hidden="true" /> the model says · {model}
       </span>
-      <p
-        className="flex items-center gap-2"
-        style={{ color: `var(${v.token})`, marginTop: "var(--ds-space-2)" }}
-      >
+      <p className="ai-banner__verdict">
         <v.Icon size={16} aria-hidden="true" />
-        <strong>{v.label}</strong>
+        {v.label}
       </p>
-      <strong>{headline}</strong>
-      <p>{rationale}</p>
+      <p className="ai-banner__headline">{headline}</p>
+      <p className="ai-banner__body">{rationale}</p>
     </div>
   );
 }

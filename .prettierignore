@@ -7,3 +7,6 @@ package-lock.json
 docs/superpowers
 # Xcode-owned asset catalog JSON — format is dictated by Xcode, not Prettier.
 ios/SyncFit/SyncFit/Assets.xcassets
+# Vendored design-system source (from the Claude Design handoff bundle) — kept
+# faithful to the upstream bundle, not reformatted to our Prettier style.
+src/styles/design

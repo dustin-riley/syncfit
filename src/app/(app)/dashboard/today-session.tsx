@@ -58,12 +58,12 @@ export function TodaySession({
     findExerciseMatch(name, actuals, (a) => a.exerciseName);
 
   return (
-    <section className="ds-panel p-4 my-3">
+    <section className="card p-4 my-3">
       <h2 className="h4">today · {title || modality}</h2>
       {exercises.length === 0 ? (
-        <p className="ds-mono-note">
+        <p className="caption">
           no exercises planned.{" "}
-          <Link href="/plan" style={{ color: "var(--ds-link)" }}>
+          <Link href="/plan" style={{ color: "var(--link)" }}>
             build your plan
           </Link>
           .
@@ -78,7 +78,7 @@ export function TodaySession({
                 <strong>{e.name}</strong> — {e.targetSets}×{e.targetReps} @{" "}
                 {e.targetWeight}
                 {a && a.sets.length > 0 && (
-                  <span className="ds-mono-note">
+                  <span className="caption">
                     {" "}
                     · last ({a.agoDays === 0
                       ? "today"
@@ -88,8 +88,8 @@ export function TodaySession({
                 )}
                 {adj && (
                   <div
-                    className="ds-mono-note"
-                    style={{ color: "var(--ds-accent-ochre)" }}
+                    className="caption"
+                    style={{ color: "var(--accent-ochre)" }}
                   >
                     today: {adj}
                   </div>
@@ -99,9 +99,10 @@ export function TodaySession({
           })}
         </ul>
       )}
-      {notes && <p className="ds-mono-note">notes: {notes}</p>}
+      {notes && <p className="caption">notes: {notes}</p>}
       <button
-        className="ds-btn ds-btn-primary mt-3"
+        className="btn btn--cta mt-3"
+        aria-busy={busy}
         disabled={busy}
         onClick={async () => {
           setBusy(true);
@@ -115,7 +116,7 @@ export function TodaySession({
         {busy ? "analyzing…" : "analyze readiness"}
       </button>
       {out?.error && (
-        <p style={{ color: "var(--ds-error)" }}>
+        <p style={{ color: "var(--error)" }}>
           {out.error}
           {result && " Showing your earlier result below."}
         </p>

@@ -15,7 +15,7 @@ export default async function ProgressPage() {
   const error = "error" in result ? result.error : undefined;
 
   return (
-    <main className="ds-container p-8">
+    <main className="container p-8">
       <ProgressWorkspace
         initialSeries={series.map((s) => ({
           ...s,

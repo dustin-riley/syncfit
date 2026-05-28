@@ -49,26 +49,28 @@ export function ProgressionInbox({
   return (
     <section className="my-6">
       <h2 className="h4">progression</h2>
-      {err && <p style={{ color: "var(--ds-error)" }}>{err}</p>}
+      {err && <p style={{ color: "var(--error)" }}>{err}</p>}
       {pending.map((s) => (
-        <div key={s.exercise} className="ds-panel p-3 my-2">
+        <div key={s.exercise} className="card p-3 my-2">
           <strong>{s.exercise}</strong>: {s.currentWeight} → {s.suggestedWeight}
           {s.suggestedSets || s.suggestedReps ? (
-            <span className="ds-mono-note">
+            <span className="caption">
               {" "}
               ({s.suggestedSets ?? "—"}×{s.suggestedReps ?? "—"})
             </span>
           ) : null}
-          <p className="ds-mono-note">{s.rationale}</p>
+          <p className="caption">{s.rationale}</p>
           <button
-            className="ds-btn ds-btn-primary"
+            className="btn"
+            aria-busy={busy}
             disabled={busy}
             onClick={() => act(s, "accept")}
           >
             <Check size={16} aria-hidden="true" /> accept
           </button>{" "}
           <button
-            className="ds-btn ds-btn-ghost"
+            className="btn btn--ghost"
+            aria-busy={busy}
             disabled={busy}
             onClick={() => act(s, "dismiss")}
           >

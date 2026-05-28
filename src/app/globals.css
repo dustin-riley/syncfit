@@ -1,2 +1,43 @@
 @import "tailwindcss";
-@import "@dustin-riley/design/tailwind.css";
+@import "../styles/design/components.css";
+
+/* Thin Tailwind bridge — maps Tailwind utility keys onto the NEW design tokens
+   so existing utilities (rounded-*, font-*, text-muted-foreground, bg-card,
+   border-input, text-destructive, …) keep resolving. The --ds-* layer is gone;
+   this bridge is Tailwind-only and does not reintroduce --ds-* names. */
+@theme {
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 16px;
+  --radius-xl: 16px;
+  --radius-2xl: 16px;
+  --radius-3xl: 16px;
+
+  --font-display: "Outfit", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--text);
+  --color-muted: var(--surface-sunken);
+  --color-muted-foreground: var(--text-muted);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--on-primary);
+  --color-destructive: var(--error);
+  --color-destructive-foreground: #ffffff;
+  --color-border: var(--border);
+  --color-input: var(--rule);
+  --color-ring: var(--primary);
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--border);
+  }
+}

@@ -56,7 +56,7 @@ export function ProgressWorkspace({
     return (
       <>
         <h1 className="h1">progress</h1>
-        <section className="ds-panel p-4 my-4">
+        <section className="card p-4 my-4">
           <p>{error}</p>
         </section>
       </>
@@ -67,14 +67,14 @@ export function ProgressWorkspace({
     return (
       <>
         <h1 className="h1">progress</h1>
-        <section className="ds-panel p-4 my-4">
+        <section className="card p-4 my-4">
           <p>
             Nothing to chart yet —{" "}
-            <Link href="/import" style={{ color: "var(--ds-link)" }}>
+            <Link href="/import" style={{ color: "var(--link)" }}>
               import a Strong CSV
             </Link>{" "}
             or{" "}
-            <Link href="/log" style={{ color: "var(--ds-link)" }}>
+            <Link href="/log" style={{ color: "var(--link)" }}>
               log a workout
             </Link>
             .
@@ -91,15 +91,15 @@ export function ProgressWorkspace({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          gap: "var(--ds-space-3)",
+          gap: "var(--space-3)",
           flexWrap: "wrap",
-          marginBottom: "var(--ds-space-4)",
+          marginBottom: "var(--space-4)",
         }}
       >
         <h1 className="h1" style={{ margin: 0 }}>
           progress
         </h1>
-        <div style={{ display: "flex", gap: "var(--ds-space-2)" }}>
+        <div style={{ display: "flex", gap: "var(--space-2)" }}>
           <PillToggle
             options={[
               { value: "topSet", label: "Top set" },
@@ -127,7 +127,7 @@ export function ProgressWorkspace({
           margin: 0,
           display: "flex",
           flexDirection: "column",
-          gap: "var(--ds-space-3)",
+          gap: "var(--space-3)",
         }}
       >
         {sorted.map((s) => (
@@ -152,15 +152,7 @@ function PillToggle<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div
-      className="ds-panel"
-      style={{
-        display: "inline-flex",
-        padding: "var(--ds-space-1)",
-        gap: "var(--ds-space-1)",
-        borderRadius: "var(--ds-radius-pill)",
-      }}
-    >
+    <div className="seg" role="group">
       {options.map((o) => {
         const active = o.value === value;
         return (
@@ -168,13 +160,8 @@ function PillToggle<T extends string>({
             key={o.value}
             type="button"
             onClick={() => onChange(o.value)}
-            className={active ? "ds-btn ds-btn-primary" : "ds-btn ds-btn-ghost"}
-            style={{
-              borderRadius: "var(--ds-radius-pill)",
-              padding: "var(--ds-space-1) var(--ds-space-2)",
-              fontSize: "var(--ds-fs-caption)",
-              lineHeight: 1,
-            }}
+            aria-pressed={active}
+            className={active ? "on" : undefined}
           >
             {o.label}
           </button>

@@ -48,7 +48,7 @@ export default async function Home() {
       : null;
 
   return (
-    <main className="ds-container p-8">
+    <main className="container p-8">
       <h1 className="h1">today</h1>
       {today ? (
         <TodaySession
@@ -64,10 +64,10 @@ export default async function Home() {
           initialResult={priorToday}
         />
       ) : (
-        <section className="ds-panel p-4 my-3">
-          <p className="ds-mono-note">
+        <section className="card p-4 my-3">
+          <p className="caption">
             no plan for today.{" "}
-            <Link href="/plan" style={{ color: "var(--ds-link)" }}>
+            <Link href="/plan" style={{ color: "var(--link)" }}>
               build your plan
             </Link>
             .
@@ -99,16 +99,16 @@ export default async function Home() {
 
       <section className="my-6">
         <h2 className="h4">past readiness checks</h2>
-        <ul style={{ listStyle: "none", padding: 0 }}>
+        <div className="field-grid">
           {pastAnalyses.map((a) => (
-            <li key={a.id} className="ds-panel p-3 my-2">
-              <span className="ds-mono-note">
+            <div key={a.id} className="field field--paper">
+              <span className="caption">
                 {a.analysisDate} · {a.verdict.replace(/_/g, " ")}
               </span>{" "}
               <strong>{a.headline}</strong>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       </section>
     </main>
   );

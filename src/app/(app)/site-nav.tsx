@@ -67,27 +67,27 @@ export function SiteNav({ email }: { email: string }) {
   return (
     <div
       className="sticky top-0 z-40 flex justify-center"
-      style={{ padding: "var(--ds-space-4) var(--ds-space-4) 0" }}
+      style={{ padding: "var(--space-4) var(--space-4) 0" }}
     >
       <nav
         aria-label="Primary"
         className="flex items-center"
         style={{
-          gap: "var(--ds-space-3)",
-          padding: "var(--ds-space-2) var(--ds-space-4)",
-          background: "var(--ds-bg)",
-          border: "var(--ds-border-width) solid var(--ds-border)",
-          borderRadius: "var(--ds-radius-pill)",
-          boxShadow: "var(--ds-shadow-md)",
+          gap: "var(--space-3)",
+          padding: "var(--space-2) var(--space-4)",
+          background: "var(--bg)",
+          border: "1px solid var(--border)",
+          borderRadius: "var(--radius-pill)",
+          boxShadow: "var(--shadow-md)",
         }}
       >
         <Link
           href="/"
           style={{
-            fontFamily: "var(--ds-font-display)",
+            fontFamily: "var(--font-display)",
             fontWeight: 600,
-            fontSize: "var(--ds-fs-body)",
-            color: "var(--ds-text)",
+            fontSize: "var(--fs-body)",
+            color: "var(--text)",
           }}
         >
           SyncFit
@@ -96,7 +96,7 @@ export function SiteNav({ email }: { email: string }) {
         <ul
           className="flex items-center list-none m-0 p-0"
           style={{
-            gap: "var(--ds-space-2)",
+            gap: "var(--space-2)",
           }}
         >
           {NAV_ITEMS.map((item) => {
@@ -106,15 +106,15 @@ export function SiteNav({ email }: { email: string }) {
                 <Link
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className="ds-btn ds-btn-ghost"
+                  className="btn btn--ghost"
                   style={{
-                    borderRadius: "var(--ds-radius-pill)",
-                    color: active ? "var(--ds-link)" : "var(--ds-text-muted)",
+                    borderRadius: "var(--radius-pill)",
+                    color: active ? "var(--link)" : "var(--text-muted)",
                     fontWeight: active ? 600 : 400,
-                    background: active ? "var(--ds-surface)" : "transparent",
+                    background: active ? "var(--surface)" : "transparent",
                     border: active
-                      ? "var(--ds-border-width) solid var(--ds-border)"
-                      : "var(--ds-border-width) solid transparent",
+                      ? "1px solid var(--border)"
+                      : "1px solid transparent",
                   }}
                 >
                   <span className="sm:hidden">{item.shortLabel}</span>
@@ -136,21 +136,21 @@ export function SiteNav({ email }: { email: string }) {
             // must not point at a non-existent element (WAI-ARIA).
             aria-controls={menuOpen ? "account-menu" : undefined}
             aria-label="Account menu"
-            className="ds-btn ds-btn-ghost flex items-center"
+            className="btn btn--ghost flex items-center"
             style={{
-              gap: "var(--ds-space-2)",
-              borderRadius: "var(--ds-radius-pill)",
+              gap: "var(--space-2)",
+              borderRadius: "var(--radius-pill)",
             }}
           >
             <span
               aria-hidden="true"
               className="flex items-center justify-center h-7 w-7"
               style={{
-                borderRadius: "var(--ds-radius-pill)",
-                background: "var(--ds-accent-ochre)",
-                color: "var(--ds-on-primary)",
+                borderRadius: "var(--radius-pill)",
+                background: "var(--accent-ochre)",
+                color: "var(--on-primary)",
                 fontWeight: 600,
-                fontSize: "var(--ds-fs-caption)",
+                fontSize: "var(--fs-caption)",
               }}
             >
               {initial}
@@ -158,8 +158,8 @@ export function SiteNav({ email }: { email: string }) {
             <span
               className="hidden sm:inline max-w-48"
               style={{
-                color: "var(--ds-text-muted)",
-                fontSize: "var(--ds-fs-body-sm)",
+                color: "var(--text-muted)",
+                fontSize: "var(--fs-body-sm)",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 whiteSpace: "nowrap",
@@ -175,21 +175,21 @@ export function SiteNav({ email }: { email: string }) {
               id="account-menu"
               role="menu"
               aria-label="Account"
-              className="ds-panel absolute right-0 z-50 min-w-56"
+              className="card card--soft absolute right-0 z-50 min-w-56"
               style={{
-                top: "calc(100% + var(--ds-space-2))",
-                borderRadius: "var(--ds-radius-sm)",
-                boxShadow: "var(--ds-shadow-lg)",
-                padding: "var(--ds-space-2)",
+                top: "calc(100% + var(--space-2))",
+                borderRadius: "var(--radius-sm)",
+                boxShadow: "var(--shadow-lg)",
+                padding: "var(--space-2)",
               }}
             >
               <div role="none">
                 <p
-                  className="ds-mono-note"
+                  className="caption"
                   style={{
                     margin: 0,
-                    padding: "var(--ds-space-2) var(--ds-space-3)",
-                    color: "var(--ds-text-muted)",
+                    padding: "var(--space-2) var(--space-3)",
+                    color: "var(--text-muted)",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
@@ -201,8 +201,8 @@ export function SiteNav({ email }: { email: string }) {
               <Link
                 href="/settings/devices"
                 role="menuitem"
-                className="ds-btn ds-btn-ghost w-full justify-start"
-                style={{ borderRadius: "var(--ds-radius-sm)" }}
+                className="btn btn--ghost w-full justify-start"
+                style={{ borderRadius: "var(--radius-sm)" }}
                 onClick={() => setMenuOpen(false)}
               >
                 Devices
@@ -212,19 +212,19 @@ export function SiteNav({ email }: { email: string }) {
                 role="menuitem"
                 onClick={onSignOut}
                 disabled={signingOut}
-                className="ds-btn ds-btn-ghost w-full justify-start disabled:cursor-not-allowed disabled:opacity-60"
-                style={{ borderRadius: "var(--ds-radius-sm)" }}
+                className="btn btn--ghost w-full justify-start disabled:cursor-not-allowed disabled:opacity-60"
+                style={{ borderRadius: "var(--radius-sm)" }}
               >
                 {signingOut ? "Signing out…" : "Sign out"}
               </button>
               {signOutError ? (
                 <p
                   role="alert"
-                  className="ds-mono-note"
+                  className="caption"
                   style={{
                     margin: 0,
-                    padding: "var(--ds-space-1) var(--ds-space-3)",
-                    color: "var(--ds-error)",
+                    padding: "var(--space-1) var(--space-3)",
+                    color: "var(--error)",
                   }}
                 >
                   {signOutError}
