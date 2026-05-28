@@ -66,12 +66,12 @@ export default function LogPage() {
   }
 
   return (
-    <main className="ds-container p-8 max-w-lg">
+    <main className="container p-8 max-w-lg">
       <h1 className="h1">log a workout</h1>
       <div className="flex gap-2 my-3" role="group" aria-label="workout kind">
         <button
           type="button"
-          className={`ds-btn ${kind === "strength" ? "ds-btn-primary" : "ds-btn-ghost"}`}
+          className={`btn ${kind === "strength" ? "" : "btn--ghost"}`}
           aria-pressed={kind === "strength"}
           onClick={() => setKind("strength")}
         >
@@ -79,7 +79,7 @@ export default function LogPage() {
         </button>
         <button
           type="button"
-          className={`ds-btn ${kind === "endurance" ? "ds-btn-primary" : "ds-btn-ghost"}`}
+          className={`btn ${kind === "endurance" ? "" : "btn--ghost"}`}
           aria-pressed={kind === "endurance"}
           onClick={() => setKind("endurance")}
         >
@@ -88,9 +88,9 @@ export default function LogPage() {
       </div>
 
       <form onSubmit={submit}>
-        <label className="grid-label">date &amp; time</label>
+        <label className="metric-label">date &amp; time</label>
         <input
-          className="border rounded p-2 w-full my-1"
+          className="input w-full my-1"
           type="datetime-local"
           value={performedAt}
           onChange={(e) => setPerformedAt(e.target.value)}
@@ -99,7 +99,7 @@ export default function LogPage() {
         {kind === "strength" ? (
           <>
             <input
-              className="border rounded p-2 w-full my-1"
+              className="input w-full my-1"
               placeholder="title (e.g. heavy lower)"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -107,14 +107,14 @@ export default function LogPage() {
             {rows.map((r, i) => (
               <div key={r.id} className="flex gap-2 my-1 items-center">
                 <input
-                  className="border rounded p-2 flex-1"
+                  className="input flex-1"
                   aria-label="exercise name"
                   placeholder="exercise"
                   value={r.name}
                   onChange={(e) => setRow(i, { name: e.target.value })}
                 />
                 <input
-                  className="border rounded p-2 w-20"
+                  className="input w-20"
                   type="number"
                   step="any"
                   min={0}
@@ -124,7 +124,7 @@ export default function LogPage() {
                   onChange={(e) => setRow(i, { weight: e.target.value })}
                 />
                 <input
-                  className="border rounded p-2 w-16"
+                  className="input w-16"
                   type="number"
                   min={1}
                   aria-label="reps"
@@ -134,7 +134,7 @@ export default function LogPage() {
                 />
                 <button
                   type="button"
-                  className="ds-btn ds-btn-ghost"
+                  className="btn btn--ghost"
                   aria-label="remove set"
                   disabled={rows.length <= 1}
                   onClick={() =>
@@ -149,20 +149,20 @@ export default function LogPage() {
             ))}
             <button
               type="button"
-              className="ds-btn ds-btn-secondary my-1"
+              className="btn btn--secondary my-1"
               onClick={() => setRows((rs) => [...rs, emptySet()])}
             >
               <Plus size={16} aria-hidden="true" /> add set
             </button>
-            <p className="ds-mono-note">
+            <p className="caption">
               one row per set; set numbers are assigned per exercise in order.
             </p>
           </>
         ) : (
           <>
-            <label className="grid-label">activity</label>
+            <label className="metric-label">activity</label>
             <select
-              className="border rounded p-2 my-1"
+              className="input my-1"
               value={activityType}
               onChange={(e) => setActivityType(e.target.value)}
             >
@@ -173,7 +173,7 @@ export default function LogPage() {
               ))}
             </select>
             <input
-              className="border rounded p-2 w-full my-1"
+              className="input w-full my-1"
               type="number"
               step="any"
               min={0}
@@ -182,13 +182,13 @@ export default function LogPage() {
               onChange={(e) => setDistance(e.target.value)}
             />
             <input
-              className="border rounded p-2 w-full my-1"
+              className="input w-full my-1"
               placeholder="duration (h:mm:ss or mm:ss)"
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
             />
             <textarea
-              className="border rounded p-2 w-full my-1"
+              className="input w-full my-1"
               placeholder="notes (optional)"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -197,9 +197,10 @@ export default function LogPage() {
         )}
 
         <button
-          className="ds-btn ds-btn-primary mt-3"
+          className="btn btn--cta mt-3"
           type="submit"
           disabled={busy}
+          aria-busy={busy}
         >
           {busy ? "saving…" : "log workout"}
         </button>
@@ -207,13 +208,13 @@ export default function LogPage() {
 
       {res &&
         (res.error || res.fieldErrors ? (
-          <p style={{ color: "var(--ds-error)" }}>
+          <p style={{ color: "var(--error)" }}>
             {res.error ??
               Object.values(res.fieldErrors ?? {}).join(" ") ??
               "Could not save."}
           </p>
         ) : (
-          <div className="ds-panel mt-4 p-4">
+          <div className="card mt-4 p-4">
             <p>
               {res.added > 0
                 ? "logged."
