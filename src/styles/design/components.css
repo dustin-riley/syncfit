@@ -1528,3 +1528,391 @@ select.input {
    No CSS rules are emitted here on purpose. Documenting the gap
    so the next reader doesn't wonder if it was missed. See
    System Overrides Spec §03 for the full weight-bump table. */
+
+/* ============================================================
+   .site-nav · canonical top navigation
+
+   Anchored hard-edge bar. Sticky-positioned. Carries the brand,
+   the in-app primary links, the account cluster, and — below the
+   phone breakpoint — a horizontally-scrolling rail of short labels.
+
+   The account menu (.site-nav__menu) is a "connected chip": it
+   structurally extends from the .site-nav__account trigger,
+   sharing its 1.5px --rule border rather than floating off as a
+   separate object. The consumer sets data-open="true" on the
+   account wrap when the menu is mounted; the wrap flattens its
+   bottom corners and the menu's top border merges cleanly.
+
+   Below --bp-phone the metaphor scales up: the avatar is too small
+   to be a connecting surface at that width, so the BAR becomes it
+   — the nav's bottom rule hands off to the menu's top rule via a
+   :has() rule. The consumer still only sets data-open on the wrap;
+   CSS handles the rest.
+
+   Container-query driven so the nav adapts to its OWN inline size
+   rather than the viewport — the recipe Just Works inside any
+   parent (including the preview card).
+
+   ANATOMY
+     <header class="site-nav">
+       <a class="site-nav__brand">…</a>
+       <ul class="site-nav__links">…li > a (desktop links)…</ul>
+       <div class="site-nav__account" data-open="true|false">
+         <button class="site-nav__trigger">
+           <span class="site-nav__avatar">D</span>
+           <span class="site-nav__email">…</span>
+           <span class="site-nav__chev" aria-hidden="true">…</span>
+         </button>
+       </div>
+       {open && (
+         <div class="site-nav__menu" role="menu">
+           <div class="site-nav__menu-email">…</div>
+           <a class="site-nav__menu-item" role="menuitem">…</a>
+           <div class="site-nav__menu-separator" role="separator"></div>
+           <button class="site-nav__menu-item" role="menuitem">…</button>
+         </div>
+       )}
+       <nav class="site-nav__rail">…a (mobile rail)…</nav>
+     </header>
+
+   The menu is a SIBLING of .site-nav__account (not nested) so it
+   can flow as its own row on mobile, beneath the bar's first row
+   and above the rail. On desktop it stacks directly under the
+   account wrap (col 3, row 2 of the grid) and visually connects
+   via the negative top margin.
+   ============================================================ */
+.site-nav {
+  container-type: inline-size;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto auto;
+  align-items: center;
+  column-gap: var(--space-6);
+  width: 100%;
+  padding: 13px 28px;
+  background: var(--bg);
+  border-bottom: var(--rule-width) solid var(--rule);
+  font-family: var(--font-body);
+  box-sizing: border-box;
+}
+
+.site-nav__brand {
+  grid-column: 1; grid-row: 1;
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  text-decoration: none;
+  line-height: 1;
+}
+
+.site-nav__links {
+  grid-column: 2; grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.site-nav__links a {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: none;
+  padding: 7px 13px;
+  border-radius: var(--radius-chip);
+  line-height: 1.2;
+  white-space: nowrap;
+  transition: background var(--duration-fast) var(--ease-standard),
+              color var(--duration-fast) var(--ease-standard);
+}
+.site-nav__links a:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+.site-nav__links a[aria-current="page"] {
+  background: var(--rule);
+  color: #fff;
+}
+.site-nav__links a:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: 0;
+}
+
+/* -------- account cluster (the chip that contains the trigger) -------- */
+.site-nav__account {
+  grid-column: 3; grid-row: 1;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  border: var(--rule-width) solid var(--rule);
+  border-radius: var(--radius-chip);
+  padding: 2px 4px 2px 2px;
+  background: var(--bg);
+  transition: border-radius var(--duration-fast) var(--ease-standard);
+}
+.site-nav__account[data-open="true"] {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.site-nav__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px 4px 4px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+.site-nav__trigger:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: 0;
+}
+
+.site-nav__avatar {
+  width: 24px;
+  height: 24px;
+  background: var(--accent-ochre);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+  border-radius: var(--radius-chip);
+}
+
+.site-nav__email {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-nav__chev {
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+/* Chevron flips to point up while the menu is open. The trigger is a
+   persistent element (only the menu unmounts), so a transition fires
+   cleanly on the aria-expanded change. */
+.site-nav__trigger[aria-expanded="true"] .site-nav__chev {
+  transform: rotate(180deg);
+}
+
+/* -------- connected-chip dropdown --------
+   Hangs flush from .site-nav__account on desktop, sharing its
+   vertical rules. No shadow — the rule does the structural work.
+   Adding a shadow would re-introduce the "floating panel" reading
+   the connected metaphor is designed to avoid. */
+.site-nav__menu {
+  grid-column: 3; grid-row: 2;
+  justify-self: end;
+  align-self: start;
+  min-width: 248px;
+  margin-top: calc(var(--rule-width) * -1);
+  background: var(--bg);
+  border: var(--rule-width) solid var(--rule);
+  border-top: none;
+  border-radius: 0 0 var(--radius-chip) var(--radius-chip);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  z-index: 50;
+  /* Unfurls downward from the chip's bottom edge on appear. The menu is
+     conditionally mounted by the consumer, so this is a keyframe animation
+     (plays once on mount), not a transition. clip-path wipes the panel in
+     from the top without squashing the text the way scaleY would; the
+     short fade softens the leading edge. duration-base = a transient
+     surface settling into its resting state. */
+  animation: site-nav-menu-in var(--duration-base) var(--ease-standard);
+  transform-origin: top;
+}
+@keyframes site-nav-menu-in {
+  from { opacity: 0; clip-path: inset(0 0 100% 0); }
+  to   { opacity: 1; clip-path: inset(0 0 0 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Honor Reduce Motion: the menu simply appears, the chevron simply
+     points up. End states are identical; only the in-between is dropped. */
+  .site-nav__menu { animation: none; }
+  .site-nav__chev { transition: none; }
+}
+
+.site-nav__menu-email {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-nav__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text);
+  text-decoration: none;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  line-height: 1.2;
+  width: 100%;
+  border-radius: 0;
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+.site-nav__menu-item:hover {
+  background: var(--surface);
+}
+.site-nav__menu-item:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: -3px;
+}
+.site-nav__menu-item:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.site-nav__menu-separator {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+/* -------- mobile rail --------
+   Always present in markup; hidden by default, revealed by the
+   container query below. Active marker is an ink underline so it
+   reads as the same family as the desktop ink-fill but at a
+   lighter weight — the rail is more navigational chrome than
+   page-state assertion. */
+.site-nav__rail {
+  grid-column: 1 / -1; grid-row: 3;
+  display: none;
+  gap: 0;
+  padding: 0 12px;
+  background: var(--bg);
+  border-bottom: var(--rule-width) solid var(--rule);
+  overflow-x: auto;
+  box-sizing: border-box;
+}
+.site-nav__rail a {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 12px;
+  box-shadow: inset 0 -3px 0 0 transparent;
+  white-space: nowrap;
+  margin-bottom: -1.5px;
+  transition: color var(--duration-fast) var(--ease-standard),
+              box-shadow var(--duration-fast) var(--ease-standard);
+}
+.site-nav__rail a:hover { color: var(--text); }
+.site-nav__rail a[aria-current="page"] {
+  color: var(--text);
+  box-shadow: inset 0 -3px 0 0 var(--rule);
+}
+.site-nav__rail a:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: -3px;
+}
+
+/* -------- < --bp-phone container query --------
+   Below 600px the nav's own inline size triggers the mobile
+   layout: link row hides, rail shows, email + chev hide from the
+   trigger, the connecting surface becomes the BAR instead of the
+   chip, and the menu spans the full bar width edge-to-edge. */
+@container (max-width: 600px) {
+  .site-nav {
+    column-gap: var(--space-3);
+    padding: 12px 16px;
+  }
+  .site-nav__links { display: none; }
+  .site-nav__rail { display: flex; }
+  .site-nav__email,
+  .site-nav__chev { display: none; }
+  /* Wrap is no longer the connecting surface — the bar is.
+     Keep the chip's full radius regardless of data-open. */
+  .site-nav__account[data-open="true"] {
+    border-bottom-left-radius: var(--radius-chip);
+    border-bottom-right-radius: var(--radius-chip);
+  }
+  /* Email + chev are hidden here, so the chip is just the avatar.
+     Match the exploration: the ink rule sits DIRECTLY on the avatar
+     (no wrap border, no inset) so the ochre fills right to the rule
+     with no --bg showing through. The wrap and trigger collapse to
+     pure layout boxes. */
+  .site-nav__account {
+    padding: 0;
+    border: none;
+    border-radius: 0;
+  }
+  .site-nav__trigger { padding: 0; gap: 0; }
+  .site-nav__avatar {
+    box-sizing: border-box;
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+    border: var(--rule-width) solid var(--rule);
+  }
+  /* Menu spans full bar width; sides go to viewport edges with
+     no vertical rules (nothing to share with there). Bar's bottom
+     rule hands off to the menu's top rule, then a fresh bottom rule
+     closes the menu off cleanly. */
+  .site-nav__menu {
+    grid-column: 1 / -1; grid-row: 2;
+    justify-self: stretch;
+    margin-top: 0;
+    margin-left: -16px;
+    margin-right: -16px;
+    border: none;
+    border-top: var(--rule-width) solid var(--rule);
+    border-bottom: var(--rule-width) solid var(--rule);
+    border-radius: 0;
+    padding: 6px 16px 10px;
+  }
+  .site-nav__menu-item {
+    padding: 12px 8px;
+    font-size: 15px;
+  }
+  .site-nav__menu-email {
+    padding: 8px;
+  }
+  .site-nav__rail {
+    margin-left: -16px;
+    margin-right: -16px;
+  }
+  /* Bar hands its bottom rule off to the menu's top rule */
+  .site-nav:has(.site-nav__account[data-open="true"]) {
+    border-bottom: none;
+  }
+}
