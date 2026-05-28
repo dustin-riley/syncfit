@@ -65,23 +65,23 @@ export function ChartCard({
 
   return (
     <article
-      className="ds-panel"
-      style={{ padding: "var(--ds-space-3) var(--ds-space-4)" }}
+      className="card"
+      style={{ padding: "var(--space-3) var(--space-4)" }}
     >
       <header
         style={{
           display: "flex",
           justifyContent: "space-between",
           alignItems: "baseline",
-          marginBottom: "var(--ds-space-1)",
+          marginBottom: "var(--space-1)",
         }}
       >
         <div>
-          <span className="h5" style={{ marginRight: "var(--ds-space-2)" }}>
+          <span className="h5" style={{ marginRight: "var(--space-2)" }}>
             {series.exerciseName}
           </span>
           {series.equipment && (
-            <span className="ds-mono-note">{series.equipment}</span>
+            <span className="caption">{series.equipment}</span>
           )}
         </div>
         <span className="h5">
@@ -89,7 +89,7 @@ export function ChartCard({
         </span>
       </header>
 
-      <p className="ds-mono-note" style={{ margin: "0 0 var(--ds-space-2)" }}>
+      <p className="caption" style={{ margin: "0 0 var(--space-2)" }}>
         {agoLabel(series.lastPerformedAt)} · {sessionsLabel}
         {showDelta && (
           <>
@@ -100,7 +100,7 @@ export function ChartCard({
         )}
       </p>
 
-      <div style={{ width: "100%", height: "var(--ds-space-9)" }}>
+      <div style={{ width: "100%", height: "var(--space-9)" }}>
         <ResponsiveContainer>
           <LineChart
             data={chartData}
@@ -123,7 +123,7 @@ export function ChartCard({
             <Line
               type="monotone"
               dataKey={dataKey}
-              stroke="var(--ds-accent-teal)"
+              stroke="var(--accent-teal)"
               strokeWidth={2}
               dot={{ r: 2 }}
               activeDot={{ r: 3 }}
