@@ -17,14 +17,14 @@ const STATE_META: Record<
   DayState,
   { label: string; Icon: typeof Check; color: string }
 > = {
-  done: { label: "done", Icon: Check, color: "var(--ds-accent-teal)" },
-  missed: { label: "missed", Icon: X, color: "var(--ds-accent-ochre)" },
+  done: { label: "done", Icon: Check, color: "var(--accent-teal)" },
+  missed: { label: "missed", Icon: X, color: "var(--accent-ochre)" },
   planned: {
     label: "planned",
     Icon: CalendarClock,
-    color: "var(--ds-text-muted)",
+    color: "var(--text-muted)",
   },
-  rest: { label: "rest", Icon: Minus, color: "var(--ds-text-muted)" },
+  rest: { label: "rest", Icon: Minus, color: "var(--text-muted)" },
 };
 
 export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
@@ -48,23 +48,23 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "var(--ds-space-2)",
-          marginBottom: "var(--ds-space-3)",
+          gap: "var(--space-2)",
+          marginBottom: "var(--space-3)",
         }}
       >
         <button
-          className="ds-btn ds-btn-ghost"
+          className="btn btn--ghost"
           onClick={() => go(data.prevWeekYmd)}
           disabled={pending}
           aria-label="previous week"
         >
           <ChevronLeft size={16} aria-hidden="true" />
         </button>
-        <span className="ds-mono-note" style={{ minWidth: "9ch" }}>
+        <span className="caption" style={{ minWidth: "9ch" }}>
           {data.label}
         </span>
         <button
-          className="ds-btn ds-btn-ghost"
+          className="btn btn--ghost"
           onClick={() => go(data.nextWeekYmd)}
           disabled={pending || data.nextDisabled}
           aria-label="next week"
@@ -81,21 +81,21 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
             <li
               key={d.ymd}
               style={{
-                borderBottom: "var(--ds-border-width) solid var(--ds-border)",
+                borderBottom: "1px solid var(--border)",
                 borderLeft: d.isToday
-                  ? "var(--ds-border-width) solid var(--ds-primary)"
-                  : "var(--ds-border-width) solid transparent",
-                paddingLeft: "var(--ds-space-2)",
-                paddingTop: "var(--ds-space-2)",
-                paddingBottom: "var(--ds-space-2)",
+                  ? "1px solid var(--primary)"
+                  : "1px solid transparent",
+                paddingLeft: "var(--space-2)",
+                paddingTop: "var(--space-2)",
+                paddingBottom: "var(--space-2)",
               }}
             >
               <div
-                className="ds-mono-note"
+                className="caption"
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "var(--ds-space-2)",
+                  gap: "var(--space-2)",
                 }}
               >
                 <span style={{ minWidth: "6ch", fontWeight: 600 }}>
@@ -105,7 +105,7 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: "var(--ds-space-1)",
+                    gap: "var(--space-1)",
                     minWidth: "8ch",
                     color: meta.color,
                     fontWeight: 600,
@@ -124,27 +124,27 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
               {d.state === "done" && (
                 <div
                   style={{
-                    marginTop: "var(--ds-space-2)",
-                    marginLeft: "var(--ds-space-5)",
+                    marginTop: "var(--space-2)",
+                    marginLeft: "var(--space-5)",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "var(--ds-space-3)",
+                    gap: "var(--space-3)",
                   }}
                 >
                   {d.workouts.map((w) => (
                     <div key={w.id}>
                       <div
-                        className="ds-mono-note"
+                        className="caption"
                         style={{
-                          color: "var(--ds-text)",
+                          color: "var(--text)",
                           fontWeight: 600,
-                          marginBottom: "var(--ds-space-1)",
+                          marginBottom: "var(--space-1)",
                         }}
                       >
                         {w.title}
                       </div>
                       <table
-                        className="ds-mono-note"
+                        className="caption"
                         style={{ borderCollapse: "collapse" }}
                       >
                         <tbody>
@@ -153,9 +153,9 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                               <td
                                 style={{
                                   whiteSpace: "nowrap",
-                                  paddingRight: "var(--ds-space-6)",
-                                  paddingTop: "var(--ds-space-1)",
-                                  paddingBottom: "var(--ds-space-1)",
+                                  paddingRight: "var(--space-6)",
+                                  paddingTop: "var(--space-1)",
+                                  paddingBottom: "var(--space-1)",
                                   verticalAlign: "baseline",
                                 }}
                               >
@@ -168,12 +168,12 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                                     width: "11ch",
                                     textAlign: "right",
                                     fontVariantNumeric: "tabular-nums",
-                                    paddingLeft: "var(--ds-space-4)",
-                                    paddingTop: "var(--ds-space-1)",
-                                    paddingBottom: "var(--ds-space-1)",
+                                    paddingLeft: "var(--space-4)",
+                                    paddingTop: "var(--space-1)",
+                                    paddingBottom: "var(--space-1)",
                                     color: s.isTop
-                                      ? "var(--ds-primary)"
-                                      : "var(--ds-text-muted)",
+                                      ? "var(--primary)"
+                                      : "var(--text-muted)",
                                     fontWeight: s.isTop ? 600 : 400,
                                   }}
                                 >
@@ -188,7 +188,7 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                   ))}
 
                   {d.endurance.map((e, i) => (
-                    <div className="ds-mono-note" key={`end-${i}`}>
+                    <div className="caption" key={`end-${i}`}>
                       {e.activityType}
                       {e.distanceMi === null
                         ? ""
@@ -204,9 +204,9 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
       </ul>
 
       {isEmptyWeek && (
-        <p className="ds-mono-note" style={{ marginTop: "var(--ds-space-3)" }}>
+        <p className="caption" style={{ marginTop: "var(--space-3)" }}>
           no workouts this week.{" "}
-          <Link href="/log" style={{ color: "var(--ds-link)" }}>
+          <Link href="/log" style={{ color: "var(--link)" }}>
             log a workout
           </Link>
           .
