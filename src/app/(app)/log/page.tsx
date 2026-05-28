@@ -68,19 +68,19 @@ export default function LogPage() {
   return (
     <main className="container p-8 max-w-lg">
       <h1 className="h1">log a workout</h1>
-      <div className="flex gap-2 my-3" role="group" aria-label="workout kind">
+      <div className="seg my-3" role="group" aria-label="workout kind">
         <button
           type="button"
-          className={`btn ${kind === "strength" ? "" : "btn--ghost"}`}
           aria-pressed={kind === "strength"}
+          className={kind === "strength" ? "on" : undefined}
           onClick={() => setKind("strength")}
         >
           strength
         </button>
         <button
           type="button"
-          className={`btn ${kind === "endurance" ? "" : "btn--ghost"}`}
           aria-pressed={kind === "endurance"}
+          className={kind === "endurance" ? "on" : undefined}
           onClick={() => setKind("endurance")}
         >
           endurance
