@@ -5,10 +5,10 @@ export default function AuthLayout({
 }) {
   return (
     <main className="flex min-h-screen items-center justify-center p-6">
-      <div className="ds-panel w-full max-w-md p-8">
+      <div className="card card--soft w-full max-w-md p-8">
         <div className="mb-6 text-center">
-          <h1 className="ds-display">SyncFit</h1>
-          <p className="ds-caption text-muted-foreground">
+          <h1 className="display">SyncFit</h1>
+          <p className="caption text-muted-foreground">
             Train smart. Progress on purpose.
           </p>
         </div>

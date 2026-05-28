@@ -37,7 +37,7 @@ export function Field({
     [hintId, describedById].filter(Boolean).join(" ") || undefined;
   return (
     <div className="mb-4">
-      <label htmlFor={id} className="ds-caption mb-1 block">
+      <label htmlFor={id} className="caption mb-1 block">
         {label}
       </label>
       <div className="relative">
@@ -51,9 +51,7 @@ export function Field({
           required={required}
           aria-invalid={error || undefined}
           aria-describedby={describedBy}
-          className={`w-full rounded-md bg-card px-3 py-2 text-foreground border ${
-            trailing ? "pr-11" : ""
-          } ${error ? "border-destructive" : "border-input"}`}
+          className={`input w-full ${trailing ? "pr-11" : ""}`}
         />
         {trailing ? (
           <div className="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -62,7 +60,7 @@ export function Field({
         ) : null}
       </div>
       {hint ? (
-        <p id={hintId} className="ds-caption mt-1 text-muted-foreground">
+        <p id={hintId} className="caption mt-1 text-muted-foreground">
           {hint}
         </p>
       ) : null}

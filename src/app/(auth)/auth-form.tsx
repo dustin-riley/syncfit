@@ -105,7 +105,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
             onClick={() => setShowPassword((s) => !s)}
             aria-pressed={showPassword}
             aria-label={showPassword ? "Hide password" : "Show password"}
-            className="ds-btn ds-btn-ghost p-1"
+            className="btn btn--ghost p-1"
           >
             {showPassword ? (
               <EyeOff size={18} aria-hidden="true" />
@@ -125,12 +125,13 @@ export function AuthForm({ mode }: { mode: Mode }) {
       <button
         type="submit"
         disabled={submitting}
-        className="ds-btn ds-btn-primary w-full justify-center disabled:cursor-not-allowed disabled:opacity-60"
+        aria-busy={submitting}
+        className="btn btn--cta w-full justify-center disabled:cursor-not-allowed disabled:opacity-60"
       >
         {submitting ? c.submitting : c.submit}
       </button>
 
-      <p className="ds-caption mt-4">
+      <p className="caption mt-4">
         <Link href={c.link.href}>{c.link.text}</Link>
       </p>
     </form>
