@@ -129,7 +129,7 @@ export function DevicesClient({
               Enter this code in the SyncFit iOS app:
             </p>
             <p
-              className="metric metric-md"
+              className="metric metric-lg"
               style={{ letterSpacing: "0.2em", margin: 0 }}
             >
               {code.code}

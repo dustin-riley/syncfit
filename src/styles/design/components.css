@@ -215,6 +215,37 @@ a:hover {
   color: var(--text-muted);
 }
 
+/* -------- .fig · aligned measurement figures --------
+   The house treatment for numbers that have to line up: weight×reps
+   cells in a column, a stat list, a timer that updates in place, an
+   pairing code. Renders figures on the MONO face, which
+   is tabular by construction — every glyph is one width — so columns
+   lock with NO dependency on an OpenType feature.
+
+   Why not just `font-variant-numeric: tabular-nums` on the body face?
+   Because the DM Sans + Outfit webfonts Google Fonts serves (what
+   tokens.css @imports, and what the consumer's next/font/google pulls)
+   STRIP the `tnum`/`zero` lookups, so that request is silently inert
+   on those builds. Mono sidesteps it entirely. (If the full DM Sans /
+   Outfit builds are ever self-hosted — they DO carry the features —
+   a face-agnostic variant could be reintroduced. See CHANGELOG.)
+
+   `slashed-zero` is kept as belt-and-suspenders: harmless on mono,
+   and it keeps a measurement 0 unmistakably a digit (e.g. 270×10).
+   (It does nothing for pairing codes — those use a full Crockford
+   alphabet with no 0/1/I/L/O/U, so there's no 0 to disambiguate;
+   mono just gives them the fixed width.) NOTE: .fig sets the
+   font family, so it changes the face — that's intentional. The big
+   hero numbers (.metric, readiness, weekly volume) stay in Outfit;
+   only column-aligned figures move to mono. */
+.fig {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums slashed-zero;
+  font-feature-settings:
+    "tnum" 1,
+    "zero" 1;
+}
+
 /* -------- .field-label · form field label --------
    The body-face label that sits above an .input/.seg/.tog. Distinct
    from .metric-label (a mono, uppercase MEASUREMENT caption) — they
