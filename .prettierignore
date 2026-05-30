@@ -4,7 +4,9 @@ drizzle
 package-lock.json
 .claude/skills
 .claude/agents
-docs/superpowers
+# Prose docs (specs, plans, backlogs) — authored by hand / by agents, not held
+# to Prettier's markdown reflow.
+docs
 # Xcode-owned asset catalog JSON — format is dictated by Xcode, not Prettier.
 ios/SyncFit/SyncFit/Assets.xcassets
 # Vendored design-system source (from the Claude Design handoff bundle) — kept

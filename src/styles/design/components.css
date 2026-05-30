@@ -215,6 +215,36 @@ a:hover {
   color: var(--text-muted);
 }
 
+/* -------- .field-label · form field label --------
+   The body-face label that sits above an .input/.seg/.tog. Distinct
+   from .metric-label (a mono, uppercase MEASUREMENT caption) — they
+   were being conflated in the consumer (log/page.tsx reused
+   .metric-label for form labels). Quiet, legible, full-ink. */
+.field-label {
+  display: block;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--text);
+  margin-bottom: var(--space-2);
+}
+
+/* -------- .alert-text · inline error / alert copy --------
+   The sanctioned replacement for the inline `style={{ color:
+   var(--error) }}` escape hatch (form-validation messages, the
+   nav sign-out error). Color stays in-palette; pair with
+   role="alert" on a live region when the message appears
+   dynamically. Color is never the only signal — keep an icon or
+   the field's [aria-invalid] state alongside it. */
+.alert-text {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--error);
+}
+
 /* ============================================================
    COMPONENTS · buttons, cards, chips, controls
 
@@ -768,6 +798,80 @@ select.input {
   box-shadow:
     inset 0 1px 2px rgba(74, 52, 28, 0.08),
     inset 0 1px 0 rgba(74, 52, 28, 0.04);
+}
+
+/* -------- .password-field · password input + reveal toggle --------
+   Wraps a canonical .input[type=password] and an icon reveal toggle,
+   so the field stays the same hard-edge chip as every other .input —
+   the only addition is the in-field affordance.
+
+     <div class="password-field">
+       <input class="input" type="password" autocomplete="current-password">
+       <button class="password-field__toggle" type="button"
+               aria-pressed="false" aria-label="show password">
+         <i data-lucide="eye"></i>
+       </button>
+     </div>
+
+   The toggle is an icon-only button carrying the Lucide eye / eye-off
+   glyph (1.5px stroke, inherits currentColor per the iconography spec).
+   The consumer flips the input's `type` between `password` and `text`,
+   swaps the glyph (eye ↔ eye-off), keeps `aria-pressed` in sync, and
+   updates the `aria-label` ("show password" / "hide password") since the
+   button has no visible text. The field itself inherits every .input
+   state (focus ring, [aria-invalid], :disabled) unchanged; the toggle
+   just sits inside the reserved right padding. iOS is token-only here
+   (E-02) — SwiftUI's SecureField covers reveal natively. */
+.password-field {
+  position: relative;
+  display: block;
+}
+.password-field > .input {
+  /* Reserve room for the toggle so revealed text never slides under it. */
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 46px;
+}
+.password-field__toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-chip);
+  padding: 0;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+/* 20px glyph for dense in-field UI, 1.5px stroke per the iconography spec. */
+.password-field__toggle svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.5;
+}
+.password-field__toggle:hover {
+  color: var(--text);
+}
+.password-field__toggle[aria-pressed="true"] {
+  color: var(--text);
+}
+/* :focus-visible per Focus Ring Policy — a mouse click on the toggle
+   shouldn't leave the ring behind, but keyboard focus must show it. */
+.password-field__toggle:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 0;
+}
+/* When the wrapped input is disabled, fade and disarm the toggle too. */
+.password-field:has(> .input:disabled) .password-field__toggle {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 /* -------- .seg · segmented control --------
@@ -1528,3 +1632,429 @@ select.input {
    No CSS rules are emitted here on purpose. Documenting the gap
    so the next reader doesn't wonder if it was missed. See
    System Overrides Spec §03 for the full weight-bump table. */
+
+/* ============================================================
+   .site-nav · canonical top navigation
+
+   Anchored hard-edge bar. Sticky-positioned. Carries the brand,
+   the in-app primary links, the account cluster, and — below the
+   phone breakpoint — a horizontally-scrolling rail of short labels.
+
+   The account menu (.site-nav__menu) is a "connected chip": it
+   structurally extends from the .site-nav__account trigger,
+   sharing its 1.5px --rule border rather than floating off as a
+   separate object. The consumer sets data-open="true" on the
+   account wrap when the menu is mounted; the wrap flattens its
+   bottom corners and the menu's top border merges cleanly.
+
+   The menu lives INSIDE .site-nav__account (which is the only
+   positioned element it needs), so it is a plain absolutely-
+   positioned dropdown — no grid placement, no :has(), nothing
+   breakpoint-specific about how it's anchored. It overlays the
+   page; nothing reflows when it opens.
+
+   Below --bp-phone the link row collapses to a scrolling rail and
+   the menu goes full-bleed: still anchored to the chip, just
+   widened to the viewport (width: 100vw) and dropped to the bar's
+   bottom edge so it reads as the bar opening. The chip itself
+   shrinks to just the avatar.
+
+   Container-query driven so the nav adapts to its OWN inline size
+   rather than the viewport — the recipe Just Works inside any
+   parent.
+
+   ANATOMY
+     <header class="site-nav">
+       <a class="site-nav__brand">…</a>
+       <nav class="site-nav__nav" aria-label="Primary">   (desktop landmark)
+         <ul class="site-nav__links">…li > a (desktop links)…</ul>
+       </nav>
+       <div class="site-nav__account" data-open="true|false">
+         <button class="site-nav__trigger">
+           <span class="site-nav__avatar">D</span>
+           <span class="site-nav__email">…</span>
+           <span class="site-nav__chev" aria-hidden="true">…</span>
+         </button>
+         {open && (
+           <div class="site-nav__menu" role="menu">
+             <!-- role="menu" owns only menuitem/separator/group/none —
+                  the email caption and any alert are presentational, so
+                  each carries role="none" (the alert is wrapped so it
+                  keeps its own role). -->
+             <p class="site-nav__menu-email" role="none">…</p>
+             <a class="site-nav__menu-item" role="menuitem">…</a>
+             <div class="site-nav__menu-separator" role="separator"></div>
+             <button class="site-nav__menu-item" role="menuitem">…</button>
+             <div role="none"><p class="alert-text" role="alert">…</p></div>
+           </div>
+         )}
+       </div>
+       <nav class="site-nav__rail" aria-label="Primary">…a (mobile rail)…</nav>
+     </header>
+
+   The menu is a CHILD of .site-nav__account so a single containment
+   ref (on the account wrap) covers both the trigger and the menu
+   for outside-click dismissal.
+   ============================================================ */
+.site-nav {
+  --sn-pad-x: 28px;
+  --sn-pad-y: 13px;
+  container-type: inline-size;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: var(--space-6);
+  width: 100%;
+  padding: var(--sn-pad-y) var(--sn-pad-x);
+  background: var(--bg);
+  border-bottom: var(--rule-width) solid var(--rule);
+  font-family: var(--font-body);
+  box-sizing: border-box;
+}
+
+.site-nav__brand {
+  grid-column: 1; grid-row: 1;
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  text-decoration: none;
+  line-height: 1;
+}
+
+/* The desktop primary-link cluster's grid child is a <nav> so desktop
+   has a real navigation landmark. The mobile .site-nav__rail is the
+   <nav> at narrow widths, but it's display:none here — leaving desktop
+   with no landmark. Wrapping the <ul> in the consumer would break the
+   grid placement, so the landmark IS the grid child and the <ul> inside
+   carries the flex layout. Below the phone breakpoint .site-nav__nav is
+   hidden (and removed from the a11y tree), so the rail is the sole
+   Primary landmark — never two at once. */
+.site-nav__nav {
+  grid-column: 2; grid-row: 1;
+  display: flex;
+  align-items: center;
+}
+.site-nav__links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.site-nav__links a {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: none;
+  padding: 7px 13px;
+  border-radius: var(--radius-chip);
+  line-height: 1.2;
+  white-space: nowrap;
+  transition: background var(--duration-fast) var(--ease-standard),
+              color var(--duration-fast) var(--ease-standard);
+}
+.site-nav__links a:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+.site-nav__links a[aria-current="page"] {
+  background: var(--rule);
+  color: #fff;
+}
+.site-nav__links a:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: 0;
+}
+
+/* -------- account cluster (the chip that contains the trigger) -------- */
+.site-nav__account {
+  grid-column: 3; grid-row: 1;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  border: var(--rule-width) solid var(--rule);
+  border-radius: var(--radius-chip);
+  padding: 2px 4px 2px 2px;
+  background: var(--bg);
+  transition: border-radius var(--duration-fast) var(--ease-standard);
+}
+.site-nav__account[data-open="true"] {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.site-nav__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px 4px 4px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+.site-nav__trigger:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: 0;
+}
+
+.site-nav__avatar {
+  width: 24px;
+  height: 24px;
+  background: var(--accent-ochre);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+  border-radius: var(--radius-chip);
+}
+
+.site-nav__email {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-nav__chev {
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+/* Chevron flips to point up while the menu is open. The trigger is a
+   persistent element (only the menu unmounts), so a transition fires
+   cleanly on the aria-expanded change. */
+.site-nav__trigger[aria-expanded="true"] .site-nav__chev {
+  transform: rotate(180deg);
+}
+
+/* -------- connected-chip dropdown --------
+   A plain absolutely-positioned dropdown, anchored to its parent
+   .site-nav__account (the only positioned element it needs). Hangs
+   flush from the chip's bottom edge, sharing the chip's vertical
+   rules. No shadow — the rule does the structural work; a shadow
+   would re-introduce the "floating panel" reading the connected
+   metaphor avoids. Out of flow, so opening it OVERLAYS the page
+   rather than pushing anything down. */
+.site-nav__menu {
+  position: absolute;
+  box-sizing: border-box;
+  /* Spans the chip exactly — left + right anchored to the chip's outer
+     edges (one rule-width past the padding box on each side) so both
+     vertical rules line up with the chip's for a true connected seam.
+     top pulled up one rule-width so the menu's top sits ON the chip's
+     bottom border. */
+  top: calc(100% - var(--rule-width));
+  left: calc(var(--rule-width) * -1);
+  right: calc(var(--rule-width) * -1);
+  background: var(--bg);
+  border: var(--rule-width) solid var(--rule);
+  border-top: none;
+  border-radius: 0 0 var(--radius-chip) var(--radius-chip);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  z-index: 50;
+  /* Unfurls downward from the chip's bottom edge on appear. The menu is
+     conditionally mounted by the consumer, so this is a keyframe animation
+     (plays once on mount), not a transition. clip-path wipes the panel in
+     from the top without squashing the text the way scaleY would; the
+     short fade softens the leading edge. duration-base = a transient
+     surface settling into its resting state. */
+  animation: site-nav-menu-in var(--duration-base) var(--ease-standard);
+  transform-origin: top;
+}
+@keyframes site-nav-menu-in {
+  from { opacity: 0; clip-path: inset(0 0 100% 0); }
+  to   { opacity: 1; clip-path: inset(0 0 0 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Honor Reduce Motion: the menu simply appears, the chevron simply
+     points up. End states are identical; only the in-between is dropped. */
+  .site-nav__menu { animation: none; }
+  .site-nav__chev { transition: none; }
+}
+
+.site-nav__menu-email {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.site-nav__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text);
+  text-decoration: none;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  line-height: 1.2;
+  width: 100%;
+  border-radius: 0;
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+.site-nav__menu-item:hover {
+  background: var(--surface);
+}
+.site-nav__menu-item:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: -3px;
+}
+.site-nav__menu-item:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.site-nav__menu-separator {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+/* -------- mobile rail --------
+   Always present in markup; hidden by default, revealed by the
+   container query below. Active marker is an ink underline so it
+   reads as the same family as the desktop ink-fill but at a
+   lighter weight — the rail is more navigational chrome than
+   page-state assertion. */
+.site-nav__rail {
+  grid-column: 1 / -1; grid-row: 2;
+  display: none;
+  gap: 0;
+  padding: 0 12px;
+  background: var(--bg);
+  border-bottom: var(--rule-width) solid var(--rule);
+  overflow-x: auto;
+  box-sizing: border-box;
+}
+.site-nav__rail a {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 12px;
+  box-shadow: inset 0 -3px 0 0 transparent;
+  white-space: nowrap;
+  margin-bottom: -1.5px;
+  transition: color var(--duration-fast) var(--ease-standard),
+              box-shadow var(--duration-fast) var(--ease-standard);
+}
+.site-nav__rail a:hover { color: var(--text); }
+.site-nav__rail a[aria-current="page"] {
+  color: var(--text);
+  box-shadow: inset 0 -3px 0 0 var(--rule);
+}
+.site-nav__rail a:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: -3px;
+}
+
+/* -------- < --bp-phone container query --------
+   Below 600px the nav's own inline size triggers the mobile
+   layout: link row hides, rail shows, email + chev hide from the
+   trigger so the chip is just the avatar, and the menu goes
+   full-bleed — anchored to the bar (not the chip) and dropped from
+   the bar's bottom edge, below the row-2 rail.
+
+   NOTE: .site-nav is its OWN query container (container-type above),
+   so @container rules here match its DESCENDANTS, never .site-nav
+   itself — the `.site-nav { --sn-pad-*; column-gap }` block below is
+   inert (the nav keeps its base padding). Left in place as the intended
+   values for when the container moves to a wrapper; descendants that
+   need the mobile metrics read them off the base custom props. */
+@container (max-width: 600px) {
+  .site-nav {
+    --sn-pad-x: 16px;
+    --sn-pad-y: 12px;
+    column-gap: var(--space-3);
+  }
+  .site-nav__nav { display: none; }
+  .site-nav__rail { display: flex; }
+  .site-nav__email,
+  .site-nav__chev { display: none; }
+  /* The chip is just the avatar now — the ink rule sits DIRECTLY on
+     it (no wrap border, no inset) so the ochre fills right to the
+     rule. The wrap and trigger collapse to pure layout boxes.
+     position:static drops the chip as the menu's containing block so
+     the full-bleed menu anchors to .site-nav (the sticky bar) and
+     hangs off the WHOLE bar's bottom — below the row-2 rail — instead
+     of off the chip's bottom, which sits mid-rail. */
+  .site-nav__account {
+    position: static;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+  }
+  .site-nav__trigger { padding: 0; gap: 0; }
+  .site-nav__avatar {
+    box-sizing: border-box;
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+    border: var(--rule-width) solid var(--rule);
+  }
+  /* Full-bleed: now anchored to .site-nav (the chip is position:static
+     above), so 100% is the bar's PADDING-box bottom. Pull up by the
+     bar's own bottom padding (var(--sn-pad-y), inherited from the base
+     rule) so the menu lands on the CONTENT-box bottom — flush under the
+     row-2 rail, no dead band — and still clears it entirely. left:0/
+     right:0 span the bar's full width (it runs edge-to-edge on mobile).
+     The nav's border-bottom frames the top of the slice, so the menu
+     carries only its bottom rule. It overlays the page; nothing reflows. */
+  .site-nav__menu {
+    top: calc(100% - var(--sn-pad-y));
+    left: 0;
+    right: 0;
+    width: auto;
+    min-width: 0;
+    border: none;
+    border-bottom: var(--rule-width) solid var(--rule);
+    border-radius: 0;
+    padding: 6px var(--sn-pad-x) 10px;
+  }
+  .site-nav__menu-item {
+    padding: 12px 8px;
+    font-size: 15px;
+  }
+  .site-nav__menu-email {
+    padding: 8px;
+  }
+  .site-nav__rail {
+    margin-left: calc(var(--sn-pad-x) * -1);
+    margin-right: calc(var(--sn-pad-x) * -1);
+  }
+}

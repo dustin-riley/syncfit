@@ -116,7 +116,7 @@ export function TodaySession({
         {busy ? "analyzing…" : "analyze readiness"}
       </button>
       {out?.error && (
-        <p style={{ color: "var(--error)" }}>
+        <p role="alert" className="alert-text">
           {out.error}
           {result && " Showing your earlier result below."}
         </p>

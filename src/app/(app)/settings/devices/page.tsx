@@ -4,7 +4,7 @@ import { DevicesClient } from "./devices-client";
 export default async function DevicesPage() {
   const devices = await listDevices();
   return (
-    <main className="container p-8">
+    <main className="container py-8">
       <h1 className="h1">devices</h1>
       <p
         style={{

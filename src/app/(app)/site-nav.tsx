@@ -1,10 +1,30 @@
 // src/app/(app)/site-nav.tsx
+//
+// v0.5 migration: the pre-v0.5 floating pill is replaced by the canonical
+// `.site-nav` recipe (web/components.css). All chrome now comes from the
+// design-system classes — no inline style objects. The component keeps the
+// same behavior contract: outside-click + Escape dismissal, focus return,
+// and the sign-out flow with inline error.
+//
+// Anatomy rendered (see README "Site nav API"):
+//   .site-nav  >  .site-nav__brand
+//                 .site-nav__links            (full labels; hidden < --bp-phone)
+//                 .site-nav__account[data-open]
+//                   .site-nav__trigger > avatar / email / chev
+//                   .site-nav__menu           (connected-chip dropdown; mounted when open)
+//                 .site-nav__rail             (short labels; shown < --bp-phone)
+//
+// The menu is a CHILD of .site-nav__account (the only positioned element it
+// needs) — a plain absolutely-positioned dropdown that overlays the page;
+// nothing reflows when it opens. `data-open` on the account wrap drives the
+// connected-chip seam. Because the menu lives inside the wrap, a single
+// containment ref on the wrap covers both the trigger and the menu.
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown } from "lucide-react";
 import { authClient } from "@/auth/client";
 import { NAV_ITEMS, isActivePath } from "@/lib/nav";
 
@@ -13,20 +33,21 @@ export function SiteNav({ email }: { email: string }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const [signOutError, setSignOutError] = useState("");
-  const menuRef = useRef<HTMLDivElement>(null);
+  const accountRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const initial = (email.trim()[0] ?? "?").toUpperCase();
 
   // Dismiss the menu on outside pointer-down and on Escape; return focus to
-  // the trigger so keyboard users are not stranded.
+  // the trigger so keyboard users are not stranded. The menu lives INSIDE
+  // .site-nav__account, so a single containment test on the wrap covers both
+  // the trigger and the menu — a pointer-down anywhere inside is "inside,"
+  // so menu-item clicks are never dismissed before they land.
   useEffect(() => {
     if (!menuOpen) return;
     function onPointerDown(e: PointerEvent) {
       if (
-        menuRef.current &&
-        !menuRef.current.contains(e.target as Node) &&
-        triggerRef.current &&
-        !triggerRef.current.contains(e.target as Node)
+        accountRef.current &&
+        !accountRef.current.contains(e.target as Node)
       ) {
         setMenuOpen(false);
       }
@@ -65,40 +86,18 @@ export function SiteNav({ email }: { email: string }) {
   }
 
   return (
-    <div
-      className="sticky top-0 z-40 flex justify-center"
-      style={{ padding: "var(--space-4) var(--space-4) 0" }}
-    >
-      <nav
-        aria-label="Primary"
-        className="flex items-center"
-        style={{
-          gap: "var(--space-3)",
-          padding: "var(--space-2) var(--space-4)",
-          background: "var(--bg)",
-          border: "1px solid var(--border)",
-          borderRadius: "var(--radius-pill)",
-          boxShadow: "var(--shadow-md)",
-        }}
-      >
-        <Link
-          href="/"
-          style={{
-            fontFamily: "var(--font-display)",
-            fontWeight: 600,
-            fontSize: "var(--fs-body)",
-            color: "var(--text)",
-          }}
-        >
-          SyncFit
-        </Link>
+    <header className="site-nav">
+      <Link href="/" className="site-nav__brand">
+        SyncFit
+      </Link>
 
-        <ul
-          className="flex items-center list-none m-0 p-0"
-          style={{
-            gap: "var(--space-2)",
-          }}
-        >
+      {/* Desktop primary links — full labels. The <nav> landmark is the
+          grid child: wrapping the <ul> in the consumer would break the
+          .site-nav grid placement, so the recipe places .site-nav__nav and
+          the <ul> rides inside it. Hidden below --bp-phone, where the rail
+          at the bottom becomes the Primary landmark. */}
+      <nav className="site-nav__nav" aria-label="Primary">
+        <ul className="site-nav__links" role="list">
           {NAV_ITEMS.map((item) => {
             const active = isActivePath(pathname, item.href);
             return (
@@ -106,134 +105,102 @@ export function SiteNav({ email }: { email: string }) {
                 <Link
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className="btn btn--ghost"
-                  style={{
-                    borderRadius: "var(--radius-pill)",
-                    color: active ? "var(--link)" : "var(--text-muted)",
-                    fontWeight: active ? 600 : 400,
-                    background: active ? "var(--surface)" : "transparent",
-                    border: active
-                      ? "1px solid var(--border)"
-                      : "1px solid transparent",
-                  }}
                 >
-                  <span className="sm:hidden">{item.shortLabel}</span>
-                  <span className="hidden sm:inline">{item.label}</span>
+                  {item.label}
                 </Link>
               </li>
             );
           })}
         </ul>
+      </nav>
 
-        <div ref={menuRef} className="relative">
-          <button
-            ref={triggerRef}
-            type="button"
-            onClick={() => setMenuOpen((o) => !o)}
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
-            // Only reference the panel while it is mounted; aria-controls
-            // must not point at a non-existent element (WAI-ARIA).
-            aria-controls={menuOpen ? "account-menu" : undefined}
-            aria-label="Account menu"
-            className="btn btn--ghost flex items-center"
-            style={{
-              gap: "var(--space-2)",
-              borderRadius: "var(--radius-pill)",
-            }}
+      {/* Account chip. data-open flattens the bottom corners so the menu
+          connects seamlessly. The menu is nested inside so a single ref
+          covers trigger + menu for outside-click dismissal. */}
+      <div className="site-nav__account" data-open={menuOpen} ref={accountRef}>
+        <button
+          ref={triggerRef}
+          type="button"
+          className="site-nav__trigger"
+          onClick={() => setMenuOpen((o) => !o)}
+          aria-haspopup="menu"
+          aria-expanded={menuOpen}
+          // Only reference the panel while it is mounted; aria-controls must
+          // not point at a non-existent element (WAI-ARIA).
+          aria-controls={menuOpen ? "account-menu" : undefined}
+          aria-label="Account menu"
+        >
+          <span className="site-nav__avatar" aria-hidden="true">
+            {initial}
+          </span>
+          <span className="site-nav__email">{email}</span>
+          <span className="site-nav__chev" aria-hidden="true">
+            ▾
+          </span>
+        </button>
+
+        {/* Connected-chip dropdown — child of the chip, absolutely positioned,
+            overlays the page. Conditionally mounted so the open animation
+            replays each time. */}
+        {menuOpen ? (
+          <div
+            id="account-menu"
+            role="menu"
+            aria-label="Account"
+            className="site-nav__menu"
           >
-            <span
-              aria-hidden="true"
-              className="flex items-center justify-center h-7 w-7"
-              style={{
-                borderRadius: "var(--radius-pill)",
-                background: "var(--accent-ochre)",
-                color: "var(--on-primary)",
-                fontWeight: 600,
-                fontSize: "var(--fs-caption)",
-              }}
-            >
-              {initial}
-            </span>
-            <span
-              className="hidden sm:inline max-w-48"
-              style={{
-                color: "var(--text-muted)",
-                fontSize: "var(--fs-body-sm)",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
+            <p className="site-nav__menu-email" role="none">
               {email}
-            </span>
-            <ChevronDown size={16} aria-hidden="true" />
-          </button>
-
-          {menuOpen ? (
-            <div
-              id="account-menu"
-              role="menu"
-              aria-label="Account"
-              className="card card--soft absolute right-0 z-50 min-w-56"
-              style={{
-                top: "calc(100% + var(--space-2))",
-                borderRadius: "var(--radius-sm)",
-                boxShadow: "var(--shadow-lg)",
-                padding: "var(--space-2)",
-              }}
+            </p>
+            <Link
+              href="/settings/devices"
+              role="menuitem"
+              className="site-nav__menu-item"
+              onClick={() => setMenuOpen(false)}
             >
+              Devices
+            </Link>
+            <div className="site-nav__menu-separator" role="separator" />
+            <button
+              type="button"
+              role="menuitem"
+              className="site-nav__menu-item"
+              onClick={onSignOut}
+              disabled={signingOut}
+            >
+              {signingOut ? "Signing out…" : "Sign out"}
+            </button>
+            {/* A menu (role="menu") owns only menuitem/separator/group/
+                presentational children. The live region is wrapped in a
+                role="none" element so it's a valid menu child while the
+                inner <p> keeps role="alert". .alert-text replaces the
+                former inline color + borderBottom override. */}
+            {signOutError ? (
               <div role="none">
-                <p
-                  className="caption"
-                  style={{
-                    margin: 0,
-                    padding: "var(--space-2) var(--space-3)",
-                    color: "var(--text-muted)",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {email}
-                </p>
-              </div>
-              <Link
-                href="/settings/devices"
-                role="menuitem"
-                className="btn btn--ghost w-full justify-start"
-                style={{ borderRadius: "var(--radius-sm)" }}
-                onClick={() => setMenuOpen(false)}
-              >
-                Devices
-              </Link>
-              <button
-                type="button"
-                role="menuitem"
-                onClick={onSignOut}
-                disabled={signingOut}
-                className="btn btn--ghost w-full justify-start disabled:cursor-not-allowed disabled:opacity-60"
-                style={{ borderRadius: "var(--radius-sm)" }}
-              >
-                {signingOut ? "Signing out…" : "Sign out"}
-              </button>
-              {signOutError ? (
-                <p
-                  role="alert"
-                  className="caption"
-                  style={{
-                    margin: 0,
-                    padding: "var(--space-1) var(--space-3)",
-                    color: "var(--error)",
-                  }}
-                >
+                <p role="alert" className="alert-text">
                   {signOutError}
                 </p>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+
+      {/* Mobile rail — short labels. Shown below --bp-phone via container query. */}
+      <nav className="site-nav__rail" aria-label="Primary">
+        {NAV_ITEMS.map((item) => {
+          const active = isActivePath(pathname, item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={active ? "page" : undefined}
+            >
+              {item.shortLabel}
+            </Link>
+          );
+        })}
       </nav>
-    </div>
+    </header>
   );
 }

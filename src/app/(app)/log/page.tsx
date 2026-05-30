@@ -68,19 +68,19 @@ export default function LogPage() {
   return (
     <main className="container p-8 max-w-lg">
       <h1 className="h1">log a workout</h1>
-      <div className="flex gap-2 my-3" role="group" aria-label="workout kind">
+      <div className="seg my-3" role="group" aria-label="workout kind">
         <button
           type="button"
-          className={`btn ${kind === "strength" ? "" : "btn--ghost"}`}
           aria-pressed={kind === "strength"}
+          className={kind === "strength" ? "on" : undefined}
           onClick={() => setKind("strength")}
         >
           strength
         </button>
         <button
           type="button"
-          className={`btn ${kind === "endurance" ? "" : "btn--ghost"}`}
           aria-pressed={kind === "endurance"}
+          className={kind === "endurance" ? "on" : undefined}
           onClick={() => setKind("endurance")}
         >
           endurance
@@ -88,7 +88,7 @@ export default function LogPage() {
       </div>
 
       <form onSubmit={submit}>
-        <label className="metric-label">date &amp; time</label>
+        <label className="field-label">date &amp; time</label>
         <input
           className="input w-full my-1"
           type="datetime-local"
@@ -160,7 +160,7 @@ export default function LogPage() {
           </>
         ) : (
           <>
-            <label className="metric-label">activity</label>
+            <label className="field-label">activity</label>
             <select
               className="input my-1"
               value={activityType}
