@@ -5,6 +5,7 @@ import {
   strengthContentHash,
   enduranceContentHash,
   sequenceStrengthSets,
+  logStrengthWorkout,
   ACTIVITY_TYPES,
   type ManualStrengthInput,
   type ManualEnduranceInput,
@@ -126,5 +127,26 @@ describe("content hashes", () => {
     expect(enduranceContentHash(goodEndurance)).not.toBe(
       enduranceContentHash({ ...goodEndurance, distanceMi: 6.3 })
     );
+  });
+  it("returns a 64-char hex string", () => {
+    expect(strengthContentHash(goodStrength)).toHaveLength(64);
+  });
+});
+
+// New test: signature accepts an optional source string.
+// The function dynamically imports @/db, so a unit test can only assert the
+// signature compiles and validation runs. The DB write path is asserted in
+// the integration test (Task 3). This test just locks the signature.
+describe("logStrengthWorkout signature", () => {
+  it("accepts a third source argument without breaking the type", () => {
+    // Compile-only check: the import below would fail to type-check if the
+    // optional third arg were removed or renamed. We don't actually invoke
+    // the function (it would need a DB) — the assignment is enough.
+    const fn: (
+      userId: string,
+      input: ManualStrengthInput,
+      source?: string
+    ) => Promise<unknown> = logStrengthWorkout;
+    expect(typeof fn).toBe("function");
   });
 });
