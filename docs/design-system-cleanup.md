@@ -82,16 +82,13 @@ These are mechanical, isolated, and don't depend on anything else.
 - [x] **[consumer]** `src/app/(app)/settings/devices/devices-client.tsx` — the
       pairing code now uses the `.metric .metric-md` primitive (mono + tabular +
       slashed-zero by design) instead of `.display` + inline `font-mono`. (PR #27)
-- [~] **[consumer]** `src/app/(app)/dashboard/training-week.tsx` L170 — inline
-  `fontVariantNumeric: "tabular-nums"` on measurement cells. **Left inline by
-  decision.** The recipe set has no tabular-nums-only primitive: `.metric` is a
-  hero-display treatment (display face, weight 700, wide tracking) and the size
-  classes `.metric-sm/-md/-lg/-xl` only set `font-size`, so `.metric-sm` alone
-  gives no tabular-nums and `.metric .metric-sm` pulls in the full display face —
-  wrong altitude for dense `weight×reps` data-table cells, and it would collide
-  with the per-cell top-set color/weight logic. Keeping the inline
-  `font-variant-numeric` here is correct until an upstream lightweight primitive
-  exists (see the `.tnum` item below).
+- [x] **[consumer]** **`src/app/(app)/dashboard/training-week.tsx` `weight×reps`
+      cells** — the inline `fontVariantNumeric: "tabular-nums"` (a documented
+      no-op on the served Google Fonts builds) is gone; the cells now carry
+      `className="fig"`. The v0.5 `.fig` recipe (mono face, tabular by
+      construction) is the lightweight primitive that was missing — the per-cell
+      top-set color/weight logic composes on top unchanged. (bundle
+      `UE-8vqOumILzbaoC2WpjWQ`.)
 
 ### Unblocked — `.field-label` / `.alert-text` are now vendored (actionable)
 
@@ -140,15 +137,15 @@ nav sign-out error already uses `.alert-text`. Remaining consumer adoption:
       versioning so the consumer can tell what changed between bundles (the
       `.site-nav` recipe changed structurally _three times_ across v0.5 with no
       version bump). Upstream notes this waits for a second consumer.
-- [ ] **[upstream]** **Lightweight tabular-nums primitive (`.tnum` / `.metric-data`).**
-      The recipe set only carries tabular-nums via the heavy `.metric` display
-      treatment; there is no "tabular-nums only" utility for dense data-table cells
-      (the size classes `.metric-sm/-md/-lg/-xl` set `font-size` only). Consequence:
-      the `training-week.tsx` measurement cells keep an inline
-      `font-variant-numeric: tabular-nums` because no recipe fits. Consider adding a
-      small `.tnum` utility (just `font-variant-numeric: tabular-nums slashed-zero` +
-      feature settings, no font/weight change) so data tables can drop the inline
-      style. Surfaced by the v0.5 conformance sweep.
+- [x] **[upstream] Lightweight aligned-figure primitive — shipped as `.fig`.**
+      Resolved by the v0.5 `.fig` recipe (bundle `UE-8vqOumILzbaoC2WpjWQ`).
+      Upstream went **mono-face**, not a body-face `.tnum`: the
+      `font-variant-numeric: tabular-nums` request is inert on the DM Sans /
+      Outfit webfonts Google Fonts serves (the lookups are stripped), so the
+      inert `.tnum` was retired and `.fig` routes column figures to the mono
+      face, which is tabular by construction. Consumer adoption: the
+      `training-week.tsx` cells (above). A face-agnostic variant could return if
+      the full font builds are ever self-hosted.
 - [ ] **[upstream]** **`.site-nav__menu` desktop min-width floor.** The v0.5 recipe
       drops the old `min-width: 248px` because the menu now spans the chip exactly for
       the connected seam. If a short email makes the chip (and thus the menu) too
@@ -169,6 +166,9 @@ nav sign-out error already uses `.alert-text`. Remaining consumer adoption:
 
 ## Done (for reference)
 
+- [x] **[consumer/upstream]** Vendor the v0.5 `.fig` aligned-figure recipe and
+      adopt it at the `training-week` `weight×reps` column; bump the devices
+      pairing code to `.metric metric-lg`. (bundle `UE-8vqOumILzbaoC2WpjWQ`.)
 - [x] **[consumer/upstream]** Migrate the nav off the pre-v0.5 floating pill onto
       the `.site-nav` recipe; vendor the recipe; adopt `.seg` for the log
       workout-kind toggle. (PR #27, branch `design-system-v0.5-nav`.)
