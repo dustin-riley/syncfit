@@ -9,8 +9,10 @@ struct PermissionView: View {
     var body: some View {
         VStack(spacing: 24) {
             Text("SyncFit").font(.largeTitle).bold()
+                .foregroundStyle(DRColor.text)
             Text("Share HRV, resting heart rate, and sleep with SyncFit to inform your readiness analysis.")
                 .multilineTextAlignment(.center).padding(.horizontal)
+                .foregroundStyle(DRColor.text)
             Button(requesting ? "Requesting…" : "Allow HealthKit access") {
                 Task {
                     requesting = true; defer { requesting = false }
@@ -20,15 +22,16 @@ struct PermissionView: View {
                 }
             }
             .buttonStyle(.borderedProminent)
+            .tint(DRColor.primary)
             .disabled(requesting)
 
             if let error {
                 VStack(spacing: 12) {
-                    Text(error).foregroundStyle(.red).multilineTextAlignment(.center)
+                    Text(error).foregroundStyle(DRColor.error).multilineTextAlignment(.center)
                     Text("If you tapped Don't Allow, open Settings → Health → Data Access & Devices → SyncFit and turn on the metrics there.")
                         .font(.footnote)
                         .multilineTextAlignment(.center)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(DRColor.textMuted)
                         .padding(.horizontal)
                     Button("Open Settings") {
                         if let url = URL(string: UIApplication.openSettingsURLString) {
@@ -36,9 +39,12 @@ struct PermissionView: View {
                         }
                     }
                     .buttonStyle(.bordered)
+                    .tint(DRColor.primary)
                 }
             }
         }
         .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(DRColor.bgIos.ignoresSafeArea())
     }
 }

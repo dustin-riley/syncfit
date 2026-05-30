@@ -18,17 +18,19 @@ struct PairingView: View {
     var body: some View {
         VStack(spacing: 16) {
             Text("Pair iOS app").font(.title2).bold()
+                .foregroundStyle(DRColor.text)
             Text("Open Devices in the SyncFit web app and generate a pairing code.")
-                .multilineTextAlignment(.center).foregroundStyle(.secondary)
+                .multilineTextAlignment(.center).foregroundStyle(DRColor.textMuted)
             TextField("------", text: $code)
                 .keyboardType(.asciiCapable)
                 .textInputAutocapitalization(.characters)
                 .autocorrectionDisabled(true)
                 .multilineTextAlignment(.center)
                 .font(.system(.title, design: .monospaced))
+                .foregroundStyle(DRColor.text)
                 .padding()
-                .background(Color(.secondarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .background(DRColor.surface)
+                .clipShape(RoundedRectangle(cornerRadius: DRRadius.sm))
                 .onChange(of: code) { _, new in
                     // Uppercase, then keep only chars in the Crockford alphabet,
                     // capped at the configured length.
@@ -53,9 +55,12 @@ struct PairingView: View {
                 }
             }
             .buttonStyle(.borderedProminent)
+            .tint(DRColor.primary)
             .disabled(code.count != Self.codeLength || pairing)
-            if let error { Text(error).foregroundStyle(.red).multilineTextAlignment(.center) }
+            if let error { Text(error).foregroundStyle(DRColor.error).multilineTextAlignment(.center) }
         }
         .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(DRColor.bgIos.ignoresSafeArea())
     }
 }
