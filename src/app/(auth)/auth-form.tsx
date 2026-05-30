@@ -3,9 +3,9 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
 import { authClient } from "@/auth/client";
 import { Field } from "./field";
+import { PasswordField } from "./password-field";
 
 type Mode = "signin" | "signup";
 
@@ -45,7 +45,6 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   // Static id is safe: only one AuthForm renders per page (login/signup are
@@ -89,31 +88,15 @@ export function AuthForm({ mode }: { mode: Mode }) {
         describedById={describedById}
       />
 
-      <Field
+      <PasswordField
         label="Password"
         name="password"
-        type={showPassword ? "text" : "password"}
         value={password}
         onChange={setPassword}
         autoComplete={c.passwordAutoComplete}
         required
         hint={c.hint}
         describedById={describedById}
-        trailing={
-          <button
-            type="button"
-            onClick={() => setShowPassword((s) => !s)}
-            aria-pressed={showPassword}
-            aria-label={showPassword ? "Hide password" : "Show password"}
-            className="btn btn--ghost p-1"
-          >
-            {showPassword ? (
-              <EyeOff size={18} aria-hidden="true" />
-            ) : (
-              <Eye size={18} aria-hidden="true" />
-            )}
-          </button>
-        }
       />
 
       {error ? (

@@ -800,6 +800,80 @@ select.input {
     inset 0 1px 0 rgba(74, 52, 28, 0.04);
 }
 
+/* -------- .password-field · password input + reveal toggle --------
+   Wraps a canonical .input[type=password] and an icon reveal toggle,
+   so the field stays the same hard-edge chip as every other .input —
+   the only addition is the in-field affordance.
+
+     <div class="password-field">
+       <input class="input" type="password" autocomplete="current-password">
+       <button class="password-field__toggle" type="button"
+               aria-pressed="false" aria-label="show password">
+         <i data-lucide="eye"></i>
+       </button>
+     </div>
+
+   The toggle is an icon-only button carrying the Lucide eye / eye-off
+   glyph (1.5px stroke, inherits currentColor per the iconography spec).
+   The consumer flips the input's `type` between `password` and `text`,
+   swaps the glyph (eye ↔ eye-off), keeps `aria-pressed` in sync, and
+   updates the `aria-label` ("show password" / "hide password") since the
+   button has no visible text. The field itself inherits every .input
+   state (focus ring, [aria-invalid], :disabled) unchanged; the toggle
+   just sits inside the reserved right padding. iOS is token-only here
+   (E-02) — SwiftUI's SecureField covers reveal natively. */
+.password-field {
+  position: relative;
+  display: block;
+}
+.password-field > .input {
+  /* Reserve room for the toggle so revealed text never slides under it. */
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 46px;
+}
+.password-field__toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-chip);
+  padding: 0;
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+/* 20px glyph for dense in-field UI, 1.5px stroke per the iconography spec. */
+.password-field__toggle svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.5;
+}
+.password-field__toggle:hover {
+  color: var(--text);
+}
+.password-field__toggle[aria-pressed="true"] {
+  color: var(--text);
+}
+/* :focus-visible per Focus Ring Policy — a mouse click on the toggle
+   shouldn't leave the ring behind, but keyboard focus must show it. */
+.password-field__toggle:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 0;
+}
+/* When the wrapped input is disabled, fade and disarm the toggle too. */
+.password-field:has(> .input:disabled) .password-field__toggle {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
 /* -------- .seg · segmented control --------
    Hard-edge wrapper, ink "on" state. Buttons inside use
    :focus-visible so a mouse click doesn't leave the ring behind. */
