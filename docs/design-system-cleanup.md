@@ -3,8 +3,9 @@
 A living backlog of design-system conformance and health items. This is **not** a
 spec or plan (those live in `docs/superpowers/`); it's a checklist of known debt
 to pick from. Source: the v0.5 nav-migration conformance audit (see
-`docs/superpowers/specs/2026-05-28-design-system-v0.5-nav-design.md`) plus a
-system-level quality review.
+`docs/superpowers/specs/2026-05-28-design-system-v0.5-nav-design.md`), a
+system-level quality review, and the upstream **v0.5 post-audit hardening**
+release (bundle ref `eiknX9mTb9wMJD2y9JM7aw`).
 
 **Two surfaces** — items are tagged by where the fix lands:
 
@@ -16,6 +17,42 @@ system-level quality review.
 
 Severity from the audit: **no high-severity violations exist.** Everything below
 is low/medium polish or structural health.
+
+---
+
+## Upstream update — v0.5 post-audit hardening (ref `eiknX9mTb9wMJD2y9JM7aw`)
+
+A post-audit pass incorporated four of six `[upstream]` findings from this
+backlog and fixed three `.site-nav` recipe bugs. What it closed (details in the
+relevant items below):
+
+- **U-01 token value-parity** — `validate.mjs` now compares resolved _values_
+  (104/109 shared tokens; 5 layered shadows skipped), not just names.
+- **U-02 recipe vocabulary** — added `.field-label` and `.alert-text` recipes.
+- **U-04 / U-05 nav ARIA** — handoff ships the `role="none"` menu wrappers; the
+  recipe adds a `.site-nav__nav` `<nav aria-label="Primary">` desktop landmark.
+- **U-03 (first half) re-vendor procedure** — `RE-VENDOR.md` + a three-part gate
+  (token parity, stylelint, preview render check).
+- **Recipe bug fixes B-01 / B-02** (and **B-03** noted, deferred).
+
+### Action this creates for us — re-vendor the release
+
+- [ ] **[consumer]** **Re-vendor the v0.5 post-audit-hardening bundle into
+      SyncFit.** High value because it: (1) **fixes B-02** — our vendored mobile
+      `.site-nav__menu` anchors to the chip and paints over the rail; the fix
+      anchors it to the bar so it drops flush below the rail; (2) lets us **drop
+      our local `role="none"` patch** (commit on PR #27) and re-converge with the
+      byte-faithful handoff, which now ships that fix upstream; (3) brings
+      `.field-label` / `.alert-text` so the consumer vocabulary items below become
+      actionable; (4) adds the `.site-nav__nav` desktop landmark. Follow
+      `RE-VENDOR.md` (strip Google-Fonts `@import`, fix loader mask path + entry
+      `@import`, Prettier the `.tsx`) and run its three-part gate. **Note:** B-01
+      (a nested `*/` dropping the `.site-nav` base rule) was verified _not_
+      present in our current vendored copy, so we're not currently broken on that
+      one — but re-vendoring keeps us aligned. **B-03** (the `.site-nav`
+      self-query-container override never applying, so mobile side-padding stays
+      at the desktop value) is deferred upstream and will still be present after
+      re-vendor; tracked there.
 
 ---
 
@@ -46,6 +83,17 @@ These are mechanical, isolated, and don't depend on anything else.
       `fontVariantNumeric: "tabular-nums"` on measurement cells; use the `.metric`
       treatment instead of re-implementing tabular-nums inline.
 
+### Unblocked by the new recipes (do _after_ the re-vendor above)
+
+- [ ] **[consumer]** `src/app/(app)/log/page.tsx` L91,163 — the form labels reuse
+      `.metric-label` (mono measurement caption). Now that `.field-label` exists
+      upstream, switch these to `.field-label`.
+- [ ] **[consumer]** Adopt `.alert-text` for error/alert copy and drop the inline
+      `style={{ color: "var(--error)" }}` escape hatches (e.g.
+      `today-session.tsx`, `progression-inbox.tsx`, `import/page.tsx`,
+      `devices-client.tsx`). The re-vendored handoff already uses `.alert-text`
+      for the nav sign-out error.
+
 ---
 
 ## Needs a decision first
@@ -65,53 +113,30 @@ These are mechanical, isolated, and don't depend on anything else.
 
 ---
 
-## Structural / system health (mostly upstream)
+## Structural / system health
 
-Bigger items from the system-level review. Higher value, more effort; sequence
-deliberately.
-
-- [ ] **[upstream]** **Token value-parity, not just name-parity.** `validate.mjs`
-      checks that `tokens.css` and `Tokens.swift` share token _names_, but not that
-      they resolve to the same _values_ — CSS and Swift can silently drift. Either
-      (a) generate both from a single source (e.g. Style Dictionary: JSON → CSS +
-      Swift), or (b) extend `validate.mjs` to compare resolved values where they're
-      expressible on both sides. Highest-leverage health fix before 1.0.
 - [ ] **[consumer]** **Unify the spacing scale.** The Tailwind `@theme` bridge maps
       colors/radii/fonts onto tokens but **not** spacing, so the app mixes Tailwind's
       default rem scale (`p-4`, `my-3`) with the system's `--space-*`. Either bridge
       `--space-*` into `@theme` in `src/app/globals.css`, or standardize on one scale
-      and sweep usages. Pairs with the "do now" padding items above.
-- [ ] **[upstream]** **Fill recipe vocabulary gaps** so inline escape hatches go
-      away: add a **field-label** recipe (today `.metric-label` is reused for form
-      labels — `log/page.tsx` L91,163) and an **error/alert-text** recipe (today
-      `style={{ color: "var(--error)" }}` is the sanctioned inline workaround, and the
-      nav sign-out error borrows `.site-nav__menu-email`). Once they exist, sweep the
-      consumer to adopt them.
-- [ ] **[upstream/process]** **A repeatable re-vendor procedure + recipe-level
-      versioning.** Each bundle update is currently a manual reconcile (strip the
-      Google-Fonts `@import`, fix the `loader-bar-curl.svg` mask path, fix
-      `@import` paths, Prettier-format the `.tsx`). The `.site-nav` recipe also
-      changed structurally _twice within v0.5_ with no version bump. Document the
-      exact re-vendor steps (so any future update is mechanical), and adopt
-      recipe-level versioning so the consumer can tell what changed. Consider whether
-      a published package is worth it once a second consumer appears.
-- [ ] **[upstream]** **Carry the `role="none"` menu fix into the handoff.** The
-      bundle's `site-nav.tsx` renders the email and sign-out-error `<p>`s as direct
-      children of `role="menu"`, which isn't valid menu ARIA (a menu owns only
-      `menuitem`/`separator`/`group`/presentational children). SyncFit re-applied the
-      `role="none"` wrapper locally (it had been fixed in `5e02203`, then dropped by
-      the v0.5 handoff); the handoff should ship with it so the next re-vendor doesn't
-      revert it again.
-- [ ] **[upstream]** **Desktop primary-nav landmark.** The `.site-nav__links` `<ul>`
-      is placed directly in the CSS grid, so at desktop width there is no `<nav>`
-      navigation landmark (the mobile rail, which is the `<nav>`, is `display:none`
-      there). Wrapping the `<ul>` in a `<nav>` in the consumer would break the grid
-      placement, so this needs to be solved in the recipe (e.g. make the landmark the
-      grid child). Low severity.
+      and sweep usages. Pairs with the "do now" padding items above. (Still open —
+      this one is consumer-side and untouched by the upstream release.)
+- [ ] **[upstream/process]** **Recipe-level versioning.** Half of U-03 shipped
+      (`RE-VENDOR.md` + the three-part gate). Still deferred upstream: per-recipe
+      versioning so the consumer can tell what changed between bundles (the
+      `.site-nav` recipe changed structurally _three times_ across v0.5 with no
+      version bump). Upstream notes this waits for a second consumer.
 - [ ] **[upstream]** **`.site-nav__menu` desktop min-width floor.** The v0.5 recipe
       drops the old `min-width: 248px` because the menu now spans the chip exactly for
       the connected seam. If a short email makes the chip (and thus the menu) too
       narrow in practice, consider a min-width floor that doesn't break the seam.
+      (Not addressed by the hardening release.)
+- [ ] **[upstream]** **B-03 — `.site-nav` self-query-container override.** The bar is
+      its own `container-type`, so its mobile `@container` self-overrides
+      (`--sn-pad-*`, `column-gap`) never apply; mobile side-padding silently stays at
+      the desktop value. Deferred upstream (needs a markup-contract change to move
+      `container-type` to a wrapper); documented in `RE-VENDOR.md`. Present in our
+      vendored copy and will remain after re-vendor.
 - [ ] **[consumer]** **Clear residual migration markers.** A few `.ds-*` / `--ds-*`
       references remain as comments (`src/app/globals.css` L6–7,
       `src/styles/design/components.css` L1334 region). Confirm they're purely
@@ -127,3 +152,20 @@ deliberately.
 - [x] **[consumer/upstream]** `.site-nav__menu` reflow fix — absolutely-positioned
       child instead of a CSS-grid sibling so opening the menu never reflows content.
       (PR #27.)
+- [x] **[consumer]** Restore `role="none"` wrappers on the menu's non-`menuitem`
+      children (PR #27). Superseded upstream by U-04 — re-vendoring will replace the
+      local patch with the shipped fix.
+- [x] **[upstream] U-01 — token value-parity.** `validate.mjs` now value-compares
+      104/109 shared tokens (closes the `#B8541C → #B8541D` name-only-pass hole).
+      Was the highest-leverage health item.
+- [x] **[upstream] U-02 — recipe vocabulary gaps.** `.field-label` and `.alert-text`
+      recipes added. (Consumer adoption tracked under "Unblocked by the new recipes"
+      above, pending re-vendor.)
+- [x] **[upstream] U-04 — `role="none"` in the handoff.** Now ships upstream so the
+      next re-vendor won't revert it.
+- [x] **[upstream] U-05 — desktop primary-nav landmark.** Recipe adds
+      `.site-nav__nav` `<nav aria-label="Primary">` as the grid child (the `<ul>`
+      can't carry the landmark without breaking grid placement).
+- [x] **[upstream] U-03 (first half) — re-vendor procedure.** `RE-VENDOR.md` +
+      three-part gate (token parity, stylelint, preview render). Recipe-level
+      versioning still open (above).
