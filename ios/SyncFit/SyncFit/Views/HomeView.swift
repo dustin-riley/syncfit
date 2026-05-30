@@ -30,7 +30,7 @@ struct HomeView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
             }
-            .background(DSColor.bg.ignoresSafeArea())
+            .background(DRColor.bgIos.ignoresSafeArea())
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
@@ -73,7 +73,7 @@ struct HomeView: View {
             case .failed:
                 Text("Couldn't load your plan. Pull to refresh.")
                     .font(.system(size: 14))
-                    .foregroundStyle(DSColor.textMuted)
+                    .foregroundStyle(DRColor.textMuted)
                     .frame(maxWidth: .infinity)
                     .padding(.top, 40)
             case .ok, .stale:
@@ -82,7 +82,7 @@ struct HomeView: View {
         } else if session.planWeek?.days.isEmpty == true {
             Text("No plan yet. Open the web app at syncfit-chi.vercel.app to create one.")
                 .font(.system(size: 13))
-                .foregroundStyle(DSColor.textMuted)
+                .foregroundStyle(DRColor.textMuted)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 24)
         } else if let r = resolved {
@@ -103,7 +103,7 @@ struct HomeView: View {
             // natural width so 'SyncFit' isn't truncated to 'S...'.
             Text("SyncFit")
                 .font(.system(size: 17, weight: .bold))
-                .foregroundStyle(DSColor.primary)
+                .foregroundStyle(DRColor.primary)
                 .fixedSize(horizontal: true, vertical: false)
         }
         ToolbarItem(placement: .topBarTrailing) {
@@ -122,14 +122,14 @@ struct HomeView: View {
                     }
                 } label: {
                     Image(systemName: "arrow.triangle.2.circlepath")
-                        .foregroundStyle(DSColor.text)
+                        .foregroundStyle(DRColor.text)
                 }
                 .disabled(syncing)
 
                 if let d = session.lastSyncedAt {
                     Text("synced \(Self.timeOnly(d))")
                         .font(.system(size: 10))
-                        .foregroundStyle(DSColor.textMuted)
+                        .foregroundStyle(DRColor.textMuted)
                 }
 
                 Menu {
@@ -138,7 +138,7 @@ struct HomeView: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis")
-                        .foregroundStyle(DSColor.text)
+                        .foregroundStyle(DRColor.text)
                 }
             }
         }
@@ -150,7 +150,7 @@ struct HomeView: View {
         Text(text.uppercased())
             .font(.system(size: 9, weight: .heavy))
             .tracking(0.72)
-            .foregroundStyle(DSColor.textMuted)
+            .foregroundStyle(DRColor.textMuted)
             .padding(.top, 4)
     }
 
@@ -174,13 +174,13 @@ struct HomeView: View {
             Text("offline — last updated \(Self.relativeAgo(session.planFetchedAt))")
                 .font(.system(size: 11))
         }
-        .foregroundStyle(DSColor.textMuted)
+        .foregroundStyle(DRColor.textMuted)
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
-            RoundedRectangle(cornerRadius: DSRadius.sm)
-                .fill(DSColor.accentOchre.opacity(0.12))
+            RoundedRectangle(cornerRadius: DRRadius.sm)
+                .fill(DRColor.accentOchre.opacity(0.12))
         )
     }
 
