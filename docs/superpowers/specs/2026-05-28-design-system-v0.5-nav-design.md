@@ -24,6 +24,22 @@
 > updated to byte-match the revised bundle. This supersedes the sibling/dual-ref
 > details in §2 and §3 below.
 
+> **Amendment — 2026-05-29 (re-vendor): v0.5 post-audit hardening.** Re-vendored
+> bundle ref `eiknX9mTb9wMJD2y9JM7aw`, which closed four upstream backlog findings
+> and three `.site-nav` recipe bugs. Net effect on the shipped nav: (1) **B-02
+> fixed** — the mobile menu now anchors to the bar and drops below the rail
+> instead of overlapping it; (2) the recipe adds a `.site-nav__nav`
+> `<nav aria-label="Primary">` desktop landmark (the `<ul>` rides inside it; it
+> can't carry the landmark itself without breaking grid placement); (3) the
+> handoff now ships the `role="none"` menu wrappers upstream, so the local
+> a11y patch from this PR is **replaced** by the byte-faithful handoff (we
+> re-converged); (4) the sign-out error uses the new `.alert-text` recipe (no
+> inline `var(--error)`). New `.field-label` / `.alert-text` recipes were also
+> vendored. `tokens.css` unchanged (no value drift). B-01 verified absent; B-03
+> (a dead container-query self-override) is deferred upstream and still carried.
+> Procedure followed `RE-VENDOR.md` from the bundle. See
+> `docs/design-system-cleanup.md` for the full backlog reconciliation.
+
 ## Summary
 
 The Dustin Riley design system shipped a v0.5 release. The headline change is a

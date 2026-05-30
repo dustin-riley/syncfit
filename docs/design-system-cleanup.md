@@ -35,24 +35,27 @@ relevant items below):
   (token parity, stylelint, preview render check).
 - **Recipe bug fixes B-01 / B-02** (and **B-03** noted, deferred).
 
-### Action this creates for us — re-vendor the release
+### Action this created for us — re-vendor the release ✅ done (PR #27)
 
-- [ ] **[consumer]** **Re-vendor the v0.5 post-audit-hardening bundle into
-      SyncFit.** High value because it: (1) **fixes B-02** — our vendored mobile
-      `.site-nav__menu` anchors to the chip and paints over the rail; the fix
-      anchors it to the bar so it drops flush below the rail; (2) lets us **drop
-      our local `role="none"` patch** (commit on PR #27) and re-converge with the
-      byte-faithful handoff, which now ships that fix upstream; (3) brings
-      `.field-label` / `.alert-text` so the consumer vocabulary items below become
-      actionable; (4) adds the `.site-nav__nav` desktop landmark. Follow
-      `RE-VENDOR.md` (strip Google-Fonts `@import`, fix loader mask path + entry
-      `@import`, Prettier the `.tsx`) and run its three-part gate. **Note:** B-01
-      (a nested `*/` dropping the `.site-nav` base rule) was verified _not_
-      present in our current vendored copy, so we're not currently broken on that
-      one — but re-vendoring keeps us aligned. **B-03** (the `.site-nav`
-      self-query-container override never applying, so mobile side-padding stays
-      at the desktop value) is deferred upstream and will still be present after
-      re-vendor; tracked there.
+- [x] **[consumer]** **Re-vendored the v0.5 post-audit-hardening bundle into
+      SyncFit.** Added `.field-label` + `.alert-text` recipes, replaced the
+      `.site-nav` block (byte-identical to the bundle), and swapped
+      `site-nav.tsx` for the new handoff. This: (1) **fixed B-02** — the mobile
+      `.site-nav__menu` now anchors to the bar (`position: static` on the chip +
+      `top: calc(100% - var(--sn-pad-y))`) and drops flush below the rail instead
+      of painting over it; (2) **dropped our local `role="none"` patch** — the
+      handoff now ships the wrappers (email `<p role="none">` + the alert wrapped
+      in `role="none"`), so we re-converged with the byte-faithful source;
+      (3) added the `.site-nav__nav` desktop landmark; (4) the nav sign-out error
+      now uses `.alert-text` (last inline `var(--error)` in the nav gone).
+      `tokens.css` needed no change (no value drift). Gate: tsc / lint / 119
+      tests / format / build all green; B-01 verified absent (the `.site-nav`
+      base rule keeps `display: grid` + `container-type`).
+- [ ] **[consumer]** **Add `stylelint` to the gate.** `RE-VENDOR.md` step 2b
+      wants `stylelint` on the vendored CSS (it would have caught B-01); the repo
+      has no stylelint config yet. Adding `stylelint-config-standard` +
+      `no-invalid-double-slash-comments` would make the next re-vendor's gate
+      complete. (We verified B-01 by hand this time.)
 
 ---
 
@@ -83,16 +86,17 @@ These are mechanical, isolated, and don't depend on anything else.
       `fontVariantNumeric: "tabular-nums"` on measurement cells; use the `.metric`
       treatment instead of re-implementing tabular-nums inline.
 
-### Unblocked by the new recipes (do _after_ the re-vendor above)
+### Unblocked — `.field-label` / `.alert-text` are now vendored (actionable)
+
+The recipes are in `src/styles/design/components.css` as of the re-vendor; the
+nav sign-out error already uses `.alert-text`. Remaining consumer adoption:
 
 - [ ] **[consumer]** `src/app/(app)/log/page.tsx` L91,163 — the form labels reuse
-      `.metric-label` (mono measurement caption). Now that `.field-label` exists
-      upstream, switch these to `.field-label`.
-- [ ] **[consumer]** Adopt `.alert-text` for error/alert copy and drop the inline
+      `.metric-label` (mono measurement caption). Switch these to `.field-label`.
+- [ ] **[consumer]** Adopt `.alert-text` for the remaining inline
       `style={{ color: "var(--error)" }}` escape hatches (e.g.
       `today-session.tsx`, `progression-inbox.tsx`, `import/page.tsx`,
-      `devices-client.tsx`). The re-vendored handoff already uses `.alert-text`
-      for the nav sign-out error.
+      `devices-client.tsx`).
 
 ---
 

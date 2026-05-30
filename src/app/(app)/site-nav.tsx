@@ -91,19 +91,28 @@ export function SiteNav({ email }: { email: string }) {
         SyncFit
       </Link>
 
-      {/* Desktop primary links — full labels. Hidden below --bp-phone. */}
-      <ul className="site-nav__links" role="list">
-        {NAV_ITEMS.map((item) => {
-          const active = isActivePath(pathname, item.href);
-          return (
-            <li key={item.href}>
-              <Link href={item.href} aria-current={active ? "page" : undefined}>
-                {item.label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+      {/* Desktop primary links — full labels. The <nav> landmark is the
+          grid child: wrapping the <ul> in the consumer would break the
+          .site-nav grid placement, so the recipe places .site-nav__nav and
+          the <ul> rides inside it. Hidden below --bp-phone, where the rail
+          at the bottom becomes the Primary landmark. */}
+      <nav className="site-nav__nav" aria-label="Primary">
+        <ul className="site-nav__links" role="list">
+          {NAV_ITEMS.map((item) => {
+            const active = isActivePath(pathname, item.href);
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                >
+                  {item.label}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
 
       {/* Account chip. data-open flattens the bottom corners so the menu
           connects seamlessly. The menu is nested inside so a single ref
@@ -140,13 +149,9 @@ export function SiteNav({ email }: { email: string }) {
             aria-label="Account"
             className="site-nav__menu"
           >
-            {/* role="none" — a bare <p> is not a valid owned child of
-                role="menu"; the wrapper removes it from menu semantics
-                while keeping the text visible (restores fix from 5e02203,
-                which the v0.5 handoff dropped). */}
-            <div role="none">
-              <p className="site-nav__menu-email">{email}</p>
-            </div>
+            <p className="site-nav__menu-email" role="none">
+              {email}
+            </p>
             <Link
               href="/settings/devices"
               role="menuitem"
@@ -165,13 +170,14 @@ export function SiteNav({ email }: { email: string }) {
             >
               {signingOut ? "Signing out…" : "Sign out"}
             </button>
+            {/* A menu (role="menu") owns only menuitem/separator/group/
+                presentational children. The live region is wrapped in a
+                role="none" element so it's a valid menu child while the
+                inner <p> keeps role="alert". .alert-text replaces the
+                former inline color + borderBottom override. */}
             {signOutError ? (
               <div role="none">
-                <p
-                  role="alert"
-                  className="site-nav__menu-email"
-                  style={{ color: "var(--error)", borderBottom: "none" }}
-                >
+                <p role="alert" className="alert-text">
                   {signOutError}
                 </p>
               </div>
