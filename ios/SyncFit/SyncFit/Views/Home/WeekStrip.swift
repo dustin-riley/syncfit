@@ -26,7 +26,7 @@ struct WeekStrip: View {
         VStack(spacing: 3) {
             Text(Self.weekdayLabels[dow])
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(isToday ? DSColor.onPrimary : DSColor.textMuted)
+                .foregroundStyle(isToday ? DRColor.onPrimary : DRColor.textMuted)
             switch glyph {
             case .letter(let s):
                 Text(s)
@@ -35,7 +35,7 @@ struct WeekStrip: View {
             case .rest:
                 Text("·")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(isToday ? DSColor.onPrimary : DSColor.textMuted)
+                    .foregroundStyle(isToday ? DRColor.onPrimary : DRColor.textMuted)
             }
         }
         // Fixed minimum height (>= 44pt HIG tap target). Drop the prior
@@ -43,42 +43,42 @@ struct WeekStrip: View {
         // making them sub-target on real devices.
         .frame(maxWidth: .infinity, minHeight: 56)
         .background(
-            RoundedRectangle(cornerRadius: DSRadius.sm)
+            RoundedRectangle(cornerRadius: DRRadius.sm)
                 .fill(bgColor(for: days[dow], isToday: isToday))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: DSRadius.sm)
+            RoundedRectangle(cornerRadius: DRRadius.sm)
                 .stroke(
-                    isSelected && !isToday ? DSColor.primary.opacity(0.5) : .clear,
+                    isSelected && !isToday ? DRColor.primary.opacity(0.5) : .clear,
                     lineWidth: 1
                 )
         )
     }
 
     private func bgColor(for d: ResolvedDay, isToday: Bool) -> Color {
-        if isToday { return DSColor.primary }
+        if isToday { return DRColor.primary }
         if case .session(let p) = d {
             switch p.modality.trimmingCharacters(in: .whitespaces).lowercased() {
-            case "strength":  return DSColor.primary.opacity(0.08)
-            case "endurance": return DSColor.accentTeal.opacity(0.10)
-            case "mixed":     return DSColor.accentOchre.opacity(0.12)
-            default:          return DSColor.surfaceSunken
+            case "strength":  return DRColor.primary.opacity(0.08)
+            case "endurance": return DRColor.accentTeal.opacity(0.10)
+            case "mixed":     return DRColor.accentOchre.opacity(0.12)
+            default:          return DRColor.surfaceSunken
             }
         }
-        return DSColor.surfaceSunken
+        return DRColor.surfaceSunken
     }
 
     private func glyphColor(for d: ResolvedDay, isToday: Bool) -> Color {
-        if isToday { return DSColor.onPrimary }
+        if isToday { return DRColor.onPrimary }
         if case .session(let p) = d {
             switch p.modality.trimmingCharacters(in: .whitespaces).lowercased() {
-            case "strength":  return DSColor.primary
-            case "endurance": return DSColor.accentTeal
-            case "mixed":     return DSColor.accentOchre
-            default:          return DSColor.text
+            case "strength":  return DRColor.primary
+            case "endurance": return DRColor.accentTeal
+            case "mixed":     return DRColor.accentOchre
+            default:          return DRColor.text
             }
         }
-        return DSColor.textMuted
+        return DRColor.textMuted
     }
 }
 
@@ -101,5 +101,5 @@ struct WeekStrip: View {
         selectedDow: $selected
     )
     .padding()
-    .background(DSColor.bg)
+    .background(DRColor.bgIos)
 }

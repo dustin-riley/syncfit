@@ -16,32 +16,32 @@ struct PlanDetailCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
         .background(
-            RoundedRectangle(cornerRadius: DSRadius.md)
-                .fill(DSColor.surface)
+            RoundedRectangle(cornerRadius: DRRadius.md)
+                .fill(DRColor.surface)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: DSRadius.md)
-                .stroke(DSColor.border, lineWidth: 1)
+            RoundedRectangle(cornerRadius: DRRadius.md)
+                .stroke(DRColor.border, lineWidth: 1)
         )
-        .dsShadow(.md)
+        .drShadow(.md)
     }
 
     @ViewBuilder
     private func sessionBody(_ p: PlanDay) -> some View {
         Text(p.title.isEmpty ? "Untitled session" : p.title)
             .font(.system(size: 16, weight: .bold))
-            .foregroundStyle(DSColor.text)
+            .foregroundStyle(DRColor.text)
         let meta = [p.modality, p.notes].filter { !$0.isEmpty }.joined(separator: " · ")
         if !meta.isEmpty {
             Text(meta)
                 .font(.system(size: 10))
-                .foregroundStyle(DSColor.textMuted)
+                .foregroundStyle(DRColor.textMuted)
                 .padding(.top, 3)
         }
         if p.exercises.isEmpty {
             Text("No exercises planned")
                 .font(.system(size: 11).italic())
-                .foregroundStyle(DSColor.textMuted)
+                .foregroundStyle(DRColor.textMuted)
                 .padding(.top, 11)
         } else {
             VStack(spacing: 5) {
@@ -49,11 +49,11 @@ struct PlanDetailCard: View {
                     HStack(alignment: .firstTextBaseline) {
                         Text(ex.name)
                             .font(.system(size: 11))
-                            .foregroundStyle(DSColor.text)
+                            .foregroundStyle(DRColor.text)
                         Spacer(minLength: 4)
                         Text(Self.formatPrescription(ex))
                             .font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(DSColor.textMuted)
+                            .foregroundStyle(DRColor.textMuted)
                     }
                 }
             }
@@ -66,16 +66,16 @@ struct PlanDetailCard: View {
         if let t = title, !t.isEmpty {
             Text(t)
                 .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(DSColor.text)
+                .foregroundStyle(DRColor.text)
         } else {
             Text("Rest day")
                 .font(.system(size: 16, weight: .medium).italic())
-                .foregroundStyle(DSColor.textMuted)
+                .foregroundStyle(DRColor.textMuted)
         }
         if let n = notes, !n.isEmpty {
             Text(n)
                 .font(.system(size: 10))
-                .foregroundStyle(DSColor.textMuted)
+                .foregroundStyle(DRColor.textMuted)
                 .padding(.top, 3)
         }
     }
@@ -103,13 +103,13 @@ struct PlanDetailCard: View {
         ]
     )))
     .padding()
-    .background(DSColor.bg)
+    .background(DRColor.bgIos)
 }
 
 #Preview("Rest day, blank") {
     PlanDetailCard(day: .rest(dayOfWeek: 0, title: nil, notes: nil))
         .padding()
-        .background(DSColor.bg)
+        .background(DRColor.bgIos)
 }
 
 #Preview("Endurance, no exercises") {
@@ -118,5 +118,5 @@ struct PlanDetailCard: View {
         modality: "endurance", exercises: []
     )))
     .padding()
-    .background(DSColor.bg)
+    .background(DRColor.bgIos)
 }

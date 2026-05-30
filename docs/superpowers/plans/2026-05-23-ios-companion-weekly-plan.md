@@ -1,5 +1,13 @@
 # iOS Companion Weekly Plan Implementation Plan
 
+> **Amendment (2026-05-30):** The design-system token layer has since migrated.
+> `DesignTokens.swift` (the `DS*` namespace — `DSColor`/`DSRadius`/`DSShadow`/
+> `dsShadow`) was replaced by the vendored canonical `Tokens.swift` (`DR*`
+> namespace — `DRColor`/`DRRadius`/`DRShadow`/`drShadow`), and the iOS background
+> token is now `DRColor.bgIos` (not `DSColor.bg`). Any `DS*` identifiers in the
+> code snippets below are historical and no longer compile — read them as `DR*`.
+> See `docs/superpowers/specs/2026-05-30-ios-design-system-v0.5-token-cutover-design.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the minimal iOS `HomeView` with a plan-first home screen: a 7-day week strip + selected-day detail card sourced from a new `GET /api/plan/week` endpoint, with on-device caching and stale-fallback UX.

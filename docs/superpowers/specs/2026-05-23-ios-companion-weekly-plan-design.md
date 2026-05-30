@@ -1,5 +1,13 @@
 # iOS Companion — Weekly Plan on Home Screen — Design Spec
 
+> **Amendment (2026-05-30):** The design-system token layer has since migrated.
+> `DesignTokens.swift` (the `DS*` namespace — `DSColor`/`DSRadius`/`DSShadow`/
+> `dsShadow`) was replaced by the vendored canonical `Tokens.swift` (`DR*`
+> namespace — `DRColor`/`DRRadius`/`DRShadow`/`drShadow`), and the iOS background
+> token is now `DRColor.bgIos` (not `DSColor.bg`). Any `DS*` identifiers in the
+> code snippets below are historical and no longer compile — read them as `DR*`.
+> See `2026-05-30-ios-design-system-v0.5-token-cutover-design.md`.
+
 **Date:** 2026-05-23
 **Status:** Approved (brainstorming) — pending implementation plan
 **Related:** [`2026-05-23-ios-companion-app-design.md`](2026-05-23-ios-companion-app-design.md) (parent / v1 iOS spec)
