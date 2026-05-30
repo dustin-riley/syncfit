@@ -164,10 +164,10 @@ export function TrainingWeek({ initial }: { initial: TrainingWeekData }) {
                               {ex.sets.map((s, i) => (
                                 <td
                                   key={i}
+                                  className="fig"
                                   style={{
                                     width: "11ch",
                                     textAlign: "right",
-                                    fontVariantNumeric: "tabular-nums",
                                     paddingLeft: "var(--space-4)",
                                     paddingTop: "var(--space-1)",
                                     paddingBottom: "var(--space-1)",
