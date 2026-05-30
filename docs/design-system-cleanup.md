@@ -63,40 +63,50 @@ relevant items below):
 
 These are mechanical, isolated, and don't depend on anything else.
 
-- [ ] **[consumer]** `src/app/(app)/progress/progress-workspace.tsx` L73,77 — drop the
-      redundant inline `style={{ color: "var(--link)" }}` on the `<a>` links; the
-      element default already supplies `--link`.
-- [ ] **[consumer]** `src/app/(app)/progress/progress-workspace.tsx` L59,70 — remove
-      `p-4` where it overrides `.card`'s canonical `--space-5` padding (keep `.card`'s
-      own padding unless a tighter override is intentional).
-- [ ] **[consumer]** `src/app/(app)/settings/devices/page.tsx` L7 — `.container` +
-      `p-8` double-pads and overrides the container's safe-area-aware horizontal
-      padding; drop `p-8` and apply only vertical padding if needed.
-- [ ] **[consumer]** `src/app/(auth)/auth-form.tsx` L129 — remove
-      `disabled:cursor-not-allowed disabled:opacity-60`; let the `.btn:disabled`
-      recipe own the disabled state (note: this changes disabled opacity 0.6 → the
-      system's 0.4 — intended).
-- [ ] **[consumer]** `src/app/(app)/import/page.tsx` L13 — replace inline
+- [x] **[consumer]** `src/app/(app)/progress/progress-workspace.tsx` — dropped the
+      redundant inline `style={{ color: "var(--link)" }}` on the two `<Link>`s; the
+      element default already supplies `--link`. (PR #27)
+- [x] **[consumer]** `src/app/(app)/progress/progress-workspace.tsx` — removed
+      `p-4` on the two empty/error cards so `.card`'s canonical `--space-5` padding
+      stands. (PR #27)
+- [x] **[consumer]** `src/app/(app)/settings/devices/page.tsx` — replaced
+      `.container p-8` with `.container py-8` so the container's safe-area-aware
+      horizontal padding is no longer overridden. (PR #27)
+- [x] **[consumer]** `src/app/(auth)/auth-form.tsx` — removed
+      `disabled:cursor-not-allowed disabled:opacity-60`; the `.btn:disabled` recipe
+      now owns the disabled state (disabled opacity 0.6 → the system's 0.4, as
+      intended). (PR #27)
+- [x] **[consumer]** `src/app/(app)/import/page.tsx` — replaced inline
       `style={{ color: "var(--text-muted)" }}` with the `text-muted-foreground`
-      Tailwind-bridge utility (or `.caption`).
-- [ ] **[consumer]** `src/app/(app)/settings/devices/devices-client.tsx` L134–143 —
-      the pairing code uses `.display` + inline `font-mono`; switch to the idiomatic
-      `.metric .metric-md` primitive (mono + tabular + slashed-zero by design).
-- [ ] **[consumer]** `src/app/(app)/dashboard/training-week.tsx` L170 — inline
-      `fontVariantNumeric: "tabular-nums"` on measurement cells; use the `.metric`
-      treatment instead of re-implementing tabular-nums inline.
+      Tailwind-bridge utility. (PR #27)
+- [x] **[consumer]** `src/app/(app)/settings/devices/devices-client.tsx` — the
+      pairing code now uses the `.metric .metric-md` primitive (mono + tabular +
+      slashed-zero by design) instead of `.display` + inline `font-mono`. (PR #27)
+- [~] **[consumer]** `src/app/(app)/dashboard/training-week.tsx` L170 — inline
+  `fontVariantNumeric: "tabular-nums"` on measurement cells. **Left inline by
+  decision.** The recipe set has no tabular-nums-only primitive: `.metric` is a
+  hero-display treatment (display face, weight 700, wide tracking) and the size
+  classes `.metric-sm/-md/-lg/-xl` only set `font-size`, so `.metric-sm` alone
+  gives no tabular-nums and `.metric .metric-sm` pulls in the full display face —
+  wrong altitude for dense `weight×reps` data-table cells, and it would collide
+  with the per-cell top-set color/weight logic. Keeping the inline
+  `font-variant-numeric` here is correct until an upstream lightweight primitive
+  exists (see the `.tnum` item below).
 
 ### Unblocked — `.field-label` / `.alert-text` are now vendored (actionable)
 
 The recipes are in `src/styles/design/components.css` as of the re-vendor; the
 nav sign-out error already uses `.alert-text`. Remaining consumer adoption:
 
-- [ ] **[consumer]** `src/app/(app)/log/page.tsx` L91,163 — the form labels reuse
-      `.metric-label` (mono measurement caption). Switch these to `.field-label`.
-- [ ] **[consumer]** Adopt `.alert-text` for the remaining inline
-      `style={{ color: "var(--error)" }}` escape hatches (e.g.
-      `today-session.tsx`, `progression-inbox.tsx`, `import/page.tsx`,
-      `devices-client.tsx`).
+- [x] **[consumer]** `src/app/(app)/log/page.tsx` — the two form labels (`date &
+    time`, `activity`) switched from `.metric-label` (mono measurement caption) to
+      `.field-label`. (PR #27)
+- [x] **[consumer]** Adopted `.alert-text` for the remaining inline
+      `style={{ color: "var(--error)" }}` escape hatches — `today-session.tsx`,
+      `progression-inbox.tsx`, `import/page.tsx`, `devices-client.tsx` — each now
+      `className="alert-text"` with `role="alert"` on the dynamic messages. Color is
+      still the only signal (no icon yet); pairing an icon / `aria-invalid` is a
+      noted follow-up. (PR #27)
 
 ---
 
@@ -130,6 +140,15 @@ nav sign-out error already uses `.alert-text`. Remaining consumer adoption:
       versioning so the consumer can tell what changed between bundles (the
       `.site-nav` recipe changed structurally _three times_ across v0.5 with no
       version bump). Upstream notes this waits for a second consumer.
+- [ ] **[upstream]** **Lightweight tabular-nums primitive (`.tnum` / `.metric-data`).**
+      The recipe set only carries tabular-nums via the heavy `.metric` display
+      treatment; there is no "tabular-nums only" utility for dense data-table cells
+      (the size classes `.metric-sm/-md/-lg/-xl` set `font-size` only). Consequence:
+      the `training-week.tsx` measurement cells keep an inline
+      `font-variant-numeric: tabular-nums` because no recipe fits. Consider adding a
+      small `.tnum` utility (just `font-variant-numeric: tabular-nums slashed-zero` +
+      feature settings, no font/weight change) so data tables can drop the inline
+      style. Surfaced by the v0.5 conformance sweep.
 - [ ] **[upstream]** **`.site-nav__menu` desktop min-width floor.** The v0.5 recipe
       drops the old `min-width: 248px` because the menu now spans the chip exactly for
       the connected seam. If a short email makes the chip (and thus the menu) too

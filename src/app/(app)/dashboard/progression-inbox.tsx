@@ -49,7 +49,11 @@ export function ProgressionInbox({
   return (
     <section className="my-6">
       <h2 className="h4">progression</h2>
-      {err && <p style={{ color: "var(--error)" }}>{err}</p>}
+      {err && (
+        <p role="alert" className="alert-text">
+          {err}
+        </p>
+      )}
       {pending.map((s) => (
         <div key={s.exercise} className="card p-3 my-2">
           <strong>{s.exercise}</strong>: {s.currentWeight} → {s.suggestedWeight}

@@ -10,7 +10,7 @@ export default function ImportPage() {
   return (
     <main className="container p-8 max-w-lg">
       <h1 className="h1">Import Strong CSV</h1>
-      <p style={{ color: "var(--text-muted)" }}>
+      <p className="text-muted-foreground">
         Export from Strong → Settings → Export Data, then upload the CSV.
       </p>
       <form
@@ -42,7 +42,9 @@ export default function ImportPage() {
       </form>
       {res &&
         (res.error ? (
-          <p style={{ color: "var(--error)" }}>{res.error}</p>
+          <p role="alert" className="alert-text">
+            {res.error}
+          </p>
         ) : (
           <div className="card mt-4 p-4">
             <p>

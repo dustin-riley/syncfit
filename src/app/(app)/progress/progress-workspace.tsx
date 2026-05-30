@@ -56,7 +56,7 @@ export function ProgressWorkspace({
     return (
       <>
         <h1 className="h1">progress</h1>
-        <section className="card p-4 my-4">
+        <section className="card my-4">
           <p>{error}</p>
         </section>
       </>
@@ -67,17 +67,11 @@ export function ProgressWorkspace({
     return (
       <>
         <h1 className="h1">progress</h1>
-        <section className="card p-4 my-4">
+        <section className="card my-4">
           <p>
             Nothing to chart yet —{" "}
-            <Link href="/import" style={{ color: "var(--link)" }}>
-              import a Strong CSV
-            </Link>{" "}
-            or{" "}
-            <Link href="/log" style={{ color: "var(--link)" }}>
-              log a workout
-            </Link>
-            .
+            <Link href="/import">import a Strong CSV</Link> or{" "}
+            <Link href="/log">log a workout</Link>.
           </p>
         </section>
       </>

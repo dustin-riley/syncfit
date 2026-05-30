@@ -107,11 +107,8 @@ export function DevicesClient({
       {error && (
         <div
           role="alert"
-          className="card"
-          style={{
-            padding: "var(--space-3) var(--space-4)",
-            color: "var(--error)",
-          }}
+          className="card alert-text"
+          style={{ padding: "var(--space-3) var(--space-4)" }}
         >
           {error}
         </div>
@@ -132,12 +129,8 @@ export function DevicesClient({
               Enter this code in the SyncFit iOS app:
             </p>
             <p
-              className="display"
-              style={{
-                fontFamily: "var(--font-mono)",
-                letterSpacing: "0.2em",
-                margin: 0,
-              }}
+              className="metric metric-md"
+              style={{ letterSpacing: "0.2em", margin: 0 }}
             >
               {code.code}
             </p>

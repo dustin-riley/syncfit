@@ -88,7 +88,7 @@ export default function LogPage() {
       </div>
 
       <form onSubmit={submit}>
-        <label className="metric-label">date &amp; time</label>
+        <label className="field-label">date &amp; time</label>
         <input
           className="input w-full my-1"
           type="datetime-local"
@@ -160,7 +160,7 @@ export default function LogPage() {
           </>
         ) : (
           <>
-            <label className="metric-label">activity</label>
+            <label className="field-label">activity</label>
             <select
               className="input my-1"
               value={activityType}

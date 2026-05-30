@@ -109,7 +109,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         type="submit"
         disabled={submitting}
         aria-busy={submitting}
-        className="btn btn--cta w-full justify-center disabled:cursor-not-allowed disabled:opacity-60"
+        className="btn btn--cta w-full justify-center"
       >
         {submitting ? c.submitting : c.submit}
       </button>
